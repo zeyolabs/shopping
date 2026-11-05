@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"moduleResolution": "bundler",
+		"module": "esnext",
+		"target": "esnext",
+		"types": ["@cloudflare/workers-types"]
+	},
+	"include": ["**/*.ts"],
+	"exclude": ["node_modules"]
+}

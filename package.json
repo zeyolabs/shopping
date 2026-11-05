@@ -1,0 +1,99 @@
+{
+	"name": "@zeyolabs/shopping",
+	"version": "2026.11.5",
+	"description": "Shop and order fulfilment for SvelteKit 3 on Cloudflare: catalogue, basket, Stripe Checkout, orders, Royal Mail Click & Drop, order emails, packing, pages and admin.",
+	"type": "module",
+	"license": "UNLICENSED",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/zeyolabs/shopping.git"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"packageManager": "pnpm@11.5.0",
+	"engines": {
+		"node": ">=24.0.0",
+		"pnpm": "^11.0.0"
+	},
+	"files": [
+		"admin",
+		"components",
+		"db",
+		"emails",
+		"pages",
+		"remote",
+		"routes",
+		"server",
+		"client.ts",
+		"config.ts",
+		"images.ts",
+		"money.ts",
+		"order-links.ts",
+		"packing.ts",
+		"royalmail.ts",
+		"shipping-rules.ts",
+		"!**/*.test.ts"
+	],
+	"scripts": {
+		"lint": "eslint . --cache --cache-location .cache/.eslintcache --cache-strategy content",
+		"test": "vitest run",
+		"fmt": "prettier --write .",
+		"check": "prettier --check . && pnpm lint && pnpm test",
+		"release": "node scripts/release.mjs"
+	},
+	"exports": {
+		"./admin/*": "./admin/*",
+		"./client": "./client.ts",
+		"./components/*": "./components/*",
+		"./config": "./config.ts",
+		"./db": "./db/index.ts",
+		"./db/schema": "./db/schema.ts",
+		"./images": "./images.ts",
+		"./money": "./money.ts",
+		"./order-links": "./order-links.ts",
+		"./packing": "./packing.ts",
+		"./pages/*": "./pages/*",
+		"./remote/*": "./remote/*.ts",
+		"./royalmail": "./royalmail.ts",
+		"./routes/*": "./routes/*.ts",
+		"./server/*": "./server/*.ts"
+	},
+	"dependencies": {
+		"@lucide/svelte": "1.52.0",
+		"stripe": "22.3.2",
+		"svelte-sonner": "1.2.1"
+	},
+	"peerDependencies": {
+		"@zeyolabs/kit": ">=2026.11.5",
+		"@zeyolabs/ui": ">=2026.11.5",
+		"@sveltejs/kit": "^3.1.1",
+		"drizzle-orm": "^0.45.3",
+		"svelte": "^5.57.3",
+		"zod": "^4.6.5"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "5.20261005.1",
+		"@eslint/compat": "2.1.1",
+		"@eslint/js": "9.39.4",
+		"@zeyolabs/kit": "2026.11.5",
+		"@zeyolabs/ui": "2026.11.5",
+		"@sveltejs/kit": "3.1.1",
+		"drizzle-orm": "0.45.3",
+		"eslint": "9.39.4",
+		"eslint-config-prettier": "10.1.8",
+		"eslint-plugin-drizzle": "0.2.3",
+		"eslint-plugin-perfectionist": "5.9.1",
+		"eslint-plugin-svelte": "3.24.0",
+		"globals": "17.13.0",
+		"prettier": "3.9.9",
+		"prettier-plugin-svelte": "4.1.1",
+		"svelte": "5.57.3",
+		"svelte-eslint-parser": "1.8.1",
+		"typescript": "6.0.3",
+		"typescript-eslint": "8.71.0",
+		"vitest": "4.1.11",
+		"zod": "4.6.5"
+	}
+}
