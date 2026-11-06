@@ -31,11 +31,11 @@ importers:
         specifier: 3.1.1
         version: 3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6))
       '@zeyolabs/kit':
-        specifier: 2026.11.5
-        version: 2026.11.5(6f8ac31fa0cee30fbfa28da5ca88104d)
+        specifier: 2026.11.6
+        version: 2026.11.6(6f8ac31fa0cee30fbfa28da5ca88104d)
       '@zeyolabs/ui':
-        specifier: 2026.11.5
-        version: 2026.11.5(@cloudflare/workers-types@5.20261005.1)(@sveltejs/kit@3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.5(6f8ac31fa0cee30fbfa28da5ca88104d))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6))
+        specifier: 2026.1106.0
+        version: 2026.1106.0(@cloudflare/workers-types@5.20261005.1)(@sveltejs/kit@3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.6(6f8ac31fa0cee30fbfa28da5ca88104d))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6))
       drizzle-orm:
         specifier: 0.45.3
         version: 0.45.3(@cloudflare/workers-types@5.20261005.1)(@opentelemetry/api@1.10.0)(mysql2@3.24.5(@types/node@26.6.6))(pg@8.23.1)
@@ -221,12 +221,27 @@ packages:
     resolution: {integrity: sha512-9RCU6OwXU6p67H4NODbuxv2S3eenuQ4/WFLrsq+K/k682xrznH5EVWA7N4VFk9VYVcbFtKqur5YQQZc0ySGhsQ==}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
+  '@oslojs/cbor@1.0.0':
+    resolution: {integrity: sha512-AY6Lknexs7n2xp8Cgey95c+975VG7XOk4UEdRdNFxHmDDbuf47OC/LAVRsl14DeTLwo8W6xr3HLFwUFmKcndTQ==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+
+  '@oslojs/crypto@1.0.0':
+    resolution: {integrity: sha512-dVz8TkkgYdr3tlwxHd7SCYGxoN7ynwHLA0nei/Aq9C+ERU0BK+U8+/3soEzBUxUNKYBf42351DyJUZ2REla50w==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+
   '@oslojs/crypto@1.0.1':
     resolution: {integrity: sha512-7n08G8nWjAr/Yu3vu9zzrd0L9XnrJfpMioQcvCMxBIiF5orECHe5/3J0jmXRVvgfqMm/+4oxlQ+Sq39COYLcNQ==}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
+  '@oslojs/encoding@1.0.0':
+    resolution: {integrity: sha512-dyIB0SdZgMm5BhGwdSp8rMxEFIopLKxDG1vxIBaiogyom6ZqH2aXPb6DEC2WzOOWKdPSq1cxdNeRx2wAn1Z+ZQ==}
+
   '@oslojs/encoding@1.1.0':
     resolution: {integrity: sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ==}
+
+  '@oslojs/webauthn@1.0.0':
+    resolution: {integrity: sha512-2ZRpbt3msNURwvjmavzq9vrNlxUnWFBGMYqbC1kO3fYBLskL7r4DiLJT1wbtLoI+hclFwjhl48YhRFBl6RWg1A==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@oxc-parser/binding-android-arm-eabi@0.152.0':
     resolution: {integrity: sha512-393VtirINkae4XHBTkq/yQxhOwEr4V+r0et37P2fp+sYZSdYgZTRDPo5Um8vBh0QjMZ+RmaMy4PP0qwr4cTMwA==}
@@ -721,8 +736,8 @@ packages:
   '@vitest/utils@4.1.11':
     resolution: {integrity: sha512-zTCVGpyFsGWBhllOyKlTw/vnr6D9qxsfSDyfbyZmTyjHw5N/VuvzHpHoQjm2ZJzn4RJgx5w4r7V0er69CmLgPQ==}
 
-  '@zeyolabs/kit@2026.11.5':
-    resolution: {integrity: sha512-CECJ3v7PqKxUJv8twbxdmMGiR27hg2+nDvqpZZ3RnBsTSiqSfsC8fTIJupQAvvdt0NuOkhl7eeIEopqzHXw2sw==}
+  '@zeyolabs/kit@2026.11.6':
+    resolution: {integrity: sha512-DCBfL1/kumbV0UQiMRifxnevZf5+K365DMHZQNBURgsw4B5P5jaciy2dbYbCzad0tsUm7EcofzocKl5OjrlPpg==}
     engines: {node: '>=24.0.0', pnpm: ^11.0.0}
     peerDependencies:
       '@cloudflare/workers-types': '*'
@@ -743,12 +758,12 @@ packages:
       vitest:
         optional: true
 
-  '@zeyolabs/ui@2026.11.5':
-    resolution: {integrity: sha512-k7MzjWvVQ38V4aRyJwSj+TjKfmuipgCla/gIfCgCRe1y08drA8vSAgg9MMNkAueHhEunwFWHJDvtQeOPezPqMg==}
+  '@zeyolabs/ui@2026.1106.0':
+    resolution: {integrity: sha512-f5hO9es15JdtS4Z7ccq+GOOygLoqJgkdaeSUL6CRsRRRi866v10lD/u/wRe98Mb5kXBtnwAUEPTuQLObUEcgUw==}
     engines: {node: '>=24.0.0', pnpm: ^11.0.0}
     peerDependencies:
       '@sveltejs/kit': ^3.1.1
-      '@zeyolabs/kit': '>=2026.11.5'
+      '@zeyolabs/kit': '>=2026.11.6'
       svelte: ^5.57.3
 
   acorn-jsx@5.3.2:
@@ -1901,6 +1916,9 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
+  worker-mailer@1.3.1:
+    resolution: {integrity: sha512-UglUq8iOtrSI0+OHOAS+pbhDgqz3JfasgseyGNZy1jnc951348GIRa/U9ZIJzMdqwrSaAZ1+ahpNEPJhac7zEQ==}
+
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
     engines: {node: '>=0.4'}
@@ -2053,12 +2071,31 @@ snapshots:
 
   '@oslojs/binary@1.0.0': {}
 
+  '@oslojs/cbor@1.0.0':
+    dependencies:
+      '@oslojs/binary': 1.0.0
+
+  '@oslojs/crypto@1.0.0':
+    dependencies:
+      '@oslojs/asn1': 1.0.0
+      '@oslojs/binary': 1.0.0
+
   '@oslojs/crypto@1.0.1':
     dependencies:
       '@oslojs/asn1': 1.0.0
       '@oslojs/binary': 1.0.0
 
+  '@oslojs/encoding@1.0.0': {}
+
   '@oslojs/encoding@1.1.0': {}
+
+  '@oslojs/webauthn@1.0.0':
+    dependencies:
+      '@oslojs/asn1': 1.0.0
+      '@oslojs/binary': 1.0.0
+      '@oslojs/cbor': 1.0.0
+      '@oslojs/crypto': 1.0.0
+      '@oslojs/encoding': 1.0.0
 
   '@oxc-parser/binding-android-arm-eabi@0.152.0':
     optional: true
@@ -2190,7 +2227,7 @@ snapshots:
       '@sentry/core': 11.4.0
       dotenv: 17.4.2
       glob: 13.0.6
-      magic-string: 0.30.21
+      magic-string: 1.4.5
       oxc-parser: 0.152.0
       sentry: 0.45.0
       supports-color: 8.1.1
@@ -2523,7 +2560,7 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.2.0
 
-  '@zeyolabs/kit@2026.11.5(6f8ac31fa0cee30fbfa28da5ca88104d)':
+  '@zeyolabs/kit@2026.11.6(6f8ac31fa0cee30fbfa28da5ca88104d)':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@clickhouse/client-web': 1.24.0
@@ -2533,6 +2570,7 @@ snapshots:
       '@internationalized/date': 3.12.4
       '@oslojs/crypto': 1.0.1
       '@oslojs/encoding': 1.1.0
+      '@oslojs/webauthn': 1.0.0
       '@sentry/cloudflare': 11.4.0(@cloudflare/workers-types@5.20261005.1)
       '@sentry/sveltekit': 11.4.0(@cloudflare/workers-types@5.20261005.1)(@sveltejs/kit@3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6))
       '@sveltejs/kit': 3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6))
@@ -2550,6 +2588,7 @@ snapshots:
       svelte-eslint-parser: 1.8.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       tldts: 7.4.16
       typescript-eslint: 8.71.0(eslint@9.39.4)(typescript@6.0.3)
+      worker-mailer: 1.3.1
       zod: 4.6.5
     optionalDependencies:
       '@cloudflare/workers-types': 5.20261005.1
@@ -2564,14 +2603,14 @@ snapshots:
       - typescript
       - wrangler
 
-  '@zeyolabs/ui@2026.11.5(@cloudflare/workers-types@5.20261005.1)(@sveltejs/kit@3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.5(6f8ac31fa0cee30fbfa28da5ca88104d))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6))':
+  '@zeyolabs/ui@2026.1106.0(@cloudflare/workers-types@5.20261005.1)(@sveltejs/kit@3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.6(6f8ac31fa0cee30fbfa28da5ca88104d))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6))':
     dependencies:
       '@internationalized/date': 3.12.4
       '@lucide/svelte': 1.52.0(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       '@sentry/sveltekit': 11.4.0(@cloudflare/workers-types@5.20261005.1)(@sveltejs/kit@3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6))
       '@standard-schema/spec': 1.1.0
       '@sveltejs/kit': 3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6))
-      '@zeyolabs/kit': 2026.11.5(6f8ac31fa0cee30fbfa28da5ca88104d)
+      '@zeyolabs/kit': 2026.11.6(6f8ac31fa0cee30fbfa28da5ca88104d)
       bits-ui: 2.19.5(@internationalized/date@3.12.4)(@sveltejs/kit@3.1.1(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       flickity: 3.0.0
       flickity-fullscreen: 2.0.0(flickity@3.0.0)
@@ -3525,6 +3564,8 @@ snapshots:
       stackback: 0.0.2
 
   word-wrap@1.2.5: {}
+
+  worker-mailer@1.3.1: {}
 
   xtend@4.0.2: {}
 
