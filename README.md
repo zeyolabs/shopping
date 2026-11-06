@@ -30,7 +30,6 @@ release step. Versions are `YYYY.M.N` in London time: `N` counts that month's re
 each month (`2026.11.7`, then `2026.12.0`). CI sets the version and pushes the `vYYYY.M.N` tag;
 docs- or CI-only changes don't publish. Publishing uses npm trusted publishing (no stored token).
 
-
 ## Checks
 
 `pnpm check`: prettier, eslint, vitest.
