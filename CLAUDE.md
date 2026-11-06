@@ -39,4 +39,5 @@ data from a remote function or a `load`.
 - Money is integer pence, GBP only for now (`money.ts`). Timestamps are epoch ms.
 - Dependency versions are exact; `svelte`, `@sveltejs/kit`, `drizzle-orm`, `zod` and the other
   zeyo packages are peers.
-- Releases are date versions via `pnpm release` (see README). Run `pnpm check` first.
+- Merging to `main` publishes a new `YYYY.M.N` version automatically (see README). Never tag or
+  publish by hand.
