@@ -3,10 +3,13 @@
 	import { shoppingClient } from '../client';
 	import { productImageUrl } from '../images';
 	import { formatMoney } from '../money';
+	import { Stock } from '../stock';
 
 	type Product = {
 		comparePricePence: null | number;
 		cover?: { alt: string; src: string };
+		/** Show "Only N left" when the sellable stock is at or below this. */
+		lowStockThreshold?: null | number;
 		name: string;
 		pricePence: number;
 		slug: string;
@@ -17,6 +20,7 @@
 
 	const client = shoppingClient();
 
+	const badge = $derived(Stock.badge(product.stock, product.lowStockThreshold));
 	const onSale = $derived(
 		product.comparePricePence !== null && product.comparePricePence > product.pricePence
 	);
@@ -42,10 +46,15 @@
 				src={productImageUrl(client.imageBaseUrl, product.cover.src)}
 			/>
 		{/if}
-		{#if product.stock <= 0}
+		{#if badge.kind === 'out'}
 			<span
 				class="absolute top-2 left-2 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-[var(--txs)] shadow-sm"
 				>Out of stock</span
+			>
+		{:else if badge.kind === 'low'}
+			<span
+				class="absolute top-2 left-2 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-[var(--txs)] shadow-sm"
+				>Only {badge.count} left</span
 			>
 		{:else if onSale}
 			<span

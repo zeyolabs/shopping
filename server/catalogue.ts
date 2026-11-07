@@ -9,6 +9,7 @@ import {
 	products,
 	productSlugAliases,
 } from '../db/schema';
+import { StockService } from './stock-service';
 
 export async function getCategory(db: ShopDb, slug: string) {
 	return db.query.categories.findFirst({ where: eq(categories.slug, slug) });
@@ -20,7 +21,7 @@ export async function listCategories(db: ShopDb) {
 
 type Product = typeof products.$inferSelect;
 
-/** Adds each product's cover image (lowest position), if it has one. */
+/** Adds each product's cover image (lowest position), if it has one. `stock` is what can be sold now. */
 async function withCovers(db: ShopDb, list: Product[]) {
 	if (list.length === 0) return [];
 	const images = await db
@@ -35,7 +36,12 @@ async function withCovers(db: ShopDb, list: Product[]) {
 		.orderBy(asc(productImages.position));
 	const cover = new Map<number, (typeof images)[number]>();
 	for (const image of images) if (!cover.has(image.productId)) cover.set(image.productId, image);
-	return list.map((product) => ({ ...product, cover: cover.get(product.id) }));
+	const sellable = await new StockService(db).availableMany(list.map((p) => p.id));
+	return list.map((product) => ({
+		...product,
+		cover: cover.get(product.id),
+		stock: sellable.get(product.id) ?? 0,
+	}));
 }
 
 /** Active products in a category, each with its cover image, if any. */
@@ -66,6 +72,7 @@ export async function getProduct(db: ShopDb, slug: string) {
 		with: { images: { orderBy: asc(productImages.position) }, variationGroup: true },
 	});
 	if (!product) return undefined;
+	product.stock = await new StockService(db).available(product.id);
 
 	const options = product.variationGroupId
 		? await db

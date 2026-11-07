@@ -9,6 +9,7 @@
 	import { shoppingClient } from '../client';
 	import { productImageUrl } from '../images';
 	import { formatMoney } from '../money';
+	import { Stock } from '../stock';
 	import { toast } from 'svelte-sonner';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import ImageGallery from '@zeyolabs/ui/gallery/ImageGallery.svelte';
@@ -36,6 +37,7 @@
 </script>
 
 {let product = $derived(data.product)}
+{let stockBadge = $derived(Stock.badge(product.stock, product.lowStockThreshold))}
 
 <PageTitle
 	description={(product.shortDescription || product.description).slice(0, 160)}
@@ -75,7 +77,10 @@
 		{/if}
 		{#if product.shortDescription}<p class="mt-4">{product.shortDescription}</p>{/if}
 		<p class="mt-4 whitespace-pre-line">{product.description}</p>
-		<p class="mt-4">{product.stock > 0 ? 'In stock' : 'Out of stock'}</p>
+		<p class="mt-4">
+			{#if stockBadge.kind === 'out'}Out of stock{:else if stockBadge.kind === 'low'}Only {stockBadge.count}
+				left{:else}In stock{/if}
+		</p>
 		{#if product.stock > 0}
 			<Button class="mt-4" onclick={() => add(product.id)} size="lg">
 				<ShoppingBasket size={18} />

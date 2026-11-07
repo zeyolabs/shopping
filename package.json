@@ -65,9 +65,9 @@
 		"svelte-sonner": "1.2.1"
 	},
 	"peerDependencies": {
+		"@sveltejs/kit": "^3.1.1",
 		"@zeyolabs/kit": ">=2026.11.5",
 		"@zeyolabs/ui": ">=2026.11.5",
-		"@sveltejs/kit": "^3.1.1",
 		"drizzle-orm": "^0.45.3",
 		"svelte": "^5.57.3",
 		"zod": "^4.6.5"
@@ -76,9 +76,9 @@
 		"@cloudflare/workers-types": "5.20261005.1",
 		"@eslint/compat": "2.1.1",
 		"@eslint/js": "9.39.4",
-		"@zeyolabs/kit": "2026.11.6",
-		"@zeyolabs/ui": "2026.1106.0",
 		"@sveltejs/kit": "3.1.1",
+		"@zeyolabs/kit": "2026.11.11",
+		"@zeyolabs/ui": "2026.1106.0",
 		"drizzle-orm": "0.45.3",
 		"eslint": "9.39.4",
 		"eslint-config-prettier": "10.1.8",
@@ -86,6 +86,7 @@
 		"eslint-plugin-perfectionist": "5.9.1",
 		"eslint-plugin-svelte": "3.24.0",
 		"globals": "17.13.0",
+		"miniflare": "4.20260730.0",
 		"prettier": "3.9.9",
 		"prettier-plugin-svelte": "4.1.1",
 		"svelte": "5.57.3",

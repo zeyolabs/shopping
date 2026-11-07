@@ -28,6 +28,15 @@ Apps keep thin route files that render or re-export the package's: `<Basket />`,
 a cron Worker (one batch per run, so the app sets the pace) and keeps the signup form. Admin has a stock
 page (`admin/StockPage.svelte`); its remote functions and the other admin ones have no auth of their own, so the app
 must guard every admin route and remote call (pureleaves does it in `apps/admin`'s hooks). `ShopMail.backInStock` is optional: a shop without it sends nothing.
+Stock: `Stock` (`stock.ts`, a library) does the arithmetic and `StockService(db)`
+(`server/stock-service.ts`) is the data access. `products.stock` is in single units; `packSize`
+above 1 sells whole packs, and a combined product (`product_components`, at most 10) has no stock
+of its own, only the complete sets its components allow. `stock` in catalogue and basket output is
+what can be sold now, not the raw count. `StockService.setStock` is the only write path for stock
+edits (it sets `restockedAt`), and `paidStatements` is the order-paid decrement, written in the same
+atomic batch as the order items. Back-in-stock keys off `sellableSql`, not `stock > 0`. New columns
+default to the old behaviour; each app generates its migration from the schema and applies it to
+prod D1 before deploying a version that uses them.
 Signup form and checkout stay in the app (Turnstile / rate limiter): the product page takes an
 `outOfStock` snippet, the basket page takes the app's `startCheckout` remote function.
 
