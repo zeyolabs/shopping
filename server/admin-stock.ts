@@ -1,8 +1,8 @@
-import { Error404 } from '@zeyolabs/kit/utils/errors';
-import { asc, count, eq, sql } from 'drizzle-orm';
+import { asc, count, sql } from 'drizzle-orm';
 
 import { shopping } from '../config';
 import { products, stockAlerts } from '../db/schema';
+import { StockService } from './stock-service';
 
 const getDb = () => shopping().db();
 
@@ -22,12 +22,7 @@ export async function listStock() {
 		.orderBy(asc(sql`${products.stock} > 0`), asc(products.name), asc(products.id));
 }
 
-/** Sets a product's stock. Customers waiting on it are emailed by the stock-alerts cron, not here. */
+/** Sets a product's stock in single units. Customers waiting on it are emailed by the stock-alerts cron, not here. */
 export async function setStock(productId: number, stock: number) {
-	const updated = await getDb()
-		.update(products)
-		.set({ stock })
-		.where(eq(products.id, productId))
-		.returning({ id: products.id });
-	if (updated.length === 0) throw Error404('Product not found.');
+	await new StockService(getDb()).setStock(productId, stock);
 }

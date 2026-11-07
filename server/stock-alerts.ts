@@ -1,10 +1,11 @@
 import { logger } from '@zeyolabs/kit/server/logger';
-import { and, asc, eq, gt, isNull } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 
 import type { BackInStockEmailData } from '../emails/back-in-stock';
 
 import { shopping } from '../config';
 import { products, stockAlerts } from '../db/schema';
+import { sellableSql } from './stock-service';
 
 /** How many back-in-stock emails go out per run. The worker runs once a minute. */
 export const BACK_IN_STOCK_BATCH = 50;
@@ -19,7 +20,7 @@ export type PendingAlert = BackInStockEmailData & {
 	productId: number;
 };
 
-/** Signups waiting on a product that has stock again, oldest first. Rows already marked notified are skipped. */
+/** Signups waiting on a product that is sellable again (a whole pack, or every component of a set), oldest first. Rows already marked notified are skipped. */
 export async function pendingAlerts(limit = BACK_IN_STOCK_BATCH): Promise<PendingAlert[]> {
 	return shopping()
 		.db()
@@ -34,7 +35,7 @@ export async function pendingAlerts(limit = BACK_IN_STOCK_BATCH): Promise<Pendin
 		})
 		.from(stockAlerts)
 		.innerJoin(products, eq(products.id, stockAlerts.productId))
-		.where(and(gt(products.stock, 0), eq(products.active, true), isNull(stockAlerts.notifiedAt)))
+		.where(and(sellableSql, eq(products.active, true), isNull(stockAlerts.notifiedAt)))
 		.orderBy(asc(stockAlerts.id))
 		.limit(limit);
 }

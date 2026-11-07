@@ -1,8 +1,13 @@
 allowBuilds:
   core-js-pure: true
   esbuild: true
+  workerd: true
 
 # Our own packages are trusted the day they are released; everything else waits out pnpm's
 # minimumReleaseAge supply-chain delay.
 minimumReleaseAgeExclude:
   - '@zeyolabs/*'
+
+overrides:
+  sharp: 0.35.5
+  undici: 7.30.1

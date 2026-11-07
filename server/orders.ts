@@ -2,15 +2,16 @@ import type Stripe from 'stripe';
 
 import { logger } from '@zeyolabs/kit/server/logger';
 import { Crypto } from '@zeyolabs/kit/utils/crypto';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import type { ShopDb } from '../db';
 
 import { secret, shopping } from '../config';
-import { addresses, orderItems, orders, products } from '../db/schema';
+import { addresses, orderItems, orders } from '../db/schema';
 import { orderUrl } from '../order-links';
 import { createClickAndDropOrder } from '../royalmail';
 import { quoteServiceCode } from './shipping';
+import { StockService } from './stock-service';
 import { getStripe } from './stripe';
 
 // No 0/O/1/I: the number is read out over the phone.
@@ -121,17 +122,17 @@ export async function fulfilCheckoutSession(db: ShopDb, sessionId: string): Prom
 		};
 	});
 
+	// Read before the batch: the stock statements depend on pack sizes and components, and the batch
+	// itself stays one atomic write of the items and the stock (a double delivery sees the items).
+	const stockStatements = await new StockService(db).paidStatements(
+		items.flatMap((item) =>
+			item.productId === null ? [] : [{ productId: item.productId, quantity: item.quantity }]
+		)
+	);
 	try {
 		await db.batch([
 			db.insert(orderItems).values(items.map((item) => ({ ...item, orderId }))),
-			...items
-				.filter((item) => item.productId !== null)
-				.map((item) =>
-					db
-						.update(products)
-						.set({ stock: sql`max(${products.stock} - ${item.quantity}, 0)` })
-						.where(eq(products.id, item.productId!))
-				),
+			...stockStatements,
 		]);
 	} catch (error) {
 		// The batch is atomic, so if the items exist another delivery already wrote them and the stock.

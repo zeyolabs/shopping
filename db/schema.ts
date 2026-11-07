@@ -33,19 +33,47 @@ export const products = sqliteTable('products', {
 	createdAt: integer('created_at').notNull(),
 	description: text('description').notNull().default(''),
 	id: integer('id').primaryKey({ autoIncrement: true }),
+	/** Show "only N left" when the sellable count is at or below this. Null: never. */
+	lowStockThreshold: integer('low_stock_threshold'),
 	massGrams: integer('mass_grams').notNull().default(0),
 	maxPerOrder: integer('max_per_order').notNull().default(10),
 	name: text('name').notNull(),
+	/** Single units sold together as one purchase; `stock` is held in single units. */
+	packSize: integer('pack_size').notNull().default(1),
 	pricePence: integer('price_pence').notNull(),
+	/** When the product last went from not sellable to sellable (set by `StockService.setStock`). */
+	restockedAt: integer('restocked_at'),
 	shortDescription: text('short_description').notNull().default(''),
 	sku: text('sku').notNull().unique(),
 	slug: text('slug').notNull().unique(),
+	/** Purchases counted when an order is paid. */
+	sold: integer('sold').notNull().default(0),
 	sortOrder: integer('sort_order').notNull().default(0),
+	/** Units in stock, in single units (a product sold in packs of 10 with 30 in stock sells 3). */
 	stock: integer('stock').notNull().default(0),
 	variationGroupId: integer('variation_group_id').references(() => variationGroups.id),
 	/** This product's option within its variation group, e.g. "Black". */
 	variationLabel: text('variation_label'),
 });
+
+/**
+ * A combined product is made of other products: it has no stock of its own, and what can be sold is
+ * the fewest complete sets the components allow. Paying for it decrements the components.
+ */
+export const productComponents = sqliteTable(
+	'product_components',
+	{
+		componentId: integer('component_id')
+			.notNull()
+			.references(() => products.id, { onDelete: 'restrict' }),
+		productId: integer('product_id')
+			.notNull()
+			.references(() => products.id, { onDelete: 'cascade' }),
+		/** How many of the component one set takes. */
+		quantity: integer('quantity').notNull().default(1),
+	},
+	(t) => [primaryKey({ columns: [t.productId, t.componentId] })]
+);
 
 /** Slugs the legacy site used, so old links and search results 301 to the product's current URL. */
 export const productSlugAliases = sqliteTable('product_slug_aliases', {

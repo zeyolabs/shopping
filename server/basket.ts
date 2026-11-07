@@ -7,6 +7,7 @@ import type { ShopDb } from '../db';
 import { shopping } from '../config';
 import { productImages, products } from '../db/schema';
 import { quoteShipping, type ShippingQuote } from './shipping';
+import { StockService } from './stock-service';
 
 /** The basket lives in a cookie as `{ [productId]: quantity }`; prices always come from D1. */
 const COOKIE = 'basket';
@@ -16,11 +17,11 @@ const MAX_LINES = 30;
 export type Basket = Record<number, number>;
 
 export type BasketLine = {
-	/** What the customer can actually buy right now: min(requested, stock, max per order). */
+	/** What the customer can actually buy right now: min(requested, sellable, max per order). */
 	available: number;
 	cover: null | { alt: string; src: string };
 	id: number;
-	/** The most of this product one order can hold: min(stock, max per order). */
+	/** The most of this product one order can hold: min(sellable, max per order). */
 	limit: number;
 	lineTotalPence: number;
 	massGrams: number;
@@ -29,6 +30,7 @@ export type BasketLine = {
 	quantity: number;
 	sku: string;
 	slug: string;
+	/** Units that can be sold now (whole packs, or complete sets), not the raw stock count. */
 	stock: number;
 };
 
@@ -131,6 +133,7 @@ export async function summariseBasket(
 		.from(products)
 		.where(and(inArray(products.id, ids), eq(products.active, true)))
 		.orderBy(asc(products.name));
+	const sellable = await new StockService(db).availableMany(rows.map((p) => p.id));
 	const images = await db
 		.select()
 		.from(productImages)
@@ -146,13 +149,14 @@ export async function summariseBasket(
 
 	const lines = rows.map((product): BasketLine => {
 		const quantity = basket[product.id];
-		const available = Math.max(0, Math.min(quantity, product.stock, product.maxPerOrder));
+		const inStock = sellable.get(product.id) ?? 0;
+		const available = Math.max(0, Math.min(quantity, inStock, product.maxPerOrder));
 		const image = cover.get(product.id);
 		return {
 			available,
 			cover: image ? { alt: image.alt, src: image.src } : null,
 			id: product.id,
-			limit: Math.max(0, Math.min(product.stock, product.maxPerOrder)),
+			limit: Math.max(0, Math.min(inStock, product.maxPerOrder)),
 			lineTotalPence: available * product.pricePence,
 			massGrams: product.massGrams,
 			name: product.name,
