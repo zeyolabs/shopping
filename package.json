@@ -34,6 +34,7 @@
 		"packing.ts",
 		"royalmail.ts",
 		"shipping-rules.ts",
+		"stock.ts",
 		"!**/*.test.ts"
 	],
 	"scripts": {
@@ -57,7 +58,8 @@
 		"./remote/*": "./remote/*.ts",
 		"./royalmail": "./royalmail.ts",
 		"./routes/*": "./routes/*.ts",
-		"./server/*": "./server/*.ts"
+		"./server/*": "./server/*.ts",
+		"./stock": "./stock.ts"
 	},
 	"dependencies": {
 		"@lucide/svelte": "1.52.0",
