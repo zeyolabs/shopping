@@ -15,6 +15,7 @@ configureShopping({
 	},
 	imageBaseUrl: 'https://images.test.example/products',
 	mail: {
+		backInStock: async () => {},
 		newOrderAlert: async () => {},
 		orderConfirmed: async () => {},
 		orderDispatched: async () => {},

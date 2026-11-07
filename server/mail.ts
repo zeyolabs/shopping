@@ -3,6 +3,7 @@ import { renderEmail, renderEmailText } from '@zeyolabs/kit/utils/email';
 import type { ShopMail } from '../config';
 
 import { shopping } from '../config';
+import { backInStockEmail } from '../emails/back-in-stock';
 import { dispatchEmail } from '../emails/dispatch';
 import { customerOrderEmail, shopOrderEmail } from '../emails/order';
 import { formatMoney } from '../money';
@@ -29,6 +30,17 @@ export function defaultShopMail({
 	send: (message: Message) => Promise<void>;
 }): ShopMail {
 	return {
+		backInStock: async (alert) => {
+			const { brand } = shopping();
+			const email = backInStockEmail(alert);
+			await send({
+				from: { email: brand.supportEmail, name: brand.name },
+				html: renderEmail(email),
+				subject: `${alert.productName} is back in stock`,
+				text: renderEmailText(email),
+				to: alert.email,
+			});
+		},
 		newOrderAlert: async (order) => {
 			const { brand } = shopping();
 			const email = shopOrderEmail(order);

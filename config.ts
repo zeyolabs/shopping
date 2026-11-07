@@ -3,6 +3,7 @@ import type { EmailBrand } from '@zeyolabs/kit/utils/email';
 import { envStore } from '@zeyolabs/kit/utils/env';
 
 import type { ShopDb } from './db';
+import type { BackInStockEmailData } from './emails/back-in-stock';
 import type { DispatchEmailData } from './emails/dispatch';
 import type { OrderEmailData } from './emails/order';
 
@@ -33,6 +34,11 @@ export type ShippingRules = {
  * (`@zeyolabs/shopping/server/mail`) is the package's own wording; a site can use it or write its own.
  */
 export type ShopMail = {
+	/**
+	 * Tells a customer that a sold-out product they asked about is available again. Optional so shops
+	 * that predate it keep working; without it the back-in-stock job sends nothing.
+	 */
+	backInStock?: (alert: BackInStockEmailData) => Promise<void>;
 	/** The shop's own heads-up that an order was paid. */
 	newOrderAlert: (order: OrderEmailData) => Promise<void>;
 	/** The customer's receipt. */

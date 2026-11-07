@@ -23,7 +23,10 @@ catalogue pages (`routes/catalogue-loads.ts`).
 Apps keep thin route files that render or re-export the package's: `<Basket />`,
 `export { POST } from '@zeyolabs/shopping/routes/stripe-webhook'`,
 `export { productLoad as load } from '@zeyolabs/shopping/routes/catalogue-loads'`.
-Back-in-stock and checkout stay in the app (Turnstile / rate limiter): the product page takes an
+The back-in-stock email and `sendBackInStockBatch()` (`server/stock-alerts.ts`) live here; the app runs it from
+a cron Worker (one batch per run, so the app sets the pace) and keeps the signup form. Admin has a stock
+page (`admin/StockPage.svelte`). `ShopMail.backInStock` is optional: a shop without it sends nothing.
+Signup form and checkout stay in the app (Turnstile / rate limiter): the product page takes an
 `outOfStock` snippet, the basket page takes the app's `startCheckout` remote function.
 
 Pages run in the browser too, so they cannot read the server config: the app's root layout calls
