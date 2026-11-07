@@ -1,5 +1,5 @@
 import { logger } from '@zeyolabs/kit/server/logger';
-import { and, asc, eq, gt } from 'drizzle-orm';
+import { and, asc, eq, gt, isNull } from 'drizzle-orm';
 
 import type { BackInStockEmailData } from '../emails/back-in-stock';
 
@@ -19,7 +19,7 @@ export type PendingAlert = BackInStockEmailData & {
 	productId: number;
 };
 
-/** Signups waiting on a product that has stock again, oldest first. */
+/** Signups waiting on a product that has stock again, oldest first. Rows already marked notified are skipped. */
 export async function pendingAlerts(limit = BACK_IN_STOCK_BATCH): Promise<PendingAlert[]> {
 	return shopping()
 		.db()
@@ -34,7 +34,7 @@ export async function pendingAlerts(limit = BACK_IN_STOCK_BATCH): Promise<Pendin
 		})
 		.from(stockAlerts)
 		.innerJoin(products, eq(products.id, stockAlerts.productId))
-		.where(and(gt(products.stock, 0), eq(products.active, true)))
+		.where(and(gt(products.stock, 0), eq(products.active, true), isNull(stockAlerts.notifiedAt)))
 		.orderBy(asc(stockAlerts.id))
 		.limit(limit);
 }

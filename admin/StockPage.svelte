@@ -5,7 +5,7 @@
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 </script>
 
-<svelte:head><title>Stock · Pure Leaves admin</title></svelte:head>
+<svelte:head><title>Stock</title></svelte:head>
 
 <h1 class="text-2xl font-semibold">Stock</h1>
 <p class="mt-1 text-sm text-[var(--ink-muted)]">
