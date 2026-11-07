@@ -164,7 +164,7 @@ export async function summariseBasket(
 			quantity,
 			sku: product.sku,
 			slug: product.slug,
-			stock: product.stock,
+			stock: inStock,
 		};
 	});
 
