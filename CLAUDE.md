@@ -23,7 +23,8 @@ catalogue pages (`routes/catalogue-loads.ts`).
 Apps keep thin route files that render or re-export the package's: `<Basket />`,
 `export { POST } from '@zeyolabs/shopping/routes/stripe-webhook'`,
 `export { productLoad as load } from '@zeyolabs/shopping/routes/catalogue-loads'`.
-The back-in-stock email and `sendBackInStockBatch()` (`server/stock-alerts.ts`) live here; the app runs it from
+`StockAlertService(db)` (`server/stock-alert-service.ts`) adds the signups; the back-in-stock email and
+`sendBackInStockBatch()` (`server/stock-alerts.ts`) live here too; the app runs it from
 a cron Worker (one batch per run, so the app sets the pace) and keeps the signup form. Admin has a stock
 page (`admin/StockPage.svelte`); its remote functions and the other admin ones have no auth of their own, so the app
 must guard every admin route and remote call (pureleaves does it in `apps/admin`'s hooks). `ShopMail.backInStock` is optional: a shop without it sends nothing.
