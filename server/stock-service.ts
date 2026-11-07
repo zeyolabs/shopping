@@ -121,6 +121,16 @@ export class StockService {
 			const nested = await this.componentsOf(ids);
 			if (nested.size > 0) throw Error400('A component cannot itself be a combined product.');
 		}
+		if (components.length > 0) {
+			const usedAsComponent = await this.db
+				.select({ productId: productComponents.productId })
+				.from(productComponents)
+				.where(eq(productComponents.componentId, productId))
+				.limit(1);
+			if (usedAsComponent.length > 0) {
+				throw Error400('A product that is a component of another set cannot be combined itself.');
+			}
+		}
 		await this.db.batch([
 			this.db.delete(productComponents).where(eq(productComponents.productId, productId)),
 			...(components.length > 0

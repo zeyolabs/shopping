@@ -18,6 +18,10 @@ const MIGRATIONS = [
 		short_description text NOT NULL DEFAULT '', sku text NOT NULL UNIQUE, slug text NOT NULL UNIQUE,
 		sold integer NOT NULL DEFAULT 0, sort_order integer NOT NULL DEFAULT 0, stock integer NOT NULL DEFAULT 0,
 		variation_group_id integer, variation_label text)`,
+	`CREATE TABLE order_items (
+		id integer PRIMARY KEY AUTOINCREMENT, name text NOT NULL, order_id integer NOT NULL,
+		product_id integer, quantity integer NOT NULL, sku text NOT NULL, unit_price_pence integer NOT NULL)`,
+	'CREATE UNIQUE INDEX order_items_order_sku_unique ON order_items (order_id, sku)',
 	`CREATE TABLE product_components (
 		component_id integer NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
 		product_id integer NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -148,6 +152,31 @@ describe('StockService', () => {
 		await expect(
 			service().setComponents(outer.id, [{ componentId: set.id, quantity: 1 }])
 		).rejects.toThrow('combined');
+	});
+
+	it('setComponents refuses a product that is already a component of another set', async () => {
+		const part = await product({ stock: 3 });
+		const outer = await product();
+		await service().setComponents(outer.id, [{ componentId: part.id, quantity: 1 }]);
+		const other = await product({ stock: 1 });
+		await expect(
+			service().setComponents(part.id, [{ componentId: other.id, quantity: 1 }])
+		).rejects.toThrow('component of another set');
+	});
+
+	it('a repeated order batch fails on the items and leaves stock and sold untouched', async () => {
+		const p = await product({ stock: 10 });
+		const items = [
+			{ name: 'Item', orderId: 77, productId: p.id, quantity: 2, sku: 'DUP', unitPricePence: 100 },
+		];
+		const write = async () => {
+			const statements = await service().paidStatements([{ productId: p.id, quantity: 2 }]);
+			await db().batch([db().insert(schema.orderItems).values(items), ...statements]);
+		};
+		await write();
+		expect(await read(p.id)).toMatchObject({ sold: 2, stock: 8 });
+		await expect(write()).rejects.toThrow();
+		expect(await read(p.id)).toMatchObject({ sold: 2, stock: 8 });
 	});
 
 	it('setComponents with an empty list makes it a plain product again', async () => {
