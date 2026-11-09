@@ -64,7 +64,7 @@
 	"dependencies": {
 		"@lucide/svelte": "1.52.0",
 		"stripe": "22.3.2",
-		"svelte-sonner": "1.2.1"
+		"svelte-sonner": "1.2.3"
 	},
 	"peerDependencies": {
 		"@sveltejs/kit": "^3.1.1",
