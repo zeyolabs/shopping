@@ -2,10 +2,10 @@ import type { EmailBrand } from '@zeyolabs/kit/utils/email';
 
 import { envStore } from '@zeyolabs/kit/utils/env';
 
-import type { ShopDb } from './db';
-import type { BackInStockEmailData } from './emails/back-in-stock';
-import type { DispatchEmailData } from './emails/dispatch';
-import type { OrderEmailData } from './emails/order';
+import type { ShopDb } from './db/index';
+import type { DispatchEmailData } from './fulfilment/dispatch-email';
+import type { OrderEmailData } from './orders/email';
+import type { BackInStockEmailData } from './stock-alerts/email';
 
 /**
  * Names of the secrets the shop reads, as they are called in the app's wrangler config. The app must

@@ -12,14 +12,19 @@ Published as source (no build step): the consuming app compiles it.
 pnpm add -E @zeyolabs/shopping @zeyolabs/ui @zeyolabs/kit
 ```
 
+## Layout
+
+One folder per feature (library, client, service, manager, remote functions, pages, admin). See
+`CLAUDE.md` for the map.
+
 ## Using it in an app
 
 1. Register the site's config once on the server: `configureShopping({...})` (brand, shipping,
    order prefix, `db`, secret names, `mail`), imported by `hooks.server.ts`, and pass its secret
    names to `runWithContext`.
-2. In the root layout, `setShoppingClient({ imageBaseUrl, siteName, siteUrl, supportEmail })`.
+2. In the root layout, `setShopContext({ imageBaseUrl, siteName, siteUrl, supportEmail })`.
 3. Thin routes: render the pages (`<Basket startCheckout={...} />`, `<Shop description intro shop={data.shop} />`)
-   and re-export handlers and loads from `@zeyolabs/shopping/routes/*`.
+   and re-export handlers and loads from `@zeyolabs/shopping/<feature>/*.server`.
 4. Tailwind must scan the components: `@source "../node_modules/@zeyolabs/shopping";`.
 5. Generate D1 migrations in the app from `@zeyolabs/shopping/db/schema` (drizzle-kit).
 
@@ -29,16 +34,16 @@ pnpm add -E @zeyolabs/shopping @zeyolabs/ui @zeyolabs/kit
   Checkout. Codes are made and limited in the Stripe dashboard; orders record the discount.
 - **Invoices**: `checkout.invoices: { footer, customFields }` has Stripe issue a paid invoice PDF
   per order (Stripe charges per invoice). Customers get it from their order page
-  (`routes/order-invoice`), staff from the admin order (`routes/admin-order-invoice`).
-- **Search**: `pages/Search.svelte` + `searchLoad`.
-- **Customer accounts**: `pages/Account.svelte` lists the orders for the signed-in email; sign-in
-  is kit's passwordless auth in the app. `createCheckout({ email })` passes the customer to Stripe
+  (`orders/invoice.server`), staff from the admin order (`fulfilment/invoice.server`).
+- **Search**: `catalogue/pages/Search.svelte` + `searchLoad`.
+- **Customer accounts**: `customers/pages/Account.svelte` lists the orders for the signed-in email; sign-in
+  is kit's passwordless auth in the app. `CheckoutManager.start({ email })` passes the customer to Stripe
   so their saved details are filled in.
 - **Reviews**: verified buyers review items from their order page; staff moderate in
-  `admin/ReviewsPage.svelte`; approved reviews show on the product page.
-- **Bundles**: `pages/Bundle.svelte` + `bundleLoad`; the customer picks per step and the picks go
-  into the basket as ordinary products. Edited in `admin/BundlesPage.svelte`.
-- **Product admin**: `admin/ProductsPage.svelte`, `ProductEditPage.svelte`, `CategoriesPage.svelte`.
+  `reviews/admin/ReviewsPage.svelte`; approved reviews show on the product page.
+- **Bundles**: `bundles/pages/Bundle.svelte` + `bundleLoad`; the customer picks per step and the picks go
+  into the basket as ordinary products. Edited in `bundles/admin/BundlesPage.svelte`.
+- **Product admin**: `catalogue/admin/` (`ProductsPage`, `ProductEditPage`, `CategoriesPage`).
 
 ## Versions
 
