@@ -23,10 +23,26 @@ export const webhookCrypto = Stripe.createSubtleCryptoProvider();
 export async function createCheckoutSession(
 	stripe: Stripe,
 	summary: ShippableSummary,
-	origin: string
+	origin: string,
+	/** The signed-in customer's Stripe Customer, so Checkout fills in their saved details. */
+	customerId?: string
 ): Promise<string> {
+	const { checkout = {} } = shopping();
 	const session = await stripe.checkout.sessions.create({
+		allow_promotion_codes: checkout.promotionCodes || undefined,
 		cancel_url: `${origin}/basket`,
+		customer: customerId,
+		customer_update: customerId ? { address: 'auto', name: 'auto', shipping: 'auto' } : undefined,
+		invoice_creation: checkout.invoices
+			? {
+					enabled: true,
+					invoice_data: {
+						custom_fields: checkout.invoices.customFields?.slice(0, 4),
+						footer: checkout.invoices.footer,
+						metadata: { source: 'checkout' },
+					},
+				}
+			: undefined,
 		line_items: summary.lines.map((line) => ({
 			price_data: {
 				currency: 'gbp',

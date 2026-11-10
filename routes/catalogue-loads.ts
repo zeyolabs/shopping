@@ -1,12 +1,14 @@
 import { error, isHttpError, redirect } from '@sveltejs/kit';
 
 import { shopping } from '../config';
+import { getBundle } from '../remote/bundles.remote';
 import {
 	getCategoryPage,
 	getMenuCategories,
 	getProduct,
 	getShop,
 	getUkShippingRate,
+	searchShop,
 } from '../remote/catalogue.remote';
 import { findProductRedirect } from '../server/catalogue';
 
@@ -45,6 +47,17 @@ export async function productLoad({ params, url }: SlugEvent) {
 	});
 	if (target) redirect(301, `/product/${target}`);
 	error(404, 'Product not found');
+}
+
+/** `/bundle/<slug>`: unknown or inactive bundles 404. */
+export async function bundleLoad({ params }: SlugEvent) {
+	return { bundle: await getBundle(params.slug ?? '') };
+}
+
+/** `/search?q=`: the results are in the server-rendered page. */
+export async function searchLoad({ url }: { url: URL }) {
+	const q = (url.searchParams.get('q') ?? '').trim().slice(0, 100);
+	return { search: await searchShop(q) };
 }
 
 export async function shippingLoad() {

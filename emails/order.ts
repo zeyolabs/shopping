@@ -12,6 +12,8 @@ export type OrderEmailData = {
 		name: string;
 		postal_code?: null | string;
 	};
+	/** Taken off by a promotion code at Checkout. */
+	discountPence?: number;
 	email: string;
 	items: { name: string; quantity: number; unitPricePence: number }[];
 	number: string;
@@ -47,6 +49,9 @@ function itemRows(order: OrderEmailData): EmailRow[] {
 function totalRows(order: OrderEmailData): EmailRow[] {
 	return [
 		{ label: 'Subtotal', value: formatMoney(order.subtotalPence) },
+		...(order.discountPence
+			? [{ label: 'Discount', value: `-${formatMoney(order.discountPence)}` }]
+			: []),
 		{
 			label: 'Delivery',
 			value: order.shippingPence === 0 ? 'Free' : formatMoney(order.shippingPence),

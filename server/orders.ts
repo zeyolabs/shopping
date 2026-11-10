@@ -33,6 +33,16 @@ export async function findOrderForCustomer(db: ShopDb, number: string, token: st
 	return { address, items, order };
 }
 
+/**
+ * A fresh link to the order's Stripe invoice PDF, or undefined when the order has none. Stripe's
+ * links expire, so the shop stores only the invoice id and asks Stripe each time.
+ */
+export async function invoicePdfUrl(stripeInvoiceId: null | string): Promise<string | undefined> {
+	if (!stripeInvoiceId) return undefined;
+	const invoice = await (await getStripe()).invoices.retrieve(stripeInvoiceId);
+	return invoice.invoice_pdf ?? invoice.hosted_invoice_url ?? undefined;
+}
+
 export async function findOrderBySession(db: ShopDb, sessionId: string) {
 	return db.query.orders.findFirst({ where: eq(orders.stripeSessionId, sessionId) });
 }
@@ -93,6 +103,7 @@ export async function fulfilCheckoutSession(db: ShopDb, sessionId: string): Prom
 					shippingPence: session.total_details?.amount_shipping ?? 0,
 					shippingService: session.metadata?.shippingService ?? null,
 					status: 'paid',
+					stripeInvoiceId: typeof session.invoice === 'string' ? session.invoice : null,
 					stripePaymentIntentId:
 						typeof session.payment_intent === 'string' ? session.payment_intent : null,
 					stripeSessionId: session.id,
@@ -145,6 +156,7 @@ export async function fulfilCheckoutSession(db: ShopDb, sessionId: string): Prom
 		const { mail } = shopping();
 		const details = {
 			address: { ...shipping.address, name: shipping.name ?? '' },
+			discountPence: order.discountPence,
 			email,
 			items,
 			number: order.number,

@@ -9,7 +9,10 @@ import {
 	listCategories,
 	listCategoryProducts,
 	listShopProducts,
+	SEARCH_MAX_LENGTH,
+	searchProducts,
 } from '../server/catalogue';
+import { ReviewService } from '../server/reviews';
 import { getUkRate } from '../server/shipping';
 
 const Slug = z.string().min(1).max(200);
@@ -33,13 +36,20 @@ export const getCategoryPage = Remote.Query(Slug, async (slug) => {
 });
 
 export const getProduct = Remote.Query(Slug, async (slug) => {
-	const found = await findProduct(shopping().db(), slug);
+	const db = shopping().db();
+	const found = await findProduct(db, slug);
 	if (!found) throw Error404('Product not found');
-	return found;
+	return { ...found, reviews: await new ReviewService(db).forProduct(found.product.id) };
 });
 
 /** The page quotes the live UK rate so it can never disagree with the basket. */
 export const getUkShippingRate = Remote.Query(async () => ({
 	freeFromPence: shopping().shipping.freeUkFromPence,
 	rate: await getUkRate(shopping().db()),
+}));
+
+/** Search results for the search page; an empty query returns nothing. */
+export const searchShop = Remote.Query(z.string().max(SEARCH_MAX_LENGTH), async (query) => ({
+	products: await searchProducts(shopping().db(), query),
+	query,
 }));

@@ -3,6 +3,8 @@
 
 	import { resolve } from '$app/paths';
 	import PageTitle from '../components/PageTitle.svelte';
+	import Reviews from '../components/Reviews.svelte';
+	import Stars from '../components/Stars.svelte';
 	import { addToBasket } from '../remote/basket.remote';
 	import type { getProduct } from '../remote/catalogue.remote';
 	import ShoppingBasket from '@lucide/svelte/icons/shopping-basket';
@@ -55,6 +57,13 @@
 		/>
 	{/key}
 	<div>
+		{#if data.reviews.average !== null}
+			<a class="mb-2 flex items-center gap-2 text-sm no-underline" href="#reviews-heading">
+				<Stars rating={data.reviews.average} size="text-sm" />
+				{data.reviews.count}
+				{data.reviews.count === 1 ? 'review' : 'reviews'}
+			</a>
+		{/if}
 		<p class="text-2xl">
 			{formatMoney(product.pricePence)}
 			{#if product.comparePricePence && product.comparePricePence > product.pricePence}
@@ -92,3 +101,5 @@
 		{/if}
 	</div>
 </div>
+
+<Reviews reviews={data.reviews} />

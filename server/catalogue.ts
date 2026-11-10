@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db';
 
@@ -9,6 +9,7 @@ import {
 	products,
 	productSlugAliases,
 } from '../db/schema';
+import { BundleService } from './bundles';
 import { StockService } from './stock-service';
 
 export async function getCategory(db: ShopDb, slug: string) {
@@ -66,6 +67,42 @@ export async function listShopProducts(db: ShopDb) {
 	return withCovers(db, list);
 }
 
+/** Longest search the shop accepts, and how many results it returns. */
+export const SEARCH_MAX_LENGTH = 100;
+const SEARCH_LIMIT = 48;
+
+/** `%` and `_` are wildcards in LIKE; a customer typing them means the characters. */
+const likeEscape = (word: string) => word.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+/** The words of a search, lower-cased, at most 6 (each must match). */
+export function searchWords(query: string): string[] {
+	return query
+		.toLowerCase()
+		.slice(0, SEARCH_MAX_LENGTH)
+		.split(/\s+/)
+		.filter((w) => w.length > 0)
+		.slice(0, 6);
+}
+
+/**
+ * Active products whose name, variation, SKU or descriptions contain every word of the query, name
+ * matches first. A LIKE scan: fine for a shop's few hundred products, no index to keep in sync.
+ */
+export async function searchProducts(db: ShopDb, query: string) {
+	const words = searchWords(query);
+	if (words.length === 0) return [];
+	const field = sql`lower(${products.name} || ' ' || coalesce(${products.variationLabel}, '') || ' ' || ${products.sku} || ' ' || ${products.shortDescription} || ' ' || ${products.description})`;
+	const conditions = words.map((w) => sql`${field} like ${`%${likeEscape(w)}%`} escape '\\'`);
+	const nameHit = sql<number>`lower(${products.name}) like ${`%${likeEscape(words[0])}%`} escape '\\'`;
+	const list = await db
+		.select()
+		.from(products)
+		.where(and(eq(products.active, true), ...conditions))
+		.orderBy(desc(nameHit), asc(products.sortOrder), asc(products.name))
+		.limit(SEARCH_LIMIT);
+	return withCovers(db, list);
+}
+
 export async function getProduct(db: ShopDb, slug: string) {
 	const product = await db.query.products.findFirst({
 		where: and(eq(products.slug, slug), eq(products.active, true)),
@@ -106,9 +143,14 @@ export async function findProductRedirect(
 }
 
 export async function listSitemapEntries(db: ShopDb) {
-	const [cats, prods] = await Promise.all([
+	const [cats, prods, bundleSlugs] = await Promise.all([
 		db.select({ slug: categories.slug }).from(categories),
 		db.select({ slug: products.slug }).from(products).where(eq(products.active, true)),
+		new BundleService(db).activeSlugs(),
 	]);
-	return { categories: cats.map((c) => c.slug), products: prods.map((p) => p.slug) };
+	return {
+		bundles: bundleSlugs,
+		categories: cats.map((c) => c.slug),
+		products: prods.map((p) => p.slug),
+	};
 }

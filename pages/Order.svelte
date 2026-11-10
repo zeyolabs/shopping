@@ -2,6 +2,8 @@
 	import { page } from '$app/state';
 	import PageTitle from '../components/PageTitle.svelte';
 	import { getOrderPage } from '../remote/order.remote';
+	import { getOrderReviews } from '../remote/reviews.remote';
+	import ReviewForm from '../components/ReviewForm.svelte';
 	import { shoppingClient } from '../client';
 	import { formatMoney } from '../money';
 	import { trackingUrl } from '../order-links';
@@ -103,6 +105,15 @@
 		</div>
 	</dl>
 
+	{#if order.hasInvoice}
+		<p class="mt-3 text-right">
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- server route, opens Stripe's PDF -->
+			<a class="underline" href="{page.url.pathname}/invoice" rel="external"
+				>Download invoice (PDF)</a
+			>
+		</p>
+	{/if}
+
 	<h2 class="mt-8 text-lg font-semibold">Delivering to</h2>
 	<address class="mt-2 not-italic">
 		{data.address.name}<br />
@@ -112,6 +123,37 @@
 		{data.address.postcode}<br />
 		{data.address.country}
 	</address>
+
+	{let reviewable = $derived(
+		await getOrderReviews({ number: order.number, token: page.params.token ?? '' })
+	)}
+	{#if reviewable.items.length > 0}
+		<h2 class="mt-8 text-lg font-semibold">Review your items</h2>
+		<ul class="mt-2 space-y-6">
+			{#each reviewable.items as item (item.productId)}
+				<li class="rounded-2xl border border-[var(--bd)] p-4">
+					<p class="font-medium">{item.name}</p>
+					{#if item.review}
+						<p class="mt-1 text-sm text-[var(--txs)]">
+							Reviewed, {item.review.rating} of 5.
+							{item.review.status === 'pending'
+								? 'It will appear once we have checked it.'
+								: item.review.status === 'approved'
+									? 'It is on the product page.'
+									: ''}
+						</p>
+					{:else}
+						<ReviewForm
+							name={item.name}
+							number={order.number}
+							productId={item.productId}
+							token={page.params.token ?? ''}
+						/>
+					{/if}
+				</li>
+			{/each}
+		</ul>
+	{/if}
 
 	<p class="mt-8 text-[var(--txs)]">
 		Need help? Email <a class="underline" href="mailto:{client.supportEmail}"

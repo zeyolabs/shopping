@@ -3,13 +3,19 @@ import { Error400 } from '@zeyolabs/kit/utils/errors';
 
 import { shopping } from '../config';
 import { readBasket, readShipTo, summariseBasket } from './basket';
+import { CustomerService } from './customers';
 import { createCheckoutSession, getStripe } from './stripe';
 
 /**
  * Prices the basket from the database and returns the Stripe Checkout URL to redirect to. The app
  * wraps this in its own remote function, where it rate-limits the call.
  */
-export async function createCheckout(): Promise<{ url: string }> {
+export async function createCheckout(
+	options: {
+		/** The signed-in customer's email: Checkout then fills in their saved details. */
+		email?: null | string;
+	} = {}
+): Promise<{ url: string }> {
 	const { cookies, url } = getRequestEvent();
 	const summary = await summariseBasket(shopping().db(), readBasket(cookies), readShipTo(cookies));
 
@@ -31,11 +37,15 @@ export async function createCheckout(): Promise<{ url: string }> {
 	}
 
 	const stripe = await getStripe();
+	const customerId = options.email
+		? await new CustomerService(shopping().db()).stripeCustomerId(stripe, options.email)
+		: undefined;
 	return {
 		url: await createCheckoutSession(
 			stripe,
 			{ ...summary, shipping: summary.shipping },
-			url.origin
+			url.origin,
+			customerId
 		),
 	};
 }

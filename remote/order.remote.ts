@@ -45,6 +45,7 @@ export const getOrderPage = Remote.Query(
 			order: {
 				createdAt: order.createdAt,
 				discountPence: order.discountPence,
+				hasInvoice: order.stripeInvoiceId !== null,
 				number: order.number,
 				paidAt: order.paidAt,
 				shippedAt: order.shippedAt,

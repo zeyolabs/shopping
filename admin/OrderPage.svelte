@@ -276,6 +276,12 @@
 				>
 			</p>
 		{/if}
+		{#if order.stripeInvoiceId}
+			<p class="mt-2 text-sm">
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- server route, opens Stripe's PDF -->
+				<a href="/orders/{order.number}/invoice" rel="external" target="_blank">Invoice (PDF)</a>
+			</p>
+		{/if}
 		{#if order.customerUrl}
 			<p class="mt-2 text-sm">
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- absolute URL on the shop domain -->

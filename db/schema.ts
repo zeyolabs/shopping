@@ -231,6 +231,8 @@ export const orders = sqliteTable(
 		/** The `shipping_rates.service` the customer chose. */
 		shippingService: text('shipping_service'),
 		status: text('status', { enum: ORDER_STATUSES }).notNull().default('pending'),
+		/** The Stripe invoice made for this payment (when the shop issues invoices), for its PDF link. */
+		stripeInvoiceId: text('stripe_invoice_id'),
 		stripePaymentIntentId: text('stripe_payment_intent_id').unique(),
 		stripeSessionId: text('stripe_session_id').unique(),
 		subtotalPence: integer('subtotal_pence').notNull(),
@@ -263,6 +265,100 @@ export const orderItems = sqliteTable(
 		index('order_items_order_idx').on(t.orderId),
 		uniqueIndex('order_items_order_sku_unique').on(t.orderId, t.sku),
 	]
+);
+
+/**
+ * A signed-in customer's Stripe Customer, so Checkout fills in their saved name and address. Keyed
+ * by the lower-cased email the customer signs in with (orders are matched to accounts by email).
+ */
+export const customers = sqliteTable('customers', {
+	createdAt: integer('created_at').notNull(),
+	email: text('email').primaryKey(),
+	stripeCustomerId: text('stripe_customer_id').notNull().unique(),
+});
+
+export const REVIEW_STATUSES = ['pending', 'approved', 'rejected'] as const;
+export type ReviewStatus = (typeof REVIEW_STATUSES)[number];
+
+/**
+ * Product reviews from verified buyers: one per product per order, written from the order page.
+ * Only `approved` reviews are shown; staff approve or reject them in the admin.
+ */
+export const reviews = sqliteTable(
+	'reviews',
+	{
+		body: text('body').notNull(),
+		createdAt: integer('created_at').notNull(),
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		/** When staff approved or rejected it. */
+		moderatedAt: integer('moderated_at'),
+		/** The name shown with the review, as the customer typed it. */
+		name: text('name').notNull(),
+		orderId: integer('order_id')
+			.notNull()
+			.references(() => orders.id, { onDelete: 'cascade' }),
+		productId: integer('product_id')
+			.notNull()
+			.references(() => products.id, { onDelete: 'cascade' }),
+		/** 1 to 5 stars. */
+		rating: integer('rating').notNull(),
+		status: text('status', { enum: REVIEW_STATUSES }).notNull().default('pending'),
+		title: text('title').notNull().default(''),
+	},
+	(t) => [
+		uniqueIndex('reviews_order_product_unique').on(t.orderId, t.productId),
+		index('reviews_product_status_idx').on(t.productId, t.status),
+	]
+);
+
+/**
+ * A bundle is built in steps: at each step the customer picks from that step's products. Adding a
+ * bundle to the basket adds the chosen products as ordinary lines at their own prices, so stock,
+ * shipping and orders work unchanged.
+ */
+export const bundles = sqliteTable('bundles', {
+	active: integer('active', { mode: 'boolean' }).notNull().default(true),
+	createdAt: integer('created_at').notNull(),
+	description: text('description').notNull().default(''),
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	/** File name in the product image bucket, shown on the bundle page. */
+	image: text('image'),
+	name: text('name').notNull(),
+	slug: text('slug').notNull().unique(),
+	sortOrder: integer('sort_order').notNull().default(0),
+});
+
+/** One step of a bundle: pick between `minChoices` and `maxChoices` of its products. */
+export const bundleSteps = sqliteTable(
+	'bundle_steps',
+	{
+		bundleId: integer('bundle_id')
+			.notNull()
+			.references(() => bundles.id, { onDelete: 'cascade' }),
+		description: text('description').notNull().default(''),
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		maxChoices: integer('max_choices').notNull().default(1),
+		/** 0 makes the step optional. */
+		minChoices: integer('min_choices').notNull().default(1),
+		position: integer('position').notNull().default(0),
+		title: text('title').notNull(),
+	},
+	(t) => [index('bundle_steps_bundle_idx').on(t.bundleId, t.position)]
+);
+
+/** The products a step offers, in display order. */
+export const bundleStepProducts = sqliteTable(
+	'bundle_step_products',
+	{
+		position: integer('position').notNull().default(0),
+		productId: integer('product_id')
+			.notNull()
+			.references(() => products.id, { onDelete: 'cascade' }),
+		stepId: integer('step_id')
+			.notNull()
+			.references(() => bundleSteps.id, { onDelete: 'cascade' }),
+	},
+	(t) => [primaryKey({ columns: [t.stepId, t.productId] })]
 );
 
 export const productsRelations = relations(products, ({ many, one }) => ({

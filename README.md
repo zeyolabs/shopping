@@ -23,6 +23,23 @@ pnpm add -E @zeyolabs/shopping @zeyolabs/ui @zeyolabs/kit
 4. Tailwind must scan the components: `@source "../node_modules/@zeyolabs/shopping";`.
 5. Generate D1 migrations in the app from `@zeyolabs/shopping/db/schema` (drizzle-kit).
 
+## Optional features
+
+- **Discount codes**: `checkout.promotionCodes: true` shows Stripe's promotion-code box at
+  Checkout. Codes are made and limited in the Stripe dashboard; orders record the discount.
+- **Invoices**: `checkout.invoices: { footer, customFields }` has Stripe issue a paid invoice PDF
+  per order (Stripe charges per invoice). Customers get it from their order page
+  (`routes/order-invoice`), staff from the admin order (`routes/admin-order-invoice`).
+- **Search**: `pages/Search.svelte` + `searchLoad`.
+- **Customer accounts**: `pages/Account.svelte` lists the orders for the signed-in email; sign-in
+  is kit's passwordless auth in the app. `createCheckout({ email })` passes the customer to Stripe
+  so their saved details are filled in.
+- **Reviews**: verified buyers review items from their order page; staff moderate in
+  `admin/ReviewsPage.svelte`; approved reviews show on the product page.
+- **Bundles**: `pages/Bundle.svelte` + `bundleLoad`; the customer picks per step and the picks go
+  into the basket as ordinary products. Edited in `admin/BundlesPage.svelte`.
+- **Product admin**: `admin/ProductsPage.svelte`, `ProductEditPage.svelte`, `CategoriesPage.svelte`.
+
 ## Versions
 
 Every merge to `main` publishes a new version (`.github/workflows/publish.yaml`); there is no
