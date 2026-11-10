@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ErrorMessage } from '../../utils/errors';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import {
@@ -30,7 +31,7 @@
 			await createOrderLabel(orderNumber);
 			window.open(resolve('/orders/[number]/label', { number: orderNumber }), '_blank');
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Could not create the label.');
+			toast.error(ErrorMessage.from(error, 'Could not create the label.'));
 		} finally {
 			printing = false;
 		}

@@ -1,4 +1,4 @@
-import { and, asc, avg, count, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, avg, count, desc, eq } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 
@@ -19,14 +19,6 @@ export type ReviewInput = {
 /** Reviews: data access only (who may write one is decided by the caller holding the order). */
 export class ReviewService {
 	constructor(private readonly db: ShopDb) {}
-
-	async countPending(): Promise<number> {
-		const [row] = await this.db
-			.select({ n: count() })
-			.from(reviews)
-			.where(eq(reviews.status, 'pending'));
-		return row?.n ?? 0;
-	}
 
 	/** The order's products, each with the review already written for it, if any. */
 	async forOrder(orderId: number) {
@@ -126,25 +118,5 @@ export class ReviewService {
 			.onConflictDoNothing()
 			.returning({ id: reviews.id });
 		return inserted.length > 0;
-	}
-
-	/** Average rating and count for several products, for product cards. */
-	async summaries(productIds: readonly number[]) {
-		const out = new Map<number, { average: number; count: number }>();
-		for (let i = 0; i < productIds.length; i += 90) {
-			const rows = await this.db
-				.select({ average: avg(reviews.rating), count: count(), productId: reviews.productId })
-				.from(reviews)
-				.where(
-					and(
-						inArray(reviews.productId, productIds.slice(i, i + 90)),
-						eq(reviews.status, 'approved')
-					)
-				)
-				.groupBy(reviews.productId);
-			for (const r of rows)
-				out.set(r.productId, { average: Math.round(Number(r.average) * 10) / 10, count: r.count });
-		}
-		return out;
 	}
 }

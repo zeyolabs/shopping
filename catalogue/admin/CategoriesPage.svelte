@@ -1,41 +1,20 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { getAdminCategories, saveCategoryCmd } from '../admin.remote';
-	import { CategoryInputSchema } from '../schema';
-	import { FormInput } from '../../utils/form-input';
-	import { toast } from 'svelte-sonner';
+	import { getAdminCategories } from '../admin.remote';
+	import CategoryForm from './CategoryForm.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 
-	type Draft = { description: string; id?: number; name: string; slug: string; sortOrder: number };
+	type Category = {
+		description: string;
+		id: number;
+		name: string;
+		slug: string;
+		sortOrder: number;
+	};
 
-	let editing = $state<Draft | null>(null);
-	let saving = $state(false);
-
-	async function save(event?: SubmitEvent) {
-		event?.preventDefault();
-		if (!editing) return;
-		const parsed = CategoryInputSchema.safeParse({
-			...editing,
-			slug: editing.slug || FormInput.slugify(editing.name),
-		});
-		if (!parsed.success) {
-			toast.error(parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '));
-			return;
-		}
-		saving = true;
-		try {
-			await saveCategoryCmd(parsed.data);
-			toast.success('Category saved.');
-			editing = null;
-		} catch (err) {
-			toast.error((err as { body?: { message?: string } })?.body?.message ?? 'Could not save.');
-		} finally {
-			saving = false;
-		}
-	}
-
-	const input = 'mt-1 w-full rounded-md border border-[var(--line)] bg-white px-3 py-1.5';
+	/** The category open in the editor: a row, `null` for a new one, `undefined` when closed. */
+	let editing = $state<Category | null | undefined>(undefined);
 </script>
 
 <svelte:head><title>Categories · Admin</title></svelte:head>
@@ -43,32 +22,13 @@
 <p class="text-sm"><a href={resolve('/products')}>← Products</a></p>
 <div class="mt-2 flex items-center justify-between">
 	<h1 class="text-2xl font-semibold">Categories</h1>
-	<Button onclick={() => (editing = { description: '', name: '', slug: '', sortOrder: 0 })}
-		>New category</Button
-	>
+	<Button onclick={() => (editing = null)}>New category</Button>
 </div>
 
-{#if editing}
-	<form
-		class="mt-4 grid max-w-xl gap-3 rounded-xl border border-[var(--line)] bg-white p-5"
-		onsubmit={save}
-	>
-		<label class="text-sm font-medium">Name<input class={input} bind:value={editing.name} /></label>
-		<label class="text-sm font-medium"
-			>Slug (URL, blank to make one)<input class={input} bind:value={editing.slug} /></label
-		>
-		<label class="text-sm font-medium"
-			>Description<textarea class="{input} min-h-24" bind:value={editing.description}
-			></textarea></label
-		>
-		<label class="text-sm font-medium"
-			>Sort order<input class={input} type="number" bind:value={editing.sortOrder} /></label
-		>
-		<div class="flex gap-3">
-			<Button disabled={saving} onclick={() => save()}>Save</Button>
-			<Button onclick={() => (editing = null)} variant="secondary">Cancel</Button>
-		</div>
-	</form>
+{#if editing !== undefined}
+	{#key editing?.id ?? 'new'}
+		<div class="mt-4"><CategoryForm category={editing} onDone={() => (editing = undefined)} /></div>
+	{/key}
 {/if}
 
 <Boundary message="Could not load categories.">
@@ -81,18 +41,7 @@
 					<span class="text-[var(--ink-muted)]">/category/{row.slug} · {row.products} products</span
 					></span
 				>
-				<button
-					class="underline"
-					onclick={() =>
-						(editing = {
-							description: row.description,
-							id: row.id,
-							name: row.name,
-							slug: row.slug,
-							sortOrder: row.sortOrder,
-						})}
-					type="button">Edit</button
-				>
+				<button class="underline" onclick={() => (editing = row)} type="button">Edit</button>
 			</li>
 		{:else}
 			<li class="px-4 py-6 text-[var(--ink-muted)]">No categories yet.</li>

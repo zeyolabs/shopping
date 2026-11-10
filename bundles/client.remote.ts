@@ -1,16 +1,16 @@
 import { getRequestEvent } from '$app/server';
 import { Remote } from '@zeyolabs/kit/server/remote-functions';
 import { Error404 } from '@zeyolabs/kit/utils/errors';
-import { z } from 'zod';
 
 import { getBasket } from '../basket/client.remote';
 import { BasketCookies } from '../basket/cookies.server';
 import { BasketCookie } from '../basket/library';
 import { shopping } from '../config';
+import { ShopSchema } from '../utils/schemas';
 import { BundleChoiceSchema } from './schema';
 import { BundleService } from './service.server';
 
-export const getBundle = Remote.Query(z.string().min(1).max(200), async (slug) => {
+export const getBundle = Remote.Query(ShopSchema.SlugParam, async (slug) => {
 	const service = new BundleService(shopping().db());
 	const bundle = await service.page(slug);
 	if (!bundle) throw Error404('Bundle not found');

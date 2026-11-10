@@ -1,15 +1,15 @@
 import { getRequestEvent } from '$app/server';
 import { Remote } from '@zeyolabs/kit/server/remote-functions';
 import { Error400 } from '@zeyolabs/kit/utils/errors';
+import { FormResult } from '@zeyolabs/kit/utils/form';
 import { z } from 'zod';
 
 import { shopping } from '../config';
 import { ShippingService } from '../shipping/service.server';
 import { BasketCookies } from './cookies.server';
 import { BasketCookie } from './library';
+import { AddToBasketSchema, BasketQuantitySchema } from './schema';
 import { BasketService } from './service.server';
-
-const ProductId = z.number().int().positive();
 
 export const getBasket = Remote.Query(async () => {
 	const { cookies } = getRequestEvent();
@@ -22,21 +22,16 @@ export const getBasket = Remote.Query(async () => {
 	);
 });
 
-export const addToBasket = Remote.Cmd(
-	z.object({ productId: ProductId, quantity: z.number().int().min(1).max(99).default(1) }),
-	async ({ productId, quantity }) => {
-		const { cookies } = getRequestEvent();
-		BasketCookies.write(
-			cookies,
-			BasketCookie.add(BasketCookies.read(cookies), productId, quantity)
-		);
-		await getBasket().refresh();
-	}
-);
+export const addToBasketForm = Remote.Form(AddToBasketSchema, async ({ productId, quantity }) => {
+	const { cookies } = getRequestEvent();
+	BasketCookies.write(cookies, BasketCookie.add(BasketCookies.read(cookies), productId, quantity));
+	await getBasket().refresh();
+	return FormResult.ok('Added to your basket');
+});
 
-/** Quantity 0 removes the line. */
-export const setBasketQuantity = Remote.Cmd(
-	z.object({ productId: ProductId, quantity: z.number().int().min(0).max(99) }),
+/** The basket's − and + buttons. Quantity 0 removes the line. */
+export const basketQuantityForm = Remote.Form(
+	BasketQuantitySchema,
 	async ({ productId, quantity }) => {
 		const { cookies } = getRequestEvent();
 		BasketCookies.write(
@@ -44,6 +39,7 @@ export const setBasketQuantity = Remote.Cmd(
 			BasketCookie.set(BasketCookies.read(cookies), productId, quantity)
 		);
 		await getBasket().refresh();
+		return FormResult.ok();
 	}
 );
 
@@ -52,6 +48,7 @@ export const getShippableCountries = Remote.Query(async () => {
 	return service.countries();
 });
 
+/** The country picker changes it as soon as a country is chosen, so this stays a command. */
 export const setShipTo = Remote.Cmd(
 	z.object({ country: z.string().regex(/^[A-Z]{2}$/) }),
 	async ({ country }) => {

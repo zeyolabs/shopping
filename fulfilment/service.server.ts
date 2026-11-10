@@ -1,11 +1,12 @@
 import { Error400, Error404 } from '@zeyolabs/kit/utils/errors';
-import { and, asc, count, desc, eq, inArray, like, or } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 import type { OrderFilter } from './filters';
 
 import { Search } from '../catalogue/library';
 import { addresses, orderItems, orders, type PackageFormat, products } from '../db/schema';
+import { Batches } from '../utils/batches';
 
 export type Parcel = {
 	format: PackageFormat;
@@ -73,7 +74,11 @@ export class FulfilmentService {
 					filter === 'to-ship' ? eq(orders.status, 'paid') : undefined,
 					filter === 'shipped' ? eq(orders.status, 'shipped') : undefined,
 					match
-						? or(like(orders.number, match), like(orders.email, match), like(addresses.name, match))
+						? or(
+								sql`${orders.number} like ${match} escape '\\'`,
+								sql`${orders.email} like ${match} escape '\\'`,
+								sql`${addresses.name} like ${match} escape '\\'`
+							)
 						: undefined
 				)
 			)
@@ -134,10 +139,12 @@ export class FulfilmentService {
 	private async estimateWeight(items: { productId: null | number; quantity: number }[]) {
 		const ids = items.flatMap((item) => (item.productId === null ? [] : [item.productId]));
 		if (ids.length === 0) return 0;
-		const rows = await this.db
-			.select({ id: products.id, massGrams: products.massGrams })
-			.from(products)
-			.where(inArray(products.id, ids));
+		const rows = await Batches.rows(ids, (slice) =>
+			this.db
+				.select({ id: products.id, massGrams: products.massGrams })
+				.from(products)
+				.where(inArray(products.id, slice))
+		);
 		const mass = new Map(rows.map((row) => [row.id, row.massGrams]));
 		return items.reduce(
 			(sum, item) =>

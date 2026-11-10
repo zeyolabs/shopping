@@ -25,3 +25,16 @@ describe('CatalogueService.search', () => {
 		expect(await catalogue.search('   ')).toEqual([]);
 	});
 });
+
+describe('CatalogueService over D1 limits', () => {
+	const { db, product } = shopTestDb();
+
+	it('lists and searches more products than D1 takes parameters (100)', async () => {
+		for (let i = 0; i < 150; i++) await product({ name: `Keycap set ${i}` });
+		const catalogue = new CatalogueService(db());
+		const all = await catalogue.products();
+		expect(all).toHaveLength(150);
+		expect(all.every((p) => p.stock === 10)).toBe(true);
+		expect(await catalogue.search('keycap')).toHaveLength(48);
+	});
+});

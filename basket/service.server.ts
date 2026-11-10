@@ -4,7 +4,8 @@ import type { ShippingRules } from '../config';
 import type { ShopDb } from '../db/index';
 import type { Basket } from './library';
 
-import { productImages, products } from '../db/schema';
+import { CoverService } from '../catalogue/covers.server';
+import { products } from '../db/schema';
 import { type ShippingQuote, ShippingService } from '../shipping/service.server';
 import { StockService } from '../stock/service.server';
 
@@ -75,18 +76,8 @@ export class BasketService {
 			.orderBy(asc(products.name));
 		const stock = new StockService(this.db);
 		const sellable = await stock.availableMany(rows.map((p) => p.id));
-		const images = await this.db
-			.select()
-			.from(productImages)
-			.where(
-				inArray(
-					productImages.productId,
-					rows.map((p) => p.id)
-				)
-			)
-			.orderBy(asc(productImages.position));
-		const cover = new Map<number, (typeof images)[number]>();
-		for (const image of images) if (!cover.has(image.productId)) cover.set(image.productId, image);
+		const covers = new CoverService(this.db);
+		const cover = await covers.covers(rows.map((p) => p.id));
 
 		const lines = rows.map((product): BasketLine => {
 			const quantity = basket[product.id];
@@ -95,7 +86,7 @@ export class BasketService {
 			const image = cover.get(product.id);
 			return {
 				available,
-				cover: image ? { alt: image.alt, src: image.src } : null,
+				cover: image ?? null,
 				id: product.id,
 				limit: Math.max(0, Math.min(inStock, product.maxPerOrder)),
 				lineTotalPence: available * product.pricePence,

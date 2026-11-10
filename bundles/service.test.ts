@@ -64,4 +64,24 @@ describe('BundleService', () => {
 		).rejects.toThrow('Unknown SKU: NOPE');
 		expect(await bundles.activeSlugs()).toContain('starter');
 	});
+
+	it('saves a step offering more products than one statement can hold', async () => {
+		const skus: string[] = [];
+		for (let i = 0; i < 40; i++) skus.push((await product({ sku: `MANY${i}` })).sku);
+		const bundles = new BundleService(db());
+		const step = { description: '', maxChoices: 3, minChoices: 1, skus, title: 'Pick' };
+		const base = {
+			active: true,
+			description: '',
+			image: null,
+			name: 'Big',
+			slug: 'big',
+			sortOrder: 0,
+		};
+		const id = await bundles.save({ ...base, steps: [step] });
+		expect((await bundles.forEdit(id))?.steps[0].skus).toEqual(skus);
+		// Saving again replaces the steps rather than adding to them.
+		await bundles.save({ ...base, id, steps: [step, { ...step, title: 'Again' }] });
+		expect((await bundles.forEdit(id))?.steps.map((s) => s.skus.length)).toEqual([40, 40]);
+	});
 });

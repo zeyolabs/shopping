@@ -1,9 +1,10 @@
 import { Error400, Error404 } from '@zeyolabs/kit/utils/errors';
-import { asc, count, eq, inArray, sql } from 'drizzle-orm';
+import { asc, count, eq, inArray, type SQL, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 
 import { productComponents, products, stockAlerts } from '../db/schema';
+import { Batches } from '../utils/batches';
 import { Stock, type StockComponent } from './library';
 
 /** A combined product takes at most this many components (keeps every statement well under D1's limits). */
@@ -39,10 +40,12 @@ export class StockService {
 	async availableMany(ids: readonly number[]): Promise<Map<number, number>> {
 		const result = new Map<number, number>();
 		if (ids.length === 0) return result;
-		const rows = await this.db
-			.select({ id: products.id, packSize: products.packSize, stock: products.stock })
-			.from(products)
-			.where(inArray(products.id, [...ids]));
+		const rows = await Batches.rows(ids, (slice) =>
+			this.db
+				.select({ id: products.id, packSize: products.packSize, stock: products.stock })
+				.from(products)
+				.where(inArray(products.id, slice))
+		);
 		const components = await this.componentsOf(rows.map((r) => r.id));
 		for (const row of rows) {
 			const parts = components.get(row.id);
@@ -54,9 +57,64 @@ export class StockService {
 		return result;
 	}
 
+	/**
+	 * Throws a 400 unless `components` is a valid set for `productId` (undefined for a product not
+	 * yet saved): at most `MAX_COMPONENTS`, no repeats, not itself, no nested combined products, and
+	 * a product that is already someone's component cannot become combined.
+	 */
+	async checkComponents(
+		productId: number | undefined,
+		components: readonly { componentId: number; quantity: number }[]
+	): Promise<void> {
+		if (components.length > MAX_COMPONENTS) {
+			throw Error400(`A combined product has at most ${MAX_COMPONENTS} components.`);
+		}
+		const ids = components.map((c) => c.componentId);
+		if (new Set(ids).size !== ids.length) throw Error400('A component can only be listed once.');
+		if (productId !== undefined && ids.includes(productId)) {
+			throw Error400('A product cannot contain itself.');
+		}
+		if (components.some((c) => !Number.isInteger(c.quantity) || c.quantity < 1)) {
+			throw Error400('Each component quantity must be a whole number of at least 1.');
+		}
+		if (ids.length > 0) {
+			const nested = await this.componentsOf(ids);
+			if (nested.size > 0) throw Error400('A component cannot itself be a combined product.');
+		}
+		if (components.length > 0 && productId !== undefined) {
+			const usedAsComponent = await this.db
+				.select({ productId: productComponents.productId })
+				.from(productComponents)
+				.where(eq(productComponents.componentId, productId))
+				.limit(1);
+			if (usedAsComponent.length > 0) {
+				throw Error400('A product that is a component of another set cannot be combined itself.');
+			}
+		}
+	}
+
 	/** The components of a combined product, or an empty list for a plain one. */
 	async components(productId: number): Promise<ComponentRow[]> {
 		return (await this.componentsOf([productId])).get(productId) ?? [];
+	}
+
+	/**
+	 * Statements that replace a product's components, for the caller's `db.batch`. `productId` may
+	 * be a SQL expression, for a product inserted earlier in the same batch. Check them first with
+	 * `checkComponents`.
+	 */
+	componentStatements(
+		productId: number | SQL,
+		components: readonly { componentId: number; quantity: number }[]
+	) {
+		return [
+			this.db.delete(productComponents).where(eq(productComponents.productId, productId)),
+			...components.map((c) =>
+				this.db
+					.insert(productComponents)
+					.values({ componentId: c.componentId, productId, quantity: c.quantity })
+			),
+		];
 	}
 
 	/** Every product with its stock and how many customers are waiting for it, sold-out first. */
@@ -83,12 +141,12 @@ export class StockService {
 	async paidStatements(lines: readonly PaidLine[]) {
 		const ids = lines.map((l) => l.productId);
 		const [rows, components] = await Promise.all([
-			ids.length > 0
-				? this.db
-						.select({ id: products.id, packSize: products.packSize })
-						.from(products)
-						.where(inArray(products.id, ids))
-				: [],
+			Batches.rows(ids, (slice) =>
+				this.db
+					.select({ id: products.id, packSize: products.packSize })
+					.from(products)
+					.where(inArray(products.id, slice))
+			),
 			this.componentsOf(ids),
 		]);
 		const packSize = new Map(rows.map((r) => [r.id, r.packSize]));
@@ -116,43 +174,14 @@ export class StockService {
 		return statements;
 	}
 
-	/**
-	 * Replaces a combined product's components. At most `MAX_COMPONENTS`, no repeats, and a product
-	 * cannot contain itself or another combined product. An empty list makes it a plain product again.
-	 */
+	/** Replaces a combined product's components (checked). An empty list makes it a plain product. */
 	async setComponents(
 		productId: number,
 		components: readonly { componentId: number; quantity: number }[]
 	) {
-		if (components.length > MAX_COMPONENTS) {
-			throw Error400(`A combined product has at most ${MAX_COMPONENTS} components.`);
-		}
-		const ids = components.map((c) => c.componentId);
-		if (new Set(ids).size !== ids.length) throw Error400('A component can only be listed once.');
-		if (ids.includes(productId)) throw Error400('A product cannot contain itself.');
-		if (components.some((c) => !Number.isInteger(c.quantity) || c.quantity < 1)) {
-			throw Error400('Each component quantity must be a whole number of at least 1.');
-		}
-		if (ids.length > 0) {
-			const nested = await this.componentsOf(ids);
-			if (nested.size > 0) throw Error400('A component cannot itself be a combined product.');
-		}
-		if (components.length > 0) {
-			const usedAsComponent = await this.db
-				.select({ productId: productComponents.productId })
-				.from(productComponents)
-				.where(eq(productComponents.componentId, productId))
-				.limit(1);
-			if (usedAsComponent.length > 0) {
-				throw Error400('A product that is a component of another set cannot be combined itself.');
-			}
-		}
-		await this.db.batch([
-			this.db.delete(productComponents).where(eq(productComponents.productId, productId)),
-			...(components.length > 0
-				? [this.db.insert(productComponents).values(components.map((c) => ({ ...c, productId })))]
-				: []),
-		]);
+		await this.checkComponents(productId, components);
+		const [first, ...rest] = this.componentStatements(productId, components);
+		await this.db.batch([first, ...rest]);
 	}
 
 	/**
@@ -175,17 +204,19 @@ export class StockService {
 	private async componentsOf(ids: readonly number[]): Promise<Map<number, ComponentRow[]>> {
 		const map = new Map<number, ComponentRow[]>();
 		if (ids.length === 0) return map;
-		const rows = await this.db
-			.select({
-				componentId: productComponents.componentId,
-				packSize: products.packSize,
-				productId: productComponents.productId,
-				quantity: productComponents.quantity,
-				stock: products.stock,
-			})
-			.from(productComponents)
-			.innerJoin(products, eq(products.id, productComponents.componentId))
-			.where(inArray(productComponents.productId, [...ids]));
+		const rows = await Batches.rows(ids, (slice) =>
+			this.db
+				.select({
+					componentId: productComponents.componentId,
+					packSize: products.packSize,
+					productId: productComponents.productId,
+					quantity: productComponents.quantity,
+					stock: products.stock,
+				})
+				.from(productComponents)
+				.innerJoin(products, eq(products.id, productComponents.componentId))
+				.where(inArray(productComponents.productId, slice))
+		);
 		for (const row of rows) {
 			const list = map.get(row.productId) ?? [];
 			list.push({

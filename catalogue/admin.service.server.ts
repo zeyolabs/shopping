@@ -1,5 +1,5 @@
 import { Error400 } from '@zeyolabs/kit/utils/errors';
-import { and, asc, eq, inArray, like, ne, or, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, ne, or, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 import type { CategoryInput, ProductInput } from './schema';
@@ -14,6 +14,7 @@ import {
 	variationGroups,
 } from '../db/schema';
 import { StockService } from '../stock/service.server';
+import { Search } from './library';
 
 /** The admin's catalogue editing: products, categories and variation groups. */
 export class CatalogueAdminService {
@@ -70,10 +71,8 @@ export class CatalogueAdminService {
 
 	/** Every product for the admin list, optionally filtered by name or SKU. */
 	async products(q = '') {
-		const term = q
-			.trim()
-			.toLowerCase()
-			.replace(/[\\%_]/g, (c) => `\\${c}`);
+		const term = q.trim().toLowerCase();
+		const match = Search.pattern(term);
 		return this.db
 			.select({
 				active: products.active,
@@ -89,8 +88,8 @@ export class CatalogueAdminService {
 			.where(
 				term
 					? or(
-							like(sql`lower(${products.name})`, `%${term}%`),
-							like(sql`lower(${products.sku})`, `%${term}%`)
+							sql`lower(${products.name}) like ${match} escape '\\'`,
+							sql`lower(${products.sku}) like ${match} escape '\\'`
 						)
 					: undefined
 			)
@@ -168,33 +167,42 @@ export class CatalogueAdminService {
 			variationLabel: input.variationGroup ? input.variationLabel || null : null,
 		};
 
-		let id = input.id;
-		if (id === undefined) {
-			const [row] = await db
-				.insert(products)
-				.values({ ...values, createdAt: now, stock: 0 })
-				.returning({ id: products.id });
-			id = row.id;
-		} else {
-			const before = await db.query.products.findFirst({ where: eq(products.id, id) });
-			if (!before) throw Error400('Product not found.');
-			await db.update(products).set(values).where(eq(products.id, id));
-			if (before.slug !== input.slug) {
-				await db
-					.insert(productSlugAliases)
-					.values({ productId: id, slug: before.slug })
-					.onConflictDoNothing();
-			}
-		}
-		const productId = id;
-		// The new slug is the product's own now, not an alias of it.
-		await db
-			.delete(productSlugAliases)
-			.where(
-				and(eq(productSlugAliases.slug, input.slug), eq(productSlugAliases.productId, productId))
-			);
+		const components = input.components.map((c) => ({
+			componentId: componentId.get(c.sku)!,
+			quantity: c.quantity,
+		}));
+		const stock = new StockService(db);
+		await stock.checkComponents(input.id, components);
 
+		const before = input.id
+			? await db.query.products.findFirst({ where: eq(products.id, input.id) })
+			: undefined;
+		if (input.id && !before) throw Error400('Product not found.');
+		// A new product has no id until the batch inserts it, so later statements find it by SKU.
+		const productId =
+			input.id ??
+			sql<number>`(select ${products.id} from ${products} where ${products.sku} = ${input.sku})`;
+
+		// One atomic batch: the product, its old-slug redirect, categories, images and components
+		// are all saved or none are.
 		await db.batch([
+			input.id
+				? db.update(products).set(values).where(eq(products.id, input.id))
+				: db.insert(products).values({ ...values, createdAt: now, stock: 0 }),
+			...(before && before.slug !== input.slug
+				? [
+						db
+							.insert(productSlugAliases)
+							.values({ productId: before.id, slug: before.slug })
+							.onConflictDoNothing(),
+					]
+				: []),
+			// The new slug is the product's own now, not an alias of it.
+			db
+				.delete(productSlugAliases)
+				.where(
+					and(eq(productSlugAliases.slug, input.slug), eq(productSlugAliases.productId, productId))
+				),
 			db.delete(productCategories).where(eq(productCategories.productId, productId)),
 			db.delete(productImages).where(eq(productImages.productId, productId)),
 			...[...new Set(input.categoryIds)].map((categoryId) =>
@@ -203,13 +211,14 @@ export class CatalogueAdminService {
 			...input.images.map((image, position) =>
 				db.insert(productImages).values({ alt: image.alt, position, productId, src: image.src })
 			),
+			...stock.componentStatements(productId, components),
 		]);
-		const stock = new StockService(db);
-		await stock.setComponents(
-			productId,
-			input.components.map((c) => ({ componentId: componentId.get(c.sku)!, quantity: c.quantity }))
-		);
-		return productId;
+		if (input.id) return input.id;
+		const [row] = await db
+			.select({ id: products.id })
+			.from(products)
+			.where(eq(products.sku, input.sku));
+		return row.id;
 	}
 
 	/** Names of the existing variation groups, for the editor's suggestions. */

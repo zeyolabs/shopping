@@ -5,10 +5,9 @@ import { z } from 'zod';
 import { shopping } from '../config';
 import { ReviewService } from '../reviews/service.server';
 import { ShippingService } from '../shipping/service.server';
+import { ShopSchema } from '../utils/schemas';
 import { Search } from './library';
 import { CatalogueService } from './service.server';
-
-const Slug = z.string().min(1).max(200);
 
 const catalogue = () => new CatalogueService(shopping().db());
 
@@ -24,14 +23,14 @@ export const getShop = Remote.Query(async () => {
 	return { categories, products };
 });
 
-export const getCategoryPage = Remote.Query(Slug, async (slug) => {
+export const getCategoryPage = Remote.Query(ShopSchema.SlugParam, async (slug) => {
 	const service = catalogue();
 	const category = await service.category(slug);
 	if (!category) throw Error404('Category not found');
 	return { category, products: await service.categoryProducts(category.id) };
 });
 
-export const getProduct = Remote.Query(Slug, async (slug) => {
+export const getProduct = Remote.Query(ShopSchema.SlugParam, async (slug) => {
 	const db = shopping().db();
 	const service = new CatalogueService(db);
 	const found = await service.product(slug);

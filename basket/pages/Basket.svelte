@@ -1,7 +1,14 @@
 <script lang="ts">
+	import { ErrorMessage } from '../../utils/errors';
 	import { resolve } from '$app/paths';
 	import PageTitle from '../../ui/PageTitle.svelte';
-	import { getBasket, getShippableCountries, setBasketQuantity, setShipTo } from '../client.remote';
+	import {
+		basketQuantityForm,
+		getBasket,
+		getShippableCountries,
+		setShipTo,
+	} from '../client.remote';
+	import { BasketQuantitySchema } from '../schema';
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
 	import { shopContext } from '../../context';
@@ -9,6 +16,7 @@
 	import { Money } from '../../utils/money';
 	import { toast } from 'svelte-sonner';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import { Select } from '@zeyolabs/ui/form/primitives';
 	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
@@ -25,7 +33,7 @@
 			const { url } = await startCheckout();
 			window.location.href = url;
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Could not start checkout.');
+			toast.error(ErrorMessage.from(error, 'Could not start checkout.'));
 			paying = false;
 		}
 	}
@@ -61,11 +69,19 @@
 							</p>
 						{/if}
 					</div>
-					<div class="flex items-center gap-2">
+					{const form = basketQuantityForm.for(line.id)}
+					<Form
+						class="flex items-center gap-2"
+						{form}
+						hidden={{ productId: line.id }}
+						reset={false}
+						schema={BasketQuantitySchema}
+					>
 						<Button
+							{...form.fields.quantity.as('submit', line.quantity - 1)}
 							aria-label="Decrease quantity of {line.name}"
+							{form}
 							icon
-							onclick={() => setBasketQuantity({ productId: line.id, quantity: line.quantity - 1 })}
 							size="sm"
 							variant="secondary"
 						>
@@ -73,16 +89,17 @@
 						</Button>
 						<span class="w-6 text-center">{line.quantity}</span>
 						<Button
+							{...form.fields.quantity.as('submit', line.quantity + 1)}
 							aria-label="Increase quantity of {line.name}"
 							disabled={line.quantity >= line.limit}
+							{form}
 							icon
-							onclick={() => setBasketQuantity({ productId: line.id, quantity: line.quantity + 1 })}
 							size="sm"
 							variant="secondary"
 						>
 							<Plus size={14} />
 						</Button>
-					</div>
+					</Form>
 					<p class="w-20 text-right">{Money.format(line.lineTotalPence)}</p>
 				</li>
 			{/each}

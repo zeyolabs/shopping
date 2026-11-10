@@ -5,12 +5,13 @@ import { z } from 'zod';
 
 import { shopping } from '../config';
 import { OrderService } from '../orders/service.server';
+import { ShopSchema } from '../utils/schemas';
 import { ReviewSchema } from './schema';
 import { ReviewService } from './service.server';
 
 const OrderLink = z.object({
-	number: z.string().min(1).max(40),
-	token: z.string().min(1).max(200),
+	number: ShopSchema.OrderNumber,
+	token: ShopSchema.OrderToken,
 });
 
 async function orderFor(number: string, token: string) {

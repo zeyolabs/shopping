@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ErrorMessage } from '../../utils/errors';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import PageTitle from '../../ui/PageTitle.svelte';
@@ -60,10 +61,7 @@
 			toast.success('Bundle added to your basket');
 			await goto(resolve('/basket'));
 		} catch (err) {
-			toast.error(
-				(err as { body?: { message?: string } })?.body?.message ??
-					'Could not add the bundle. Please try again.'
-			);
+			toast.error(ErrorMessage.from(err, 'Could not add the bundle. Please try again.'));
 		} finally {
 			busy = false;
 		}
@@ -92,8 +90,8 @@
 			</p>
 			<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				{#each step.products as product (product.id)}
-					{@const on = chosen(step.id).has(product.id)}
-					{@const out = product.stock < 1}
+					{const on = chosen(step.id).has(product.id)}
+					{const out = product.stock < 1}
 					<li>
 						<button
 							class="flex w-full items-center gap-3 rounded-xl border p-2 text-left transition {on

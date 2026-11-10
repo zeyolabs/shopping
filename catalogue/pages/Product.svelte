@@ -5,14 +5,15 @@
 	import PageTitle from '../../ui/PageTitle.svelte';
 	import Reviews from '../../reviews/components/Reviews.svelte';
 	import Stars from '../../ui/Stars.svelte';
-	import { addToBasket } from '../../basket/client.remote';
+	import { addToBasketForm } from '../../basket/client.remote';
+	import { AddToBasketSchema } from '../../basket/schema';
 	import type { getProduct } from '../client.remote';
 	import ShoppingBasket from '@lucide/svelte/icons/shopping-basket';
 	import { shopContext } from '../../context';
 	import { Images } from '../../utils/images';
 	import { Money } from '../../utils/money';
 	import { Stock } from '../../stock/library';
-	import { toast } from 'svelte-sonner';
+	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import ImageGallery from '@zeyolabs/ui/gallery/ImageGallery.svelte';
 
@@ -27,15 +28,6 @@
 	} = $props();
 
 	const context = shopContext();
-
-	async function add(productId: number) {
-		try {
-			await addToBasket({ productId, quantity: 1 });
-			toast.success('Added to your basket');
-		} catch {
-			toast.error('Could not add to basket. Please try again.');
-		}
-	}
 </script>
 
 {let product = $derived(data.product)}
@@ -91,10 +83,19 @@
 				left{:else}In stock{/if}
 		</p>
 		{#if product.stock > 0}
-			<Button class="mt-4" onclick={() => add(product.id)} size="lg">
-				<ShoppingBasket size={18} />
-				Add to basket
-			</Button>
+			{const form = addToBasketForm.for(product.id)}
+			<Form
+				class="mt-4"
+				{form}
+				hidden={{ productId: product.id, quantity: 1 }}
+				reset={false}
+				schema={AddToBasketSchema}
+			>
+				<Button {form} loadingMessage="Adding…" size="lg">
+					<ShoppingBasket size={18} />
+					Add to basket
+				</Button>
+			</Form>
 		{/if}
 		{#if product.stock <= 0}
 			{@render outOfStock?.(product.id)}

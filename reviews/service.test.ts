@@ -27,8 +27,7 @@ describe('ReviewService', () => {
 		const [pending] = await reviews.list('pending');
 		await reviews.moderate(pending.id, 'approved');
 		expect(await reviews.forProduct(p.id)).toMatchObject({ average: 4, count: 1 });
-		expect((await reviews.summaries([p.id])).get(p.id)).toEqual({ average: 4, count: 1 });
-		expect(await reviews.countPending()).toBe(0);
+		expect(await reviews.list('pending')).toEqual([]);
 	});
 
 	it('refuses cancelled orders', async () => {

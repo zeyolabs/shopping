@@ -3,6 +3,7 @@ import { Error404 } from '@zeyolabs/kit/utils/errors';
 import { z } from 'zod';
 
 import { shopping } from '../config';
+import { ShopSchema } from '../utils/schemas';
 import { Orders } from './library';
 import { OrderService } from './service.server';
 
@@ -25,7 +26,7 @@ export const getCheckoutOrder = Remote.Query(z.string().min(1).max(255), async (
  * token", so the number cannot be probed. Cache and robots headers are set in hooks.server.ts.
  */
 export const getOrderPage = Remote.Query(
-	z.object({ number: z.string().min(1).max(40), token: z.string().min(1).max(200) }),
+	z.object({ number: ShopSchema.OrderNumber, token: ShopSchema.OrderToken }),
 	async ({ number, token }) => {
 		const service = new OrderService(shopping().db());
 		const found = await service.forCustomer(number, token);

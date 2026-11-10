@@ -48,7 +48,7 @@
 	{:else}
 		<ul class="mt-4 space-y-4">
 			{#each rows as review (review.id)}
-				{@const form = moderateReviewForm.for(review.id)}
+				{const form = moderateReviewForm.for(review.id)}
 				<li class="rounded-xl border border-[var(--line)] bg-white p-4">
 					<p class="text-sm text-[var(--ink-muted)]">
 						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the shop's own domain -->

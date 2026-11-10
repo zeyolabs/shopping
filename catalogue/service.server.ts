@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 
@@ -11,6 +11,7 @@ import {
 	productSlugAliases,
 } from '../db/schema';
 import { StockService } from '../stock/service.server';
+import { CoverService } from './covers.server';
 import { Search } from './library';
 
 type Product = typeof products.$inferSelect;
@@ -127,20 +128,10 @@ export class CatalogueService {
 	/** Adds each product's cover image (lowest position). `stock` becomes what can be sold now. */
 	private async withCovers(list: Product[]) {
 		if (list.length === 0) return [];
-		const images = await this.db
-			.select()
-			.from(productImages)
-			.where(
-				inArray(
-					productImages.productId,
-					list.map((p) => p.id)
-				)
-			)
-			.orderBy(asc(productImages.position));
-		const cover = new Map<number, (typeof images)[number]>();
-		for (const image of images) if (!cover.has(image.productId)) cover.set(image.productId, image);
+		const ids = list.map((p) => p.id);
+		const covers = new CoverService(this.db);
 		const stock = new StockService(this.db);
-		const sellable = await stock.availableMany(list.map((p) => p.id));
+		const [cover, sellable] = await Promise.all([covers.covers(ids), stock.availableMany(ids)]);
 		return list.map((product) => ({
 			...product,
 			cover: cover.get(product.id),

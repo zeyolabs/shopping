@@ -14,16 +14,9 @@ export const getReviews = Remote.Query(z.enum(REVIEW_STATUSES), (status) => {
 	return service.list(status);
 });
 
-export const getPendingReviewCount = Remote.Query(() => {
-	const service = reviewService();
-	return service.countPending();
-});
-
 export const moderateReviewForm = Remote.Form(ModerateReviewSchema, async ({ id, status }) => {
 	const service = reviewService();
 	await service.moderate(id, status);
-	await Promise.all(
-		REVIEW_STATUSES.map((s) => getReviews(s).refresh()).concat(getPendingReviewCount().refresh())
-	);
+	await Promise.all(REVIEW_STATUSES.map((s) => getReviews(s).refresh()));
 	return FormResult.ok(status === 'approved' ? 'Review approved.' : 'Review rejected.');
 });

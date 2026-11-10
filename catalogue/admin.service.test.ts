@@ -79,4 +79,12 @@ describe('CatalogueAdminService.saveProduct', () => {
 			admin.saveProduct({ ...base, id: part, sku: 'CUP', slug: 'green-tea' })
 		).rejects.toThrow('old link');
 	});
+
+	it('finds products by name or SKU, taking _ literally', async () => {
+		const admin = new CatalogueAdminService(db());
+		await admin.saveProduct({ ...base, name: 'Key_cap', sku: 'KC_1', slug: 'key-cap' });
+		await admin.saveProduct({ ...base, name: 'Keyxcap', sku: 'KCX1', slug: 'keyx-cap' });
+		expect((await admin.products('key_')).map((p) => p.name)).toEqual(['Key_cap']);
+		expect((await admin.products('kcx')).map((p) => p.sku)).toEqual(['KCX1']);
+	});
 });

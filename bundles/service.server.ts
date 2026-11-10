@@ -1,11 +1,13 @@
 import { Error400 } from '@zeyolabs/kit/utils/errors';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 import type { BundleInput } from './schema';
 
-import { bundles, bundleStepProducts, bundleSteps, productImages, products } from '../db/schema';
+import { CoverService } from '../catalogue/covers.server';
+import { bundles, bundleStepProducts, bundleSteps, products } from '../db/schema';
 import { StockService } from '../stock/service.server';
+import { Batches } from '../utils/batches';
 
 type Choice = { productIds: number[]; stepId: number };
 
@@ -90,14 +92,13 @@ export class BundleService {
 	/** Creates or replaces a bundle and all its steps. Unknown SKUs are a 400 naming them. */
 	async save(input: BundleInput, now = Date.now()): Promise<number> {
 		const skus = [...new Set(input.steps.flatMap((s) => s.skus))];
-		const found = new Map<string, number>();
-		for (let i = 0; i < skus.length; i += 90) {
-			const rows = await this.db
+		const skuRows = await Batches.rows(skus, (slice) =>
+			this.db
 				.select({ id: products.id, sku: products.sku })
 				.from(products)
-				.where(inArray(products.sku, skus.slice(i, i + 90)));
-			for (const r of rows) found.set(r.sku, r.id);
-		}
+				.where(inArray(products.sku, slice))
+		);
+		const found = new Map(skuRows.map((r) => [r.sku, r.id]));
 		const missing = skus.filter((s) => !found.has(s));
 		if (missing.length > 0) throw Error400(`Unknown SKU: ${missing.join(', ')}`);
 		const clash = await this.db.query.bundles.findFirst({ where: eq(bundles.slug, input.slug) });
@@ -111,23 +112,30 @@ export class BundleService {
 			slug: input.slug,
 			sortOrder: input.sortOrder,
 		};
-		let id = input.id;
-		if (id === undefined) {
-			const [row] = await this.db
-				.insert(bundles)
-				.values({ ...values, createdAt: now })
-				.returning({ id: bundles.id });
-			id = row.id;
-		} else {
-			await this.db.update(bundles).set(values).where(eq(bundles.id, id));
-		}
-		const bundleId = id;
-		// Steps are replaced whole: simpler than diffing, and nothing else points at a step.
-		await this.db.delete(bundleSteps).where(eq(bundleSteps.bundleId, bundleId));
-		for (const [position, step] of input.steps.entries()) {
-			const [row] = await this.db
-				.insert(bundleSteps)
-				.values({
+		// A new bundle has no id until the batch inserts it, so later statements find it by slug,
+		// and each step by its bundle and position.
+		const bundleId =
+			input.id ??
+			sql<number>`(select ${bundles.id} from ${bundles} where ${bundles.slug} = ${input.slug})`;
+		const stepId = (position: number) =>
+			sql<number>`(select ${bundleSteps.id} from ${bundleSteps} where ${bundleSteps.bundleId} = ${bundleId} and ${bundleSteps.position} = ${position})`;
+		const offered = input.steps.flatMap((step, position) =>
+			[...new Set(step.skus)].map((sku, i) => ({
+				position: i,
+				productId: found.get(sku)!,
+				stepId: stepId(position),
+			}))
+		);
+
+		// One atomic batch: the bundle and all its steps are saved, or nothing is. Steps are replaced
+		// whole: simpler than diffing, and nothing else points at a step.
+		await this.db.batch([
+			input.id
+				? this.db.update(bundles).set(values).where(eq(bundles.id, input.id))
+				: this.db.insert(bundles).values({ ...values, createdAt: now }),
+			this.db.delete(bundleSteps).where(eq(bundleSteps.bundleId, bundleId)),
+			...input.steps.map((step, position) =>
+				this.db.insert(bundleSteps).values({
 					bundleId,
 					description: step.description,
 					maxChoices: step.maxChoices,
@@ -135,18 +143,16 @@ export class BundleService {
 					position,
 					title: step.title,
 				})
-				.returning({ id: bundleSteps.id });
-			const rows = [...new Set(step.skus)].map((sku, i) => ({
-				position: i,
-				productId: found.get(sku)!,
-				stepId: row.id,
-			}));
-			// 3 parameters a row; D1 allows 100 per statement.
-			for (let i = 0; i < rows.length; i += 30) {
-				await this.db.insert(bundleStepProducts).values(rows.slice(i, i + 30));
-			}
-		}
-		return bundleId;
+			),
+			// Each row carries a subquery's parameters; 15 rows keep a statement under D1's 100.
+			...Batches.chunks(offered, 15).map((rows) => this.db.insert(bundleStepProducts).values(rows)),
+		]);
+		if (input.id) return input.id;
+		const [row] = await this.db
+			.select({ id: bundles.id })
+			.from(bundles)
+			.where(eq(bundles.slug, input.slug));
+		return row.id;
 	}
 
 	private async steps(bundleId: number, { activeOnly }: { activeOnly: boolean }) {
@@ -182,19 +188,8 @@ export class BundleService {
 		const ids = [...new Set(offered.map((p) => p.id))];
 		const stock = new StockService(this.db);
 		const sellable = await stock.availableMany(ids);
-		const covers = new Map<number, { alt: string; src: string }>();
-		if (ids.length > 0) {
-			for (let i = 0; i < ids.length; i += 90) {
-				const images = await this.db
-					.select()
-					.from(productImages)
-					.where(inArray(productImages.productId, ids.slice(i, i + 90)))
-					.orderBy(asc(productImages.position));
-				for (const image of images)
-					if (!covers.has(image.productId))
-						covers.set(image.productId, { alt: image.alt, src: image.src });
-			}
-		}
+		const coverService = new CoverService(this.db);
+		const covers = await coverService.covers(ids);
 		return steps.map((step) => ({
 			...step,
 			products: offered
