@@ -9,6 +9,14 @@ describe('Search.words', () => {
 		expect(Search.words('  Green   TEA ')).toEqual(['green', 'tea']);
 		expect(Search.words('a b c d e f g h')).toHaveLength(6);
 	});
+
+	it('cuts a long word so its LIKE pattern fits D1 (50 bytes), escapes and multibyte included', () => {
+		for (const word of ['x'.repeat(90), '%'.repeat(40), '茶'.repeat(30), '_a'.repeat(30)]) {
+			const [fitted] = Search.words(word);
+			expect(fitted.length).toBeGreaterThan(0);
+			expect(new TextEncoder().encode(Search.pattern(fitted)).length).toBeLessThanOrEqual(50);
+		}
+	});
 });
 
 describe('CatalogueService.search', () => {

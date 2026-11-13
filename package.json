@@ -46,6 +46,7 @@
 	},
 	"exports": {
 		"./*.svelte": "./*.svelte",
+		"./db": "./db/index.ts",
 		"./*": "./*.ts"
 	},
 	"dependencies": {

@@ -1,6 +1,7 @@
 import type Stripe from 'stripe';
 
 import { getRequestEvent } from '$app/server';
+import { AuthHandle } from '@zeyolabs/kit/auth/sessions/handle';
 import { Error400 } from '@zeyolabs/kit/utils/errors';
 
 import { BasketCookies } from '../basket/cookies.server';
@@ -16,15 +17,13 @@ type ShippableSummary = BasketSummary & { shipping: NonNullable<BasketSummary['s
 export const CheckoutManager = {
 	/**
 	 * Prices the basket from the database and returns the Stripe Checkout URL to redirect to. The
-	 * order itself is only created from the webhook once paid.
+	 * order itself is only created from the webhook once paid. A signed-in customer (the app's kit
+	 * `AuthHandle` in front) is passed to Stripe as a Customer, so their saved details are filled
+	 * in; the email is read from their session here, never taken from the caller.
 	 */
-	async start(
-		options: {
-			/** The signed-in customer's email: Checkout then fills in their saved details. */
-			email?: null | string;
-		} = {}
-	): Promise<{ url: string }> {
-		const { cookies, url } = getRequestEvent();
+	async start(): Promise<{ url: string }> {
+		const event = getRequestEvent();
+		const { cookies, url } = event;
 		const config = shopping();
 		const db = config.db();
 		const basket = new BasketService(db);
@@ -52,9 +51,8 @@ export const CheckoutManager = {
 
 		const client = ShopClients.stripe();
 		const customers = new CustomerService(db);
-		const customerId = options.email
-			? await customers.stripeCustomerId(client, options.email)
-			: undefined;
+		const email = AuthHandle.locals(event).user?.email;
+		const customerId = email ? await customers.stripeCustomerId(client, email) : undefined;
 		const session = await client.checkout.sessions.create(
 			sessionParams({ ...summary, shipping: summary.shipping }, url.origin, customerId)
 		);

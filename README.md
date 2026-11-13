@@ -37,8 +37,8 @@ One folder per feature (library, client, service, manager, remote functions, pag
   (`orders/invoice.server`), staff from the admin order (`fulfilment/invoice.server`).
 - **Search**: `catalogue/pages/Search.svelte` + `searchLoad`.
 - **Customer accounts**: `customers/pages/Account.svelte` lists the orders for the signed-in email; sign-in
-  is kit's passwordless auth in the app. `CheckoutManager.start({ email })` passes the customer to Stripe
-  so their saved details are filled in.
+  is kit's passwordless auth in the app. `CheckoutManager.start()` passes a signed-in customer to Stripe (their
+  email comes from the session, never from the caller) so their saved details are filled in.
 - **Reviews**: verified buyers review items from their order page; staff moderate in
   `reviews/admin/ReviewsPage.svelte`; approved reviews show on the product page.
 - **Bundles**: `bundles/pages/Bundle.svelte` + `bundleLoad`; the customer picks per step and the picks go
