@@ -9,6 +9,7 @@ import { shopping } from '../config';
 import { Orders } from '../orders/library';
 import { OrderManager } from '../orders/manager.server';
 import { ShippingService } from '../shipping/service.server';
+import { OrderRefunds } from './refund.server';
 import { FulfilmentService, type Parcel } from './service.server';
 
 const service = () => new FulfilmentService(shopping().db());
@@ -95,6 +96,34 @@ export const FulfilmentManager = {
 			packingStartedAt: order.packingStartedAt ?? now,
 			weightGrams,
 		});
+	},
+
+	/**
+	 * Refunds `pence` of a paid or shipped order through Stripe and records Stripe's new total.
+	 * Stripe is the source of truth (see `OrderRefunds`), so a refund made in its dashboard, a
+	 * double click or a failed database write cannot make this order disagree with it. Stock is not
+	 * put back: the admin does that on the stock page. A full refund marks the order refunded even
+	 * if it had shipped; a label for a parcel not yet posted is not cancelled.
+	 */
+	async refund(number: string, pence: number) {
+		const order = await findOrThrow(number);
+		if (order.status !== 'paid' && order.status !== 'shipped') {
+			throw Error400(`This order is ${order.status}, so it cannot be refunded.`);
+		}
+		if (!order.stripePaymentIntentId) throw Error400('This order has no Stripe payment to refund.');
+
+		const result = await OrderRefunds.run(
+			ShopClients.stripe(),
+			{ number: order.number, stripePaymentIntentId: order.stripePaymentIntentId },
+			pence
+		);
+		await service().setRefunded(order.id, result.refundedPence);
+		logger.info('refund', {
+			amountPence: pence,
+			order: order.number,
+			refundedPence: result.refundedPence,
+		});
+		return { fullyRefunded: result.fullyRefunded };
 	},
 
 	/** The order in full, with the customer's order page link. */

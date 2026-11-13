@@ -121,6 +121,21 @@ export class FulfilmentService {
 		await this.update(order.id, { heldAt: held ? now : null });
 	}
 
+	/**
+	 * Sets the order's refunded total to what Stripe reports (never lower than recorded), so
+	 * recording the same refund twice, or two at once, gives the same result. Reaching the order
+	 * total makes it `refunded`.
+	 */
+	async setRefunded(orderId: number, refundedPence: number) {
+		await this.db
+			.update(orders)
+			.set({
+				refundedPence: sql`max(${orders.refundedPence}, ${refundedPence})`,
+				status: sql`case when ${refundedPence} >= ${orders.totalPence} then 'refunded' else ${orders.status} end`,
+			})
+			.where(eq(orders.id, orderId));
+	}
+
 	async startPacking(number: string, now = Date.now()) {
 		const order = await this.packable(number);
 		if (order.packingStartedAt && !order.heldAt) return;

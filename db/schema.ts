@@ -221,6 +221,8 @@ export const orders = sqliteTable(
 		/** When someone started packing it, so two people don't pack the same order. */
 		packingStartedAt: integer('packing_started_at'),
 		paidAt: integer('paid_at'),
+		/** Total refunded through Stripe so far, in pence. Equal to `totalPence` means fully refunded. */
+		refundedPence: integer('refunded_pence').notNull().default(0),
 		/** Click & Drop order identifier, once the order has been pushed to Royal Mail. */
 		royalMailOrderId: text('royal_mail_order_id'),
 		shippedAt: integer('shipped_at'),
