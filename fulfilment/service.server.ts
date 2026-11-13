@@ -3,6 +3,7 @@ import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 import type { OrderFilter } from './filters';
+import type { OrderDetails } from './schema';
 
 import { Search } from '../catalogue/library';
 import { addresses, orderItems, orders, type PackageFormat, products } from '../db/schema';
@@ -103,6 +104,60 @@ export class FulfilmentService {
 		if (order.status !== 'paid')
 			throw Error400(`This order is ${order.status}, so it cannot be packed.`);
 		return order;
+	}
+
+	/**
+	 * Corrects the customer's contact, the address and the postage service of a paid or shipped
+	 * order. Returns whether anything Click & Drop holds (address, email, phone, service) changed.
+	 */
+	async saveDetails(
+		number: string,
+		details: Omit<OrderDetails, 'number' | 'trackingNumber'> & { trackingNumber?: null | string }
+	) {
+		const order = await this.db.query.orders.findFirst({ where: eq(orders.number, number) });
+		if (!order) throw Error404('Order not found.');
+		if (order.status !== 'paid' && order.status !== 'shipped')
+			throw Error400(`This order is ${order.status}, so its details cannot be edited.`);
+		const address = await this.db.query.addresses.findFirst({
+			where: eq(addresses.id, order.shippingAddressId),
+		});
+		if (!address) throw Error404('Order not found.');
+
+		const next = {
+			city: details.city,
+			country: details.country,
+			line1: details.line1,
+			line2: details.line2 || null,
+			name: details.name,
+			phone: details.phone || null,
+			postcode: details.postcode,
+		};
+		// A blank service keeps the order's current one: a paid order should not lose its postage.
+		const service = details.shippingService || order.shippingService;
+		const email = details.email.toLowerCase();
+		const labelAffected =
+			email !== order.email.toLowerCase() ||
+			service !== order.shippingService ||
+			(Object.keys(next) as (keyof typeof next)[]).some((key) => next[key] !== address[key]);
+		// Click & Drop cannot edit an order: a label made before the change is stale, so printing
+		// again replaces it. Cleared in the same batch as the address, so they cannot disagree.
+		const labelStale = labelAffected && order.status === 'paid' && order.labelCreatedAt !== null;
+
+		await this.db.batch([
+			this.db.update(addresses).set(next).where(eq(addresses.id, address.id)),
+			this.db
+				.update(orders)
+				.set({
+					email: details.email,
+					shippingService: service,
+					...(labelStale ? { labelCreatedAt: null } : {}),
+					...(details.trackingNumber === undefined
+						? {}
+						: { trackingNumber: details.trackingNumber || null }),
+				})
+				.where(eq(orders.id, order.id)),
+		]);
+		return { labelStale };
 	}
 
 	async saveParcel(number: string, parcel: Parcel) {
