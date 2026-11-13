@@ -2,10 +2,10 @@ import type { EmailBrand } from '@zeyolabs/kit/utils/email';
 
 import { envStore } from '@zeyolabs/kit/utils/env';
 
-import type { ShopDb } from './db';
-import type { BackInStockEmailData } from './emails/back-in-stock';
-import type { DispatchEmailData } from './emails/dispatch';
-import type { OrderEmailData } from './emails/order';
+import type { ShopDb } from './db/index';
+import type { DispatchEmailData } from './fulfilment/dispatch-email';
+import type { OrderEmailData } from './orders/email';
+import type { BackInStockEmailData } from './stock-alerts/email';
 
 /**
  * Names of the secrets the shop reads, as they are called in the app's wrangler config. The app must
@@ -46,9 +46,28 @@ export type ShopMail = {
 	orderDispatched: (order: DispatchEmailData) => Promise<void>;
 };
 
+/** Stripe Checkout options. Both are off unless the site turns them on. */
+export type CheckoutOptions = {
+	/**
+	 * Have Stripe issue a numbered, paid invoice (PDF) for every order and email it with the
+	 * receipt. Stripe charges per invoice. `customFields` appear on the invoice, e.g. the VAT number
+	 * (up to 4); `footer` is printed at the bottom, e.g. the registered company details.
+	 */
+	invoices?: {
+		customFields?: { name: string; value: string }[];
+		footer?: string;
+	};
+	/**
+	 * Let customers enter a Stripe promotion code at Checkout. Codes, coupons and their limits are
+	 * created and managed in the Stripe dashboard; the shop stores only the discount on each order.
+	 */
+	promotionCodes?: boolean;
+};
+
 /** Everything that differs between sites. The package holds no brand, address or account of its own. */
 export type ShoppingConfig = {
 	brand: EmailBrand;
+	checkout?: CheckoutOptions;
 	db: () => ShopDb;
 	/** Where product image files are served from; the database stores only file names. */
 	imageBaseUrl: string;
