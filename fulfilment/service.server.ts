@@ -3,6 +3,7 @@ import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 import type { OrderFilter } from './filters';
+import type { OrderDetails } from './schema';
 
 import { Search } from '../catalogue/library';
 import { addresses, orderItems, orders, type PackageFormat, products } from '../db/schema';
@@ -103,6 +104,49 @@ export class FulfilmentService {
 		if (order.status !== 'paid')
 			throw Error400(`This order is ${order.status}, so it cannot be packed.`);
 		return order;
+	}
+
+	/**
+	 * Corrects the customer's contact, the address and the postage service of a paid or shipped
+	 * order. Returns whether anything Click & Drop holds (address, email, phone, service) changed.
+	 */
+	async saveDetails(
+		number: string,
+		details: Omit<OrderDetails, 'number' | 'trackingNumber'> & { trackingNumber?: null | string }
+	) {
+		const order = await this.db.query.orders.findFirst({ where: eq(orders.number, number) });
+		if (!order) throw Error404('Order not found.');
+		if (order.status !== 'paid' && order.status !== 'shipped')
+			throw Error400(`This order is ${order.status}, so its details cannot be edited.`);
+		const address = await this.db.query.addresses.findFirst({
+			where: eq(addresses.id, order.shippingAddressId),
+		});
+		if (!address) throw Error404('Order not found.');
+
+		const next = {
+			city: details.city,
+			country: details.country,
+			line1: details.line1,
+			line2: details.line2 || null,
+			name: details.name,
+			phone: details.phone || null,
+			postcode: details.postcode,
+		};
+		const service = details.shippingService || null;
+		const labelAffected =
+			details.email !== order.email ||
+			service !== order.shippingService ||
+			(Object.keys(next) as (keyof typeof next)[]).some((key) => next[key] !== address[key]);
+
+		await this.db.update(addresses).set(next).where(eq(addresses.id, address.id));
+		await this.update(order.id, {
+			email: details.email,
+			shippingService: service,
+			...(details.trackingNumber === undefined
+				? {}
+				: { trackingNumber: details.trackingNumber || null }),
+		});
+		return { labelAffected };
 	}
 
 	async saveParcel(number: string, parcel: Parcel) {

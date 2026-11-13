@@ -4,12 +4,14 @@
 	import { page } from '$app/state';
 	import {
 		createOrderLabel,
+		detailsForm,
 		getOrder,
+		getShippingServices,
 		parcelForm,
 		shipForm,
 		updateOrderForm,
 	} from '../admin.remote';
-	import { OrderStepSchema, ParcelSchema, ShipSchema } from '../schema';
+	import { OrderDetailsSchema, OrderStepSchema, ParcelSchema, ShipSchema } from '../schema';
 	import { Money } from '../../utils/money';
 	import { Orders } from '../../orders/library';
 	import { toast } from 'svelte-sonner';
@@ -227,6 +229,69 @@
 				</div>
 				<div><Button form={parcelForm}>Save parcel</Button></div>
 			</Form>
+		</section>
+	{/if}
+
+	{#if order.status === 'paid' || order.status === 'shipped'}
+		{let services = $derived(await getShippingServices())}
+		<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
+			<details>
+				<summary class="cursor-pointer font-semibold">Edit contact, address and postage</summary>
+				<p class="mt-2 text-sm text-[var(--ink-muted)]">
+					For fixing a typo or a customer's request. {#if order.status === 'paid' && order.labelCreatedAt}The
+						label is already made, so after a change you need to print it again.{/if}
+				</p>
+				<Form
+					class="mt-4 grid gap-4"
+					defaults={{
+						city: order.address.city,
+						country: order.address.country,
+						email: order.email,
+						line1: order.address.line1,
+						line2: order.address.line2 ?? '',
+						name: order.address.name,
+						phone: order.address.phone ?? '',
+						postcode: order.address.postcode,
+						shippingService: order.shippingService ?? '',
+						trackingNumber: order.trackingNumber ?? '',
+					}}
+					form={detailsForm}
+					hidden={{ number: order.number }}
+					reset={false}
+					schema={OrderDetailsSchema}
+				>
+					<TextField name="name" form={detailsForm}>Name</TextField>
+					<TextField name="email" form={detailsForm} inputmode="email">Email</TextField>
+					<TextField name="phone" form={detailsForm} inputmode="tel" optional>Phone</TextField>
+					<TextField name="line1" form={detailsForm}>Address line 1</TextField>
+					<TextField name="line2" form={detailsForm} optional>Address line 2</TextField>
+					<TextField name="city" form={detailsForm}>Town or city</TextField>
+					<TextField name="postcode" autocapitalize="characters" form={detailsForm}
+						>Postcode</TextField
+					>
+					<TextField name="country" autocapitalize="characters" form={detailsForm}
+						>Country code (e.g. GB)</TextField
+					>
+					<SelectField
+						name="shippingService"
+						form={detailsForm}
+						getLabel={(s) => services.find((x) => x.service === s)?.name ?? s}
+						items={services.map((s) => s.service)}
+						placeholder="Postage service"
+					/>
+					{#if order.status === 'shipped'}
+						<TextField
+							name="trackingNumber"
+							autocapitalize="characters"
+							form={detailsForm}
+							optional
+						>
+							Tracking number (no email is sent)
+						</TextField>
+					{/if}
+					<div><Button form={detailsForm}>Save details</Button></div>
+				</Form>
+			</details>
 		</section>
 	{/if}
 
