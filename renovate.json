@@ -8,6 +8,11 @@
 	"dependencyDashboard": true,
 	"packageRules": [
 		{
+			"description": "engines.node stays a range; Renovate would pin it to one exact Node release.",
+			"matchDepTypes": ["engines"],
+			"enabled": false
+		},
+		{
 			"description": "Peer ranges stay ranges; only widen them when a new major is out.",
 			"matchDepTypes": ["peerDependencies"],
 			"rangeStrategy": "widen"
