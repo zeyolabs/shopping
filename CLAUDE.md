@@ -52,6 +52,7 @@ in catalogue and basket output is what can be sold now. `StockService.setStock` 
 path (it sets `restockedAt`); `paidStatements` is the paid decrement, in the same atomic batch as the
 order items. Back-in-stock keys off `sellableSql`. Schema changes are additive; each app generates
 its migration and applies it to prod D1 before deploying a version that uses it.
+Refunds (`fulfilment/refund.server.ts`) read what is already refunded from the Stripe charge and record Stripe's total in `orders.refunded_pence`; an app must generate and apply that migration to prod D1 before deploying the version that has it.
 Signup form and checkout stay in the app (Turnstile / rate limiter): the product page takes an
 `outOfStock` snippet, the basket page takes the app's `startCheckout` remote function.
 

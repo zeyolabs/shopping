@@ -244,7 +244,8 @@
 			<h2 class="font-semibold">Refund</h2>
 			<p class="mt-1 text-sm text-[var(--ink-muted)]">
 				Up to {Money.format(left)} can be refunded to the customer's card through Stripe. A full refund
-				marks the order refunded. Stock is not put back; do that on the stock page if the goods come back.
+				marks the order refunded, even if it had shipped, and does not cancel a Royal Mail label. Stock
+				is not put back; do that on the stock page if the goods come back.
 			</p>
 			<Form
 				class="mt-4 grid gap-4"

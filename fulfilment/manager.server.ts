@@ -9,7 +9,7 @@ import { shopping } from '../config';
 import { Orders } from '../orders/library';
 import { OrderManager } from '../orders/manager.server';
 import { ShippingService } from '../shipping/service.server';
-import { Money } from '../utils/money';
+import { OrderRefunds } from './refund.server';
 import { FulfilmentService, type Parcel } from './service.server';
 
 const service = () => new FulfilmentService(shopping().db());
@@ -99,11 +99,11 @@ export const FulfilmentManager = {
 	},
 
 	/**
-	 * Refunds `pence` of a paid or shipped order through Stripe, then records it. The idempotency
-	 * key names the order, what was already refunded and the amount, so a retry after a failed
-	 * database write returns the same Stripe refund instead of refunding twice. Stock is not put
-	 * back: the admin does that on the stock page. Refunds made in the Stripe dashboard are not
-	 * seen here.
+	 * Refunds `pence` of a paid or shipped order through Stripe and records Stripe's new total.
+	 * Stripe is the source of truth (see `OrderRefunds`), so a refund made in its dashboard, a
+	 * double click or a failed database write cannot make this order disagree with it. Stock is not
+	 * put back: the admin does that on the stock page. A full refund marks the order refunded even
+	 * if it had shipped; a label for a parcel not yet posted is not cancelled.
 	 */
 	async refund(number: string, pence: number) {
 		const order = await findOrThrow(number);
@@ -111,19 +111,19 @@ export const FulfilmentManager = {
 			throw Error400(`This order is ${order.status}, so it cannot be refunded.`);
 		}
 		if (!order.stripePaymentIntentId) throw Error400('This order has no Stripe payment to refund.');
-		const left = order.totalPence - order.refundedPence;
-		if (pence > left) throw Error400(`Only ${Money.format(left)} is left to refund on this order.`);
 
-		await ShopClients.stripe().refunds.create(
-			{
-				amount: pence,
-				metadata: { order: order.number },
-				payment_intent: order.stripePaymentIntentId,
-			},
-			{ idempotencyKey: `refund-${order.number}-${order.refundedPence}-${pence}` }
+		const result = await OrderRefunds.run(
+			ShopClients.stripe(),
+			{ number: order.number, stripePaymentIntentId: order.stripePaymentIntentId },
+			pence
 		);
-		await service().recordRefund(order.id, pence);
-		return { fullyRefunded: pence === left };
+		await service().setRefunded(order.id, result.refundedPence);
+		logger.info('refund', {
+			amountPence: pence,
+			order: order.number,
+			refundedPence: result.refundedPence,
+		});
+		return { fullyRefunded: result.fullyRefunded };
 	},
 
 	/** The order in full, with the customer's order page link. */
