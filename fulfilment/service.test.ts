@@ -15,3 +15,18 @@ describe('FulfilmentService.list', () => {
 		expect(await fulfilment.list('to-ship', 'shop.test')).toHaveLength(2);
 	});
 });
+
+describe('FulfilmentService.recordRefund', () => {
+	const { db, order } = shopTestDb();
+
+	it('adds partial refunds and marks the order refunded when the total is reached', async () => {
+		const row = await order('paid', []);
+		const fulfilment = new FulfilmentService(db());
+		await fulfilment.recordRefund(row.id, 400);
+		let found = await fulfilment.find(row.number);
+		expect([found?.refundedPence, found?.status]).toEqual([400, 'paid']);
+		await fulfilment.recordRefund(row.id, 600);
+		found = await fulfilment.find(row.number);
+		expect([found?.refundedPence, found?.status]).toEqual([1000, 'refunded']);
+	});
+});

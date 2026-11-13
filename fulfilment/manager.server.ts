@@ -9,6 +9,7 @@ import { shopping } from '../config';
 import { Orders } from '../orders/library';
 import { OrderManager } from '../orders/manager.server';
 import { ShippingService } from '../shipping/service.server';
+import { Money } from '../utils/money';
 import { FulfilmentService, type Parcel } from './service.server';
 
 const service = () => new FulfilmentService(shopping().db());
@@ -95,6 +96,34 @@ export const FulfilmentManager = {
 			packingStartedAt: order.packingStartedAt ?? now,
 			weightGrams,
 		});
+	},
+
+	/**
+	 * Refunds `pence` of a paid or shipped order through Stripe, then records it. The idempotency
+	 * key names the order, what was already refunded and the amount, so a retry after a failed
+	 * database write returns the same Stripe refund instead of refunding twice. Stock is not put
+	 * back: the admin does that on the stock page. Refunds made in the Stripe dashboard are not
+	 * seen here.
+	 */
+	async refund(number: string, pence: number) {
+		const order = await findOrThrow(number);
+		if (order.status !== 'paid' && order.status !== 'shipped') {
+			throw Error400(`This order is ${order.status}, so it cannot be refunded.`);
+		}
+		if (!order.stripePaymentIntentId) throw Error400('This order has no Stripe payment to refund.');
+		const left = order.totalPence - order.refundedPence;
+		if (pence > left) throw Error400(`Only ${Money.format(left)} is left to refund on this order.`);
+
+		await ShopClients.stripe().refunds.create(
+			{
+				amount: pence,
+				metadata: { order: order.number },
+				payment_intent: order.stripePaymentIntentId,
+			},
+			{ idempotencyKey: `refund-${order.number}-${order.refundedPence}-${pence}` }
+		);
+		await service().recordRefund(order.id, pence);
+		return { fullyRefunded: pence === left };
 	},
 
 	/** The order in full, with the customer's order page link. */

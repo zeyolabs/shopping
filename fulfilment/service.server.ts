@@ -105,6 +105,20 @@ export class FulfilmentService {
 		return order;
 	}
 
+	/**
+	 * Adds a refund Stripe has accepted to the order. One statement, so two refunds at once cannot
+	 * lose one. A refund that takes it to the full total makes the order `refunded`.
+	 */
+	async recordRefund(orderId: number, pence: number) {
+		await this.db
+			.update(orders)
+			.set({
+				refundedPence: sql`${orders.refundedPence} + ${pence}`,
+				status: sql`case when ${orders.refundedPence} + ${pence} >= ${orders.totalPence} then 'refunded' else ${orders.status} end`,
+			})
+			.where(eq(orders.id, orderId));
+	}
+
 	async saveParcel(number: string, parcel: Parcel) {
 		const order = await this.packable(number);
 		await this.update(order.id, {

@@ -6,11 +6,13 @@
 		createOrderLabel,
 		getOrder,
 		parcelForm,
+		refundForm,
 		shipForm,
 		updateOrderForm,
 	} from '../admin.remote';
-	import { OrderStepSchema, ParcelSchema, ShipSchema } from '../schema';
+	import { OrderStepSchema, ParcelSchema, RefundSchema, ShipSchema } from '../schema';
 	import { Money } from '../../utils/money';
+	import { FormInput } from '../../utils/form-input';
 	import { Orders } from '../../orders/library';
 	import { toast } from 'svelte-sonner';
 	import { PACKAGE_FORMATS } from '../../db/schema';
@@ -119,6 +121,12 @@
 					<dt>Total</dt>
 					<dd>{Money.format(order.totalPence)}</dd>
 				</div>
+				{#if order.refundedPence > 0}
+					<div class="flex justify-between">
+						<dt>Refunded</dt>
+						<dd>-{Money.format(order.refundedPence)}</dd>
+					</div>
+				{/if}
 			</dl>
 		</section>
 	</div>
@@ -226,6 +234,28 @@
 					</NumberField>
 				</div>
 				<div><Button form={parcelForm}>Save parcel</Button></div>
+			</Form>
+		</section>
+	{/if}
+
+	{#if (order.status === 'paid' || order.status === 'shipped') && order.stripePaymentIntentId && order.refundedPence < order.totalPence}
+		{let left = $derived(order.totalPence - order.refundedPence)}
+		<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
+			<h2 class="font-semibold">Refund</h2>
+			<p class="mt-1 text-sm text-[var(--ink-muted)]">
+				Up to {Money.format(left)} can be refunded to the customer's card through Stripe. A full refund
+				marks the order refunded. Stock is not put back; do that on the stock page if the goods come back.
+			</p>
+			<Form
+				class="mt-4 grid gap-4"
+				defaults={{ amount: FormInput.penceToPounds(left) }}
+				form={refundForm}
+				hidden={{ number: order.number }}
+				reset={false}
+				schema={RefundSchema}
+			>
+				<TextField name="amount" form={refundForm} inputmode="decimal">Amount (£)</TextField>
+				<div><Button form={refundForm} variant="secondary">Refund</Button></div>
 			</Form>
 		</section>
 	{/if}

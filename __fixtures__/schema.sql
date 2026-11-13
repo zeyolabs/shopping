@@ -122,6 +122,7 @@ CREATE TABLE `shipping_rates` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `shipping_rates_zone_service_weight` ON `shipping_rates` (`zone`,`service`,`max_grams`);--> statement-breakpoint
 ALTER TABLE `orders` ADD `royal_mail_order_id` text;--> statement-breakpoint
+ALTER TABLE `orders` ADD `refunded_pence` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE `orders` ADD `shipping_service` text;
 --> statement-breakpoint
 CREATE TABLE `product_slug_aliases` (
