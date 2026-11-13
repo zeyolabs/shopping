@@ -132,21 +132,32 @@ export class FulfilmentService {
 			phone: details.phone || null,
 			postcode: details.postcode,
 		};
-		const service = details.shippingService || null;
+		// A blank service keeps the order's current one: a paid order should not lose its postage.
+		const service = details.shippingService || order.shippingService;
+		const email = details.email.toLowerCase();
 		const labelAffected =
-			details.email !== order.email ||
+			email !== order.email.toLowerCase() ||
 			service !== order.shippingService ||
 			(Object.keys(next) as (keyof typeof next)[]).some((key) => next[key] !== address[key]);
+		// Click & Drop cannot edit an order: a label made before the change is stale, so printing
+		// again replaces it. Cleared in the same batch as the address, so they cannot disagree.
+		const labelStale = labelAffected && order.status === 'paid' && order.labelCreatedAt !== null;
 
-		await this.db.update(addresses).set(next).where(eq(addresses.id, address.id));
-		await this.update(order.id, {
-			email: details.email,
-			shippingService: service,
-			...(details.trackingNumber === undefined
-				? {}
-				: { trackingNumber: details.trackingNumber || null }),
-		});
-		return { labelAffected };
+		await this.db.batch([
+			this.db.update(addresses).set(next).where(eq(addresses.id, address.id)),
+			this.db
+				.update(orders)
+				.set({
+					email: details.email,
+					shippingService: service,
+					...(labelStale ? { labelCreatedAt: null } : {}),
+					...(details.trackingNumber === undefined
+						? {}
+						: { trackingNumber: details.trackingNumber || null }),
+				})
+				.where(eq(orders.id, order.id)),
+		]);
+		return { labelStale };
 	}
 
 	async saveParcel(number: string, parcel: Parcel) {

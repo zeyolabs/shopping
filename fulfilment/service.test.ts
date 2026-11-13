@@ -34,7 +34,7 @@ describe('FulfilmentService.saveDetails', () => {
 		const row = await order('paid', []);
 		const fulfilment = new FulfilmentService(db());
 		const result = await fulfilment.saveDetails(row.number, { ...details, email: 'new@b.test' });
-		expect(result.labelAffected).toBe(true);
+		expect(result.labelStale).toBe(false); // no label yet
 		const found = await fulfilment.find(row.number);
 		expect(found?.email).toBe('new@b.test');
 		expect(found?.address.line1).toBe('2 New St');
@@ -50,7 +50,51 @@ describe('FulfilmentService.saveDetails', () => {
 			line1: '1',
 			postcode: 'N1',
 		});
-		expect(result.labelAffected).toBe(false);
+		expect(result.labelStale).toBe(false);
+	});
+
+	it('clears the label of a paid order in the same call when its address changes', async () => {
+		const row = await order('paid', []);
+		const fulfilment = new FulfilmentService(db());
+		await fulfilment.update(row.id, { labelCreatedAt: 5, royalMailOrderId: 'RM1' });
+		const same = await fulfilment.saveDetails(row.number, {
+			...details,
+			city: 'X',
+			line1: '1',
+			postcode: 'N1',
+		});
+		expect(same.labelStale).toBe(false);
+		expect((await fulfilment.find(row.number))?.labelCreatedAt).toBe(5);
+		const changed = await fulfilment.saveDetails(row.number, details);
+		expect(changed.labelStale).toBe(true);
+		const found = await fulfilment.find(row.number);
+		expect([found?.labelCreatedAt, found?.royalMailOrderId]).toEqual([null, 'RM1']);
+	});
+
+	it('does not flag a shipped order, and a case-only email change is not a change', async () => {
+		const shipped = await order('shipped', [], 'Mixed@Case.test');
+		const fulfilment = new FulfilmentService(db());
+		await fulfilment.update(shipped.id, { labelCreatedAt: 5 });
+		const result = await fulfilment.saveDetails(shipped.number, details);
+		expect(result.labelStale).toBe(false);
+		const paid = await order('paid', [], 'Mixed@Case.test');
+		await fulfilment.update(paid.id, { labelCreatedAt: 5 });
+		const same = await fulfilment.saveDetails(paid.number, {
+			...details,
+			city: 'X',
+			email: 'mixed@case.test',
+			line1: '1',
+			postcode: 'N1',
+		});
+		expect(same.labelStale).toBe(false);
+	});
+
+	it('keeps the current postage service when the field is blank', async () => {
+		const row = await order('paid', []);
+		const fulfilment = new FulfilmentService(db());
+		await fulfilment.update(row.id, { shippingService: 'tracked-48' });
+		await fulfilment.saveDetails(row.number, { ...details, shippingService: '' });
+		expect((await fulfilment.find(row.number))?.shippingService).toBe('tracked-48');
 	});
 
 	it('only edits tracking when it is given, and refuses cancelled orders', async () => {

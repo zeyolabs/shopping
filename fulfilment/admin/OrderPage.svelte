@@ -238,8 +238,9 @@
 			<details>
 				<summary class="cursor-pointer font-semibold">Edit contact, address and postage</summary>
 				<p class="mt-2 text-sm text-[var(--ink-muted)]">
-					For fixing a typo or a customer's request. {#if order.status === 'paid' && order.labelCreatedAt}The
-						label is already made, so after a change you need to print it again.{/if}
+					For fixing a typo or a customer's request. If you change the country, check the postage
+					service still fits. {#if order.status === 'paid' && order.labelCreatedAt}The label is
+						already made, so after a change you need to print it again.{/if}
 				</p>
 				<Form
 					class="mt-4 grid gap-4"

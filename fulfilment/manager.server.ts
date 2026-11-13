@@ -111,14 +111,11 @@ export const FulfilmentManager = {
 		}
 		const fulfilment = new FulfilmentService(db);
 		const order = await findOrThrow(number);
-		const { labelAffected } = await fulfilment.saveDetails(number, {
+		// Tracking is only edited once the order has shipped; before that Click & Drop assigns it.
+		return fulfilment.saveDetails(number, {
 			...details,
-			// Tracking is only edited once the order has shipped; before that Click & Drop assigns it.
 			trackingNumber: order.status === 'shipped' ? details.trackingNumber : undefined,
 		});
-		const labelStale = labelAffected && order.status === 'paid' && order.labelCreatedAt !== null;
-		if (labelStale) await fulfilment.update(order.id, { labelCreatedAt: null });
-		return { labelStale };
 	},
 
 	/** Postage services the admin can pick when correcting an order. */
