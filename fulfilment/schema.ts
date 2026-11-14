@@ -1,7 +1,8 @@
+import { SchemaForm } from '@zeyolabs/kit/utils/form';
 import { z } from 'zod';
 
 import { PACKAGE_FORMATS } from '../db/schema';
-import { ORDER_FILTERS } from './filters';
+import { BULK_DISPATCH_LIMIT, ORDER_FILTERS } from './filters';
 
 export const OrderListSchema = z.object({
 	filter: z.enum(ORDER_FILTERS).default('to-ship'),
@@ -11,6 +12,8 @@ export const OrderListSchema = z.object({
 /** Royal Mail tracking numbers are letters and digits (e.g. AB123456789GB); blank means untracked. */
 export const ShipSchema = z.object({
 	number: z.string().regex(/^[A-Z]{2,5}-[A-Z0-9]{6}$/, 'invalid order number'),
+	/** Tick to dispatch without emailing the customer (e.g. the email already went another way). */
+	skipEmail: SchemaForm.Boolean,
 	trackingNumber: z
 		.string()
 		.transform((value) => value.replace(/\s+/g, '').toUpperCase())
@@ -48,3 +51,9 @@ export const ParcelSchema = z
 			[heightMm, lengthMm, widthMm].every((v) => v !== undefined),
 		{ message: 'give length, width and height, or leave all three blank', path: ['lengthMm'] }
 	);
+
+/** Orders ticked on the list. Capped at `BULK_DISPATCH_LIMIT`. */
+export const BulkDispatchSchema = z.object({
+	numbers: z.array(OrderNumber).min(1).max(BULK_DISPATCH_LIMIT),
+	sendEmail: z.boolean(),
+});
