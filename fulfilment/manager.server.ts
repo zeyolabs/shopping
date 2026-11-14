@@ -1,6 +1,6 @@
 import { logger } from '@zeyolabs/kit/server/logger';
 import { Crypto } from '@zeyolabs/kit/utils/crypto';
-import { Error400, Error404 } from '@zeyolabs/kit/utils/errors';
+import { Error400, Error404, Error500 } from '@zeyolabs/kit/utils/errors';
 
 import type { OrderStep } from './schema';
 
@@ -9,6 +9,7 @@ import { shopping } from '../config';
 import { Orders } from '../orders/library';
 import { OrderManager } from '../orders/manager.server';
 import { ShippingService } from '../shipping/service.server';
+import { Money } from '../utils/money';
 import { OrderRefunds } from './refund.server';
 import { FulfilmentService, type Parcel } from './service.server';
 
@@ -117,7 +118,20 @@ export const FulfilmentManager = {
 			{ number: order.number, stripePaymentIntentId: order.stripePaymentIntentId },
 			pence
 		);
-		await service().setRefunded(order.id, result.refundedPence);
+		try {
+			await service().setRefunded(order.id, result.refundedPence);
+		} catch (error) {
+			// Stripe has the money back already, so retrying would look like a second refund.
+			logger.error(error, {
+				amountPence: pence,
+				op: 'refundRecord',
+				orderNumber: order.number,
+				refundedPence: result.refundedPence,
+			});
+			throw Error500(
+				`Stripe refunded ${Money.format(result.refundedPence)} but it was not recorded here. Do not retry; reload the page.`
+			);
+		}
 		logger.info('refund', {
 			amountPence: pence,
 			order: order.number,
