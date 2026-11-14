@@ -112,10 +112,16 @@ export const FulfilmentManager = {
 		const fulfilment = new FulfilmentService(db);
 		const order = await findOrThrow(number);
 		// Tracking is only edited once the order has shipped; before that Click & Drop assigns it.
-		return fulfilment.saveDetails(number, {
+		const result = await fulfilment.saveDetails(number, {
 			...details,
 			trackingNumber: order.status === 'shipped' ? details.trackingNumber : undefined,
 		});
+		// An email edit moves the order to another account, so it leaves a trace.
+		logger.info('order details edited', {
+			emailChanged: details.email.toLowerCase() !== order.email.toLowerCase(),
+			order: order.number,
+		});
+		return result;
 	},
 
 	/** Postage services the admin can pick when correcting an order. */
