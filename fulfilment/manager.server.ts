@@ -200,6 +200,11 @@ export const FulfilmentManager = {
 		const results: { emailed: boolean; error?: string; number: string; ok: boolean }[] = [];
 		for (const number of new Set(numbers)) {
 			try {
+				// "Ready to dispatch" is only a list filter, so check each order is really ready.
+				const order = await findOrThrow(number);
+				if (order.status !== 'paid' || order.heldAt || !order.labelCreatedAt) {
+					throw Error400('Not ready to dispatch: it needs a label and must not be on hold.');
+				}
 				const { emailed } = await FulfilmentManager.markShipped(number, null, options);
 				results.push({ emailed, number, ok: true });
 			} catch (error) {

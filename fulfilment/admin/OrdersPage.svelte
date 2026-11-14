@@ -24,8 +24,14 @@
 	let sendEmail = $state(true);
 	let dispatching = $state(false);
 
-	async function dispatchSelected() {
-		const numbers = [...selected];
+	async function dispatchSelected(numbers: string[]) {
+		if (
+			sendEmail &&
+			!confirm(
+				`Dispatch ${numbers.length} order${numbers.length === 1 ? '' : 's'} and email the customer${numbers.length === 1 ? '' : 's'}?`
+			)
+		)
+			return;
 		dispatching = true;
 		try {
 			const results = await dispatchOrders({ numbers, sendEmail });
@@ -112,6 +118,8 @@
 
 <Boundary message="Could not load orders.">
 	{let rows = $derived(await getOrders({ filter, q }))}
+	<!-- Only orders still on screen: a search or tab change must not dispatch hidden ticks. -->
+	{let chosen = $derived(rows.map((r) => r.number).filter((n) => selected.has(n)))}
 	{#if rows.length === 0}
 		<p class="mt-6 text-[var(--ink-muted)]">
 			{filter === 'to-ship' && !q ? 'Nothing to ship. All caught up.' : 'No orders match.'}
@@ -122,7 +130,7 @@
 				<label class="flex items-center gap-2">
 					<input
 						checked={rows.length > 0 &&
-							selected.size === Math.min(rows.length, BULK_DISPATCH_LIMIT)}
+							chosen.length === Math.min(rows.length, BULK_DISPATCH_LIMIT)}
 						onchange={(event) => {
 							selected.clear();
 							if (event.currentTarget.checked)
@@ -136,8 +144,11 @@
 					<input bind:checked={sendEmail} type="checkbox" />
 					Email the customers
 				</label>
-				<Button disabled={selected.size === 0 || dispatching} onclick={dispatchSelected}>
-					Dispatch {selected.size} order{selected.size === 1 ? '' : 's'}
+				<Button
+					disabled={chosen.length === 0 || dispatching}
+					onclick={() => dispatchSelected(chosen)}
+				>
+					Dispatch {chosen.length} order{chosen.length === 1 ? '' : 's'}
 				</Button>
 			</div>
 		{/if}
@@ -161,7 +172,7 @@
 									<input
 										aria-label="Select {row.number}"
 										checked={selected.has(row.number)}
-										disabled={!selected.has(row.number) && selected.size >= BULK_DISPATCH_LIMIT}
+										disabled={!selected.has(row.number) && chosen.length >= BULK_DISPATCH_LIMIT}
 										onchange={(event) => {
 											if (event.currentTarget.checked) selected.add(row.number);
 											else selected.delete(row.number);
