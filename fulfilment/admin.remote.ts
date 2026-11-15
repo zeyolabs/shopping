@@ -18,6 +18,7 @@ export const getOrders = Remote.Query(OrderListSchema, ({ filter, q }) =>
 );
 
 export const getOrderCounts = Remote.Query(() => FulfilmentManager.counts());
+export const getReadyByService = Remote.Query(() => FulfilmentManager.readyByService());
 
 export const getOrder = Remote.Query(OrderNumber, (number) => FulfilmentManager.find(number));
 
@@ -25,7 +26,11 @@ export const shipForm = Remote.Form(ShipSchema, async ({ number, skipEmail, trac
 	const { emailed, skipped } = await FulfilmentManager.markShipped(number, trackingNumber || null, {
 		email: !skipEmail,
 	});
-	await Promise.all([getOrder(number).refresh(), getOrderCounts().refresh()]);
+	await Promise.all([
+		getOrder(number).refresh(),
+		getOrderCounts().refresh(),
+		getReadyByService().refresh(),
+	]);
 	if (skipped) return FormResult.ok('Marked as dispatched. The customer was not emailed.');
 	return emailed
 		? FormResult.ok('Marked as dispatched and the customer has been emailed.')
@@ -97,6 +102,6 @@ export const refundForm = Remote.Form(RefundSchema, async ({ amount, number }) =
  */
 export const dispatchOrders = Remote.Cmd(BulkDispatchSchema, async ({ numbers, sendEmail }) => {
 	const results = await FulfilmentManager.markShippedMany(numbers, { email: sendEmail });
-	await getOrderCounts().refresh();
+	await Promise.all([getOrderCounts().refresh(), getReadyByService().refresh()]);
 	return results;
 });
