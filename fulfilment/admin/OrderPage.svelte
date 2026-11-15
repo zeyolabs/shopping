@@ -19,7 +19,7 @@
 	import { Packing } from '../library';
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
-	import { Form, NumberField, SelectField, TextField } from '@zeyolabs/ui/form';
+	import { CheckboxField, Form, NumberField, SelectField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 
 	const number = $derived(page.params.number ?? '');
@@ -281,7 +281,7 @@
 			{/if}
 			<Form
 				class="mt-4 grid gap-4"
-				defaults={{ trackingNumber: order.trackingNumber ?? '' }}
+				defaults={{ skipEmail: false, trackingNumber: order.trackingNumber ?? '' }}
 				form={shipForm}
 				hidden={{ number: order.number }}
 				reset={false}
@@ -290,6 +290,7 @@
 				<TextField name="trackingNumber" autocapitalize="characters" form={shipForm} optional>
 					Tracking number
 				</TextField>
+				<CheckboxField name="skipEmail" form={shipForm}>Do not email the customer</CheckboxField>
 				<div>
 					<Button form={shipForm} loadingMessage="Sending…">
 						{order.shippedAt ? 'Save and resend email' : 'Mark as dispatched and email customer'}
