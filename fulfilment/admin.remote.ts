@@ -4,6 +4,7 @@ import { FormResult } from '@zeyolabs/kit/utils/form';
 import { FulfilmentManager } from './manager.server';
 import {
 	BulkDispatchSchema,
+	OrderDetailsSchema,
 	OrderListSchema,
 	OrderNumber,
 	OrderStepSchema,
@@ -66,6 +67,18 @@ export const parcelForm = Remote.Form(
 		return FormResult.ok('Parcel details saved.');
 	}
 );
+
+export const getShippingServices = Remote.Query(() => FulfilmentManager.shippingServices());
+
+export const detailsForm = Remote.Form(OrderDetailsSchema, async ({ number, ...details }) => {
+	const { labelStale } = await FulfilmentManager.saveDetails(number, { number, ...details });
+	await getOrder(number).refresh();
+	return FormResult.ok(
+		labelStale
+			? 'Details saved. The label no longer matches: print it again to replace it.'
+			: 'Details saved.'
+	);
+});
 
 /** Creates the label in Click & Drop. The page then opens it from `/orders/<number>/label`. */
 export const createOrderLabel = Remote.Cmd(OrderNumber, async (number) => {

@@ -75,6 +75,15 @@ export class ShippingService {
 		return rate?.royalMailServiceCode ?? null;
 	}
 
+	/** The distinct postage services that have a rate, for the admin's service picker. */
+	async services() {
+		const rows = await this.db
+			.selectDistinct({ name: shippingRates.name, service: shippingRates.service })
+			.from(shippingRates)
+			.orderBy(asc(shippingRates.service));
+		return rows;
+	}
+
 	/** The cheapest UK rate, for pages that quote delivery so they never disagree with the basket. */
 	async ukRate() {
 		const [rate] = await this.db

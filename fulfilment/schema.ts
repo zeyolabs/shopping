@@ -53,6 +53,36 @@ export const ParcelSchema = z
 		{ message: 'give length, width and height, or leave all three blank', path: ['lengthMm'] }
 	);
 
+const Tracking = z
+	.string()
+	.transform((value) => value.replace(/\s+/g, '').toUpperCase())
+	.pipe(
+		z.union([
+			z.literal(''),
+			z.string().regex(/^[A-Z0-9]{8,20}$/, 'enter the tracking number, letters and digits only'),
+		])
+	);
+
+/** Contact, address, postage service and tracking, as the admin corrects them on a paid or shipped order. */
+export const OrderDetailsSchema = z.object({
+	city: z.string().trim().min(1, 'enter the town or city').max(100),
+	country: z
+		.string()
+		.trim()
+		.toUpperCase()
+		.regex(/^[A-Z]{2}$/, 'enter the two-letter country code, e.g. GB'),
+	email: z.string().trim().toLowerCase().max(254).pipe(z.email('enter a valid email')),
+	line1: z.string().trim().min(1, 'enter the first address line').max(200),
+	line2: z.string().trim().max(200).default(''),
+	name: z.string().trim().min(1, 'enter the name').max(200),
+	number: OrderNumber,
+	phone: z.string().trim().max(40).default(''),
+	postcode: z.string().trim().min(1, 'enter the postcode').max(20),
+	shippingService: z.string().trim().max(50).default(''),
+	trackingNumber: Tracking.default(''),
+});
+export type OrderDetails = z.infer<typeof OrderDetailsSchema>;
+
 /** Orders ticked on the list. Capped at `BULK_DISPATCH_LIMIT`. */
 export const BulkDispatchSchema = z.object({
 	numbers: z.array(OrderNumber).min(1).max(BULK_DISPATCH_LIMIT),

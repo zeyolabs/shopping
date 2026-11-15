@@ -2,7 +2,7 @@ import { logger } from '@zeyolabs/kit/server/logger';
 import { Crypto } from '@zeyolabs/kit/utils/crypto';
 import { Error400, Error404, Error500 } from '@zeyolabs/kit/utils/errors';
 
-import type { OrderStep } from './schema';
+import type { OrderDetails, OrderStep } from './schema';
 
 import { ShopClients } from '../clients/shop.server';
 import { shopping } from '../config';
@@ -103,6 +103,38 @@ export const FulfilmentManager = {
 			packingStartedAt: order.packingStartedAt ?? now,
 			weightGrams,
 		});
+	},
+
+	/**
+	 * Saves corrected contact, address, postage service and tracking. Click & Drop cannot edit an
+	 * order, so when something it holds changed on an order that has a label, the label is marked
+	 * stale: printing it again deletes the old Click & Drop order and creates a fresh one.
+	 */
+	async saveDetails(number: string, details: OrderDetails) {
+		const db = shopping().db();
+		if (details.shippingService) {
+			const known = await new ShippingService(db).services();
+			if (!known.some((s) => s.service === details.shippingService))
+				throw Error400('Choose one of the shop’s postage services.');
+		}
+		const fulfilment = new FulfilmentService(db);
+		const order = await findOrThrow(number);
+		// Tracking is only edited once the order has shipped; before that Click & Drop assigns it.
+		const result = await fulfilment.saveDetails(number, {
+			...details,
+			trackingNumber: order.status === 'shipped' ? details.trackingNumber : undefined,
+		});
+		// An email edit moves the order to another account, so it leaves a trace.
+		logger.info('order details edited', {
+			emailChanged: details.email.toLowerCase() !== order.email.toLowerCase(),
+			order: order.number,
+		});
+		return result;
+	},
+
+	/** Postage services the admin can pick when correcting an order. */
+	shippingServices() {
+		return new ShippingService(shopping().db()).services();
 	},
 
 	/**
