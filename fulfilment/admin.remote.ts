@@ -24,7 +24,11 @@ export const shipForm = Remote.Form(ShipSchema, async ({ number, skipEmail, trac
 	const { emailed, skipped } = await FulfilmentManager.markShipped(number, trackingNumber || null, {
 		email: !skipEmail,
 	});
-	await Promise.all([getOrder(number).refresh(), getOrderCounts().refresh()]);
+	await Promise.all([
+		getOrder(number).refresh(),
+		getOrderCounts().refresh(),
+		getReadyByService().refresh(),
+	]);
 	if (skipped) return FormResult.ok('Marked as dispatched. The customer was not emailed.');
 	return emailed
 		? FormResult.ok('Marked as dispatched and the customer has been emailed.')
@@ -74,6 +78,6 @@ export const createOrderLabel = Remote.Cmd(OrderNumber, async (number) => {
  */
 export const dispatchOrders = Remote.Cmd(BulkDispatchSchema, async ({ numbers, sendEmail }) => {
 	const results = await FulfilmentManager.markShippedMany(numbers, { email: sendEmail });
-	await getOrderCounts().refresh();
+	await Promise.all([getOrderCounts().refresh(), getReadyByService().refresh()]);
 	return results;
 });

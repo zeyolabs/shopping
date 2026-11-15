@@ -97,9 +97,11 @@
 		</a>
 		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	{/each}
-	{#each Object.entries(await getReadyByService()) as [service, n] (service)}
-		<span class="text-sm text-[var(--muted)]">{service}: {n} ready</span>
-	{/each}
+	<Boundary message="Could not load ready counts.">
+		{#each Object.entries(await getReadyByService()) as [service, n] (service)}
+			<span class="text-sm text-[var(--muted)]">{service}: {n} ready</span>
+		{/each}
+	</Boundary>
 	<form
 		class="ml-auto"
 		onsubmit={(event) => {
