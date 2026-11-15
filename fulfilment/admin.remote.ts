@@ -8,6 +8,7 @@ import {
 	OrderNumber,
 	OrderStepSchema,
 	ParcelSchema,
+	RefundSchema,
 	ShipSchema,
 } from './schema';
 
@@ -65,6 +66,16 @@ export const parcelForm = Remote.Form(
 export const createOrderLabel = Remote.Cmd(OrderNumber, async (number) => {
 	await FulfilmentManager.createLabel(number);
 	await getOrder(number).refresh();
+});
+
+export const refundForm = Remote.Form(RefundSchema, async ({ amount, number }) => {
+	const { fullyRefunded } = await FulfilmentManager.refund(number, amount);
+	await Promise.all([getOrder(number).refresh(), getOrderCounts().refresh()]);
+	return FormResult.ok(
+		fullyRefunded
+			? 'Refunded in full. Put the stock back on the stock page if the goods are returned.'
+			: 'Partly refunded.'
+	);
 });
 
 /**
