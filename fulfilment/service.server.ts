@@ -1,5 +1,5 @@
 import { Error400, Error404 } from '@zeyolabs/kit/utils/errors';
-import { and, asc, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 import type { OrderFilter } from './filters';
@@ -19,21 +19,47 @@ export type Parcel = {
 
 type OrderRow = typeof orders.$inferSelect;
 
+/** The SQL condition behind each list filter: paid orders are split by hold and label. */
+function filterCondition(filter: OrderFilter) {
+	switch (filter) {
+		case 'all':
+			return undefined;
+		case 'on-hold':
+			return and(eq(orders.status, 'paid'), isNotNull(orders.heldAt));
+		case 'ready':
+			return and(
+				eq(orders.status, 'paid'),
+				isNull(orders.heldAt),
+				isNotNull(orders.labelCreatedAt)
+			);
+		case 'shipped':
+			return eq(orders.status, 'shipped');
+		case 'to-ship':
+			return eq(orders.status, 'paid');
+	}
+}
+
 /** Fulfilment data access: the order list, one order in full, and the packing state changes. */
 export class FulfilmentService {
 	constructor(private readonly db: ShopDb) {}
 
 	/** Order counts per list filter, for the filter tabs. */
 	async counts(): Promise<Record<OrderFilter, number>> {
-		const rows = await this.db
-			.select({ n: count(), status: orders.status })
-			.from(orders)
-			.groupBy(orders.status);
-		const byStatus = Object.fromEntries(rows.map((r) => [r.status, r.n]));
+		const [row] = await this.db
+			.select({
+				all: count(),
+				onHold: sql<number>`coalesce(sum(${orders.status} = 'paid' and ${orders.heldAt} is not null), 0)`,
+				ready: sql<number>`coalesce(sum(${orders.status} = 'paid' and ${orders.heldAt} is null and ${orders.labelCreatedAt} is not null), 0)`,
+				shipped: sql<number>`coalesce(sum(${orders.status} = 'shipped'), 0)`,
+				toShip: sql<number>`coalesce(sum(${orders.status} = 'paid'), 0)`,
+			})
+			.from(orders);
 		return {
-			all: rows.reduce((sum, r) => sum + r.n, 0),
-			shipped: byStatus.shipped ?? 0,
-			'to-ship': byStatus.paid ?? 0,
+			all: row.all,
+			'on-hold': Number(row.onHold),
+			ready: Number(row.ready),
+			shipped: Number(row.shipped),
+			'to-ship': Number(row.toShip),
 		};
 	}
 
@@ -72,8 +98,7 @@ export class FulfilmentService {
 			.innerJoin(addresses, eq(orders.shippingAddressId, addresses.id))
 			.where(
 				and(
-					filter === 'to-ship' ? eq(orders.status, 'paid') : undefined,
-					filter === 'shipped' ? eq(orders.status, 'shipped') : undefined,
+					filterCondition(filter),
 					match
 						? or(
 								sql`${orders.number} like ${match} escape '\\'`,
@@ -83,7 +108,11 @@ export class FulfilmentService {
 						: undefined
 				)
 			)
-			.orderBy(filter === 'to-ship' ? asc(orders.createdAt) : desc(orders.createdAt))
+			.orderBy(
+				filter === 'to-ship' || filter === 'ready' || filter === 'on-hold'
+					? asc(orders.createdAt)
+					: desc(orders.createdAt)
+			)
 			.limit(200);
 	}
 
@@ -174,6 +203,21 @@ export class FulfilmentService {
 	async setHold(number: string, held: boolean, now = Date.now()) {
 		const order = await this.packable(number);
 		await this.update(order.id, { heldAt: held ? now : null });
+	}
+
+	/**
+	 * Sets the order's refunded total to what Stripe reports (never lower than recorded), so
+	 * recording the same refund twice, or two at once, gives the same result. Reaching the order
+	 * total makes it `refunded`.
+	 */
+	async setRefunded(orderId: number, refundedPence: number) {
+		await this.db
+			.update(orders)
+			.set({
+				refundedPence: sql`max(${orders.refundedPence}, ${refundedPence})`,
+				status: sql`case when ${refundedPence} >= ${orders.totalPence} then 'refunded' else ${orders.status} end`,
+			})
+			.where(eq(orders.id, orderId));
 	}
 
 	async startPacking(number: string, now = Date.now()) {

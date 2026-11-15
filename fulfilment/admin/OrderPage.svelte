@@ -8,18 +8,26 @@
 		getOrder,
 		getShippingServices,
 		parcelForm,
+		refundForm,
 		shipForm,
 		updateOrderForm,
 	} from '../admin.remote';
-	import { OrderDetailsSchema, OrderStepSchema, ParcelSchema, ShipSchema } from '../schema';
+	import {
+		OrderDetailsSchema,
+		OrderStepSchema,
+		ParcelSchema,
+		RefundSchema,
+		ShipSchema,
+	} from '../schema';
 	import { Money } from '../../utils/money';
+	import { FormInput } from '../../utils/form-input';
 	import { Orders } from '../../orders/library';
 	import { toast } from 'svelte-sonner';
 	import { PACKAGE_FORMATS } from '../../db/schema';
 	import { Packing } from '../library';
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
-	import { Form, NumberField, SelectField, TextField } from '@zeyolabs/ui/form';
+	import { CheckboxField, Form, NumberField, SelectField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 
 	const number = $derived(page.params.number ?? '');
@@ -121,6 +129,12 @@
 					<dt>Total</dt>
 					<dd>{Money.format(order.totalPence)}</dd>
 				</div>
+				{#if order.refundedPence > 0}
+					<div class="flex justify-between">
+						<dt>Refunded</dt>
+						<dd>-{Money.format(order.refundedPence)}</dd>
+					</div>
+				{/if}
 			</dl>
 		</section>
 	</div>
@@ -296,6 +310,29 @@
 		</section>
 	{/if}
 
+	{#if (order.status === 'paid' || order.status === 'shipped') && order.stripePaymentIntentId && order.refundedPence < order.totalPence}
+		{let left = $derived(order.totalPence - order.refundedPence)}
+		<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
+			<h2 class="font-semibold">Refund</h2>
+			<p class="mt-1 text-sm text-[var(--ink-muted)]">
+				Up to {Money.format(left)} can be refunded to the customer's card through Stripe. A full refund
+				marks the order refunded, even if it had shipped, and does not cancel a Royal Mail label. Stock
+				is not put back; do that on the stock page if the goods come back.
+			</p>
+			<Form
+				class="mt-4 grid gap-4"
+				defaults={{ amount: FormInput.penceToPounds(left) }}
+				form={refundForm}
+				hidden={{ number: order.number }}
+				reset={false}
+				schema={RefundSchema}
+			>
+				<TextField name="amount" form={refundForm} inputmode="decimal">Amount (£)</TextField>
+				<div><Button form={refundForm} variant="secondary">Refund</Button></div>
+			</Form>
+		</section>
+	{/if}
+
 	<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
 		<h2 class="font-semibold">Dispatch</h2>
 		{#if order.status === 'paid' || order.status === 'shipped'}
@@ -316,7 +353,7 @@
 			{/if}
 			<Form
 				class="mt-4 grid gap-4"
-				defaults={{ trackingNumber: order.trackingNumber ?? '' }}
+				defaults={{ skipEmail: false, trackingNumber: order.trackingNumber ?? '' }}
 				form={shipForm}
 				hidden={{ number: order.number }}
 				reset={false}
@@ -325,6 +362,7 @@
 				<TextField name="trackingNumber" autocapitalize="characters" form={shipForm} optional>
 					Tracking number
 				</TextField>
+				<CheckboxField name="skipEmail" form={shipForm}>Do not email the customer</CheckboxField>
 				<div>
 					<Button form={shipForm} loadingMessage="Sending…">
 						{order.shippedAt ? 'Save and resend email' : 'Mark as dispatched and email customer'}

@@ -1,7 +1,9 @@
+import { SchemaForm } from '@zeyolabs/kit/utils/form';
 import { z } from 'zod';
 
 import { PACKAGE_FORMATS } from '../db/schema';
-import { ORDER_FILTERS } from './filters';
+import { FormInput } from '../utils/form-input';
+import { BULK_DISPATCH_LIMIT, ORDER_FILTERS } from './filters';
 
 export const OrderListSchema = z.object({
 	filter: z.enum(ORDER_FILTERS).default('to-ship'),
@@ -11,6 +13,8 @@ export const OrderListSchema = z.object({
 /** Royal Mail tracking numbers are letters and digits (e.g. AB123456789GB); blank means untracked. */
 export const ShipSchema = z.object({
 	number: z.string().regex(/^[A-Z]{2,5}-[A-Z0-9]{6}$/, 'invalid order number'),
+	/** Tick to dispatch without emailing the customer (e.g. the email already went another way). */
+	skipEmail: SchemaForm.Boolean,
 	trackingNumber: z
 		.string()
 		.transform((value) => value.replace(/\s+/g, '').toUpperCase())
@@ -67,7 +71,7 @@ export const OrderDetailsSchema = z.object({
 		.trim()
 		.toUpperCase()
 		.regex(/^[A-Z]{2}$/, 'enter the two-letter country code, e.g. GB'),
-	email: z.string().trim().toLowerCase().pipe(z.email('enter a valid email')).max(254),
+	email: z.string().trim().toLowerCase().max(254).pipe(z.email('enter a valid email')),
 	line1: z.string().trim().min(1, 'enter the first address line').max(200),
 	line2: z.string().trim().max(200).default(''),
 	name: z.string().trim().min(1, 'enter the name').max(200),
@@ -78,3 +82,22 @@ export const OrderDetailsSchema = z.object({
 	trackingNumber: Tracking.default(''),
 });
 export type OrderDetails = z.infer<typeof OrderDetailsSchema>;
+
+/** Orders ticked on the list. Capped at `BULK_DISPATCH_LIMIT`. */
+export const BulkDispatchSchema = z.object({
+	numbers: z.array(OrderNumber).min(1).max(BULK_DISPATCH_LIMIT),
+	sendEmail: z.boolean(),
+});
+
+/** Pounds as typed ("12.50"); the amount is refunded in full or in part, up to what is left. */
+export const RefundSchema = z.object({
+	amount: z
+		.string()
+		.trim()
+		.refine((v) => {
+			const pence = FormInput.parsePounds(v);
+			return pence !== null && !Number.isNaN(pence) && pence > 0;
+		}, 'enter an amount like 12.50')
+		.transform((v) => FormInput.parsePounds(v) as number),
+	number: OrderNumber,
+});

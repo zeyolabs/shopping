@@ -1,6 +1,6 @@
 import { logger } from '@zeyolabs/kit/server/logger';
 import { Crypto } from '@zeyolabs/kit/utils/crypto';
-import { Error400, Error404 } from '@zeyolabs/kit/utils/errors';
+import { Error400, Error404, Error500 } from '@zeyolabs/kit/utils/errors';
 
 import type { OrderDetails, OrderStep } from './schema';
 
@@ -9,6 +9,9 @@ import { shopping } from '../config';
 import { Orders } from '../orders/library';
 import { OrderManager } from '../orders/manager.server';
 import { ShippingService } from '../shipping/service.server';
+import { Money } from '../utils/money';
+import { BULK_DISPATCH_LIMIT } from './filters';
+import { OrderRefunds } from './refund.server';
 import { FulfilmentService, type Parcel } from './service.server';
 
 const service = () => new FulfilmentService(shopping().db());
@@ -129,6 +132,47 @@ export const FulfilmentManager = {
 		return new ShippingService(shopping().db()).services();
 	},
 
+	/**
+	 * Refunds `pence` of a paid or shipped order through Stripe and records Stripe's new total.
+	 * Stripe is the source of truth (see `OrderRefunds`), so a refund made in its dashboard, a
+	 * double click or a failed database write cannot make this order disagree with it. Stock is not
+	 * put back: the admin does that on the stock page. A full refund marks the order refunded even
+	 * if it had shipped; a label for a parcel not yet posted is not cancelled.
+	 */
+	async refund(number: string, pence: number) {
+		const order = await findOrThrow(number);
+		if (order.status !== 'paid' && order.status !== 'shipped') {
+			throw Error400(`This order is ${order.status}, so it cannot be refunded.`);
+		}
+		if (!order.stripePaymentIntentId) throw Error400('This order has no Stripe payment to refund.');
+
+		const result = await OrderRefunds.run(
+			ShopClients.stripe(),
+			{ number: order.number, stripePaymentIntentId: order.stripePaymentIntentId },
+			pence
+		);
+		try {
+			await service().setRefunded(order.id, result.refundedPence);
+		} catch (error) {
+			// Stripe has the money back already, so retrying would look like a second refund.
+			logger.error(error, {
+				amountPence: pence,
+				op: 'refundRecord',
+				orderNumber: order.number,
+				refundedPence: result.refundedPence,
+			});
+			throw Error500(
+				`Stripe refunded ${Money.format(result.refundedPence)} but it was not recorded here. Do not retry; reload the page.`
+			);
+		}
+		logger.info('refund', {
+			amountPence: pence,
+			order: order.number,
+			refundedPence: result.refundedPence,
+		});
+		return { fullyRefunded: result.fullyRefunded };
+	},
+
 	/** The order in full, with the customer's order page link. */
 	async find(number: string) {
 		const order = await findOrThrow(number);
@@ -165,7 +209,11 @@ export const FulfilmentManager = {
 	 * database change comes first: a failed email never undoes a parcel that has really left, and
 	 * the result says whether the email went so the admin can resend it.
 	 */
-	async markShipped(number: string, trackingNumber: null | string) {
+	async markShipped(
+		number: string,
+		trackingNumber: null | string,
+		options: { email?: boolean } = {}
+	) {
 		const order = await findOrThrow(number);
 		const { address } = order;
 		if (order.status !== 'paid' && order.status !== 'shipped') {
@@ -197,6 +245,8 @@ export const FulfilmentManager = {
 			trackingNumber: tracking,
 		});
 
+		if (options.email === false) return { emailed: false, skipped: true };
+
 		try {
 			await shopping().mail.orderDispatched({
 				address,
@@ -206,11 +256,43 @@ export const FulfilmentManager = {
 				trackingNumber: tracking,
 			});
 			await fulfilment.update(order.id, { dispatchEmailedAt: now });
-			return { emailed: true };
+			return { emailed: true, skipped: false };
 		} catch (error) {
 			logger.error(error, { op: 'dispatchEmail', orderNumber: order.number });
-			return { emailed: false };
+			return { emailed: false, skipped: false };
 		}
+	},
+
+	/**
+	 * Dispatches several orders one after another (each is its own database change, so one that
+	 * fails does not hold back the rest). Tracking numbers come from Click & Drop where a label
+	 * exists. Capped, because each order can cost a Royal Mail call and an email.
+	 */
+	async markShippedMany(numbers: string[], options: { email: boolean }) {
+		if (numbers.length > BULK_DISPATCH_LIMIT) {
+			throw Error400(`Dispatch at most ${BULK_DISPATCH_LIMIT} orders at once.`);
+		}
+		const results: { emailed: boolean; error?: string; number: string; ok: boolean }[] = [];
+		for (const number of new Set(numbers)) {
+			try {
+				// "Ready to dispatch" is only a list filter, so check each order is really ready.
+				const order = await findOrThrow(number);
+				if (order.status !== 'paid' || order.heldAt || !order.labelCreatedAt) {
+					throw Error400('Not ready to dispatch: it needs a label and must not be on hold.');
+				}
+				const { emailed } = await FulfilmentManager.markShipped(number, null, options);
+				results.push({ emailed, number, ok: true });
+			} catch (error) {
+				logger.error(error, { op: 'bulkDispatch', orderNumber: number });
+				results.push({
+					emailed: false,
+					error: error instanceof Error ? error.message : 'Could not dispatch.',
+					number,
+					ok: false,
+				});
+			}
+		}
+		return results;
 	},
 
 	async saveParcel(number: string, parcel: Parcel) {

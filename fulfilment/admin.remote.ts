@@ -3,11 +3,13 @@ import { FormResult } from '@zeyolabs/kit/utils/form';
 
 import { FulfilmentManager } from './manager.server';
 import {
+	BulkDispatchSchema,
 	OrderDetailsSchema,
 	OrderListSchema,
 	OrderNumber,
 	OrderStepSchema,
 	ParcelSchema,
+	RefundSchema,
 	ShipSchema,
 } from './schema';
 
@@ -19,9 +21,12 @@ export const getOrderCounts = Remote.Query(() => FulfilmentManager.counts());
 
 export const getOrder = Remote.Query(OrderNumber, (number) => FulfilmentManager.find(number));
 
-export const shipForm = Remote.Form(ShipSchema, async ({ number, trackingNumber }) => {
-	const { emailed } = await FulfilmentManager.markShipped(number, trackingNumber || null);
+export const shipForm = Remote.Form(ShipSchema, async ({ number, skipEmail, trackingNumber }) => {
+	const { emailed, skipped } = await FulfilmentManager.markShipped(number, trackingNumber || null, {
+		email: !skipEmail,
+	});
 	await Promise.all([getOrder(number).refresh(), getOrderCounts().refresh()]);
+	if (skipped) return FormResult.ok('Marked as dispatched. The customer was not emailed.');
 	return emailed
 		? FormResult.ok('Marked as dispatched and the customer has been emailed.')
 		: FormResult.warn(
@@ -74,4 +79,24 @@ export const detailsForm = Remote.Form(OrderDetailsSchema, async ({ number, ...d
 export const createOrderLabel = Remote.Cmd(OrderNumber, async (number) => {
 	await FulfilmentManager.createLabel(number);
 	await getOrder(number).refresh();
+});
+
+export const refundForm = Remote.Form(RefundSchema, async ({ amount, number }) => {
+	const { fullyRefunded } = await FulfilmentManager.refund(number, amount);
+	await Promise.all([getOrder(number).refresh(), getOrderCounts().refresh()]);
+	return FormResult.ok(
+		fullyRefunded
+			? 'Refunded in full. Put the stock back on the stock page if the goods are returned.'
+			: 'Partly refunded.'
+	);
+});
+
+/**
+ * Dispatches the ticked orders. A command, so it returns each order's result instead of throwing:
+ * the list shows which went through and which did not.
+ */
+export const dispatchOrders = Remote.Cmd(BulkDispatchSchema, async ({ numbers, sendEmail }) => {
+	const results = await FulfilmentManager.markShippedMany(numbers, { email: sendEmail });
+	await getOrderCounts().refresh();
+	return results;
 });
