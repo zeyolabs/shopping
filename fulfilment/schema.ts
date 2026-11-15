@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { PACKAGE_FORMATS } from '../db/schema';
+import { FormInput } from '../utils/form-input';
 import { ORDER_FILTERS } from './filters';
 
 export const OrderListSchema = z.object({
@@ -48,3 +49,16 @@ export const ParcelSchema = z
 			[heightMm, lengthMm, widthMm].every((v) => v !== undefined),
 		{ message: 'give length, width and height, or leave all three blank', path: ['lengthMm'] }
 	);
+
+/** Pounds as typed ("12.50"); the amount is refunded in full or in part, up to what is left. */
+export const RefundSchema = z.object({
+	amount: z
+		.string()
+		.trim()
+		.refine((v) => {
+			const pence = FormInput.parsePounds(v);
+			return pence !== null && !Number.isNaN(pence) && pence > 0;
+		}, 'enter an amount like 12.50')
+		.transform((v) => FormInput.parsePounds(v) as number),
+	number: OrderNumber,
+});
