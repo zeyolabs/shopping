@@ -1,6 +1,6 @@
 import { logger } from '@zeyolabs/kit/server/logger';
 import { Crypto } from '@zeyolabs/kit/utils/crypto';
-import { Error400, Error404 } from '@zeyolabs/kit/utils/errors';
+import { Error400, Error404, Error500 } from '@zeyolabs/kit/utils/errors';
 
 import type { OrderStep } from './schema';
 
@@ -9,7 +9,9 @@ import { shopping } from '../config';
 import { Orders } from '../orders/library';
 import { OrderManager } from '../orders/manager.server';
 import { ShippingService } from '../shipping/service.server';
+import { Money } from '../utils/money';
 import { BULK_DISPATCH_LIMIT } from './filters';
+import { OrderRefunds } from './refund.server';
 import { FulfilmentService, type Parcel } from './service.server';
 
 const service = () => new FulfilmentService(shopping().db());
@@ -101,6 +103,47 @@ export const FulfilmentManager = {
 			packingStartedAt: order.packingStartedAt ?? now,
 			weightGrams,
 		});
+	},
+
+	/**
+	 * Refunds `pence` of a paid or shipped order through Stripe and records Stripe's new total.
+	 * Stripe is the source of truth (see `OrderRefunds`), so a refund made in its dashboard, a
+	 * double click or a failed database write cannot make this order disagree with it. Stock is not
+	 * put back: the admin does that on the stock page. A full refund marks the order refunded even
+	 * if it had shipped; a label for a parcel not yet posted is not cancelled.
+	 */
+	async refund(number: string, pence: number) {
+		const order = await findOrThrow(number);
+		if (order.status !== 'paid' && order.status !== 'shipped') {
+			throw Error400(`This order is ${order.status}, so it cannot be refunded.`);
+		}
+		if (!order.stripePaymentIntentId) throw Error400('This order has no Stripe payment to refund.');
+
+		const result = await OrderRefunds.run(
+			ShopClients.stripe(),
+			{ number: order.number, stripePaymentIntentId: order.stripePaymentIntentId },
+			pence
+		);
+		try {
+			await service().setRefunded(order.id, result.refundedPence);
+		} catch (error) {
+			// Stripe has the money back already, so retrying would look like a second refund.
+			logger.error(error, {
+				amountPence: pence,
+				op: 'refundRecord',
+				orderNumber: order.number,
+				refundedPence: result.refundedPence,
+			});
+			throw Error500(
+				`Stripe refunded ${Money.format(result.refundedPence)} but it was not recorded here. Do not retry; reload the page.`
+			);
+		}
+		logger.info('refund', {
+			amountPence: pence,
+			order: order.number,
+			refundedPence: result.refundedPence,
+		});
+		return { fullyRefunded: result.fullyRefunded };
 	},
 
 	/** The order in full, with the customer's order page link. */
