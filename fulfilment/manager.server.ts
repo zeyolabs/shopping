@@ -36,6 +36,11 @@ export const FulfilmentManager = {
 		return fulfilment.counts();
 	},
 
+	readyByService() {
+		const fulfilment = service();
+		return fulfilment.readyByService();
+	},
+
 	/**
 	 * Makes sure Click & Drop holds this order with the parcel as packed, so its label is right.
 	 * Click & Drop cannot edit an order, so until a label exists the old one is removed and

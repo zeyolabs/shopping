@@ -16,6 +16,7 @@ export const getOrders = Remote.Query(OrderListSchema, ({ filter, q }) =>
 );
 
 export const getOrderCounts = Remote.Query(() => FulfilmentManager.counts());
+export const getReadyByService = Remote.Query(() => FulfilmentManager.readyByService());
 
 export const getOrder = Remote.Query(OrderNumber, (number) => FulfilmentManager.find(number));
 

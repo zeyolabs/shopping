@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { BULK_DISPATCH_LIMIT, FILTER_LABELS, ORDER_FILTERS, type OrderFilter } from '../filters';
-	import { dispatchOrders, getOrderCounts, getOrders } from '../admin.remote';
+	import { dispatchOrders, getOrderCounts, getOrders, getReadyByService } from '../admin.remote';
 	import { ErrorMessage } from '../../utils/errors';
 	import { toast } from 'svelte-sonner';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
@@ -96,6 +96,9 @@
 			({(await getOrderCounts())[f]})
 		</a>
 		<!-- eslint-enable svelte/no-navigation-without-resolve -->
+	{/each}
+	{#each Object.entries(await getReadyByService()) as [service, n] (service)}
+		<span class="text-sm text-[var(--muted)]">{service}: {n} ready</span>
 	{/each}
 	<form
 		class="ml-auto"

@@ -35,6 +35,8 @@ function filterCondition(filter: OrderFilter) {
 			return eq(orders.status, 'shipped');
 		case 'to-ship':
 			return eq(orders.status, 'paid');
+		case 'unpaid':
+			return eq(orders.status, 'pending');
 	}
 }
 
@@ -51,6 +53,7 @@ export class FulfilmentService {
 				ready: sql<number>`coalesce(sum(${orders.status} = 'paid' and ${orders.heldAt} is null and ${orders.labelCreatedAt} is not null), 0)`,
 				shipped: sql<number>`coalesce(sum(${orders.status} = 'shipped'), 0)`,
 				toShip: sql<number>`coalesce(sum(${orders.status} = 'paid'), 0)`,
+				unpaid: sql<number>`coalesce(sum(${orders.status} = 'pending'), 0)`,
 			})
 			.from(orders);
 		return {
@@ -59,6 +62,7 @@ export class FulfilmentService {
 			ready: Number(row.ready),
 			shipped: Number(row.shipped),
 			'to-ship': Number(row.toShip),
+			unpaid: Number(row.unpaid),
 		};
 	}
 
@@ -132,6 +136,16 @@ export class FulfilmentService {
 		if (order.status !== 'paid')
 			throw Error400(`This order is ${order.status}, so it cannot be packed.`);
 		return order;
+	}
+
+	/** Orders ready to dispatch (paid, not held, labelled), counted per postage service. */
+	async readyByService(): Promise<Record<string, number>> {
+		const rows = await this.db
+			.select({ n: count(), service: orders.shippingService })
+			.from(orders)
+			.where(filterCondition('ready'))
+			.groupBy(orders.shippingService);
+		return Object.fromEntries(rows.map((r) => [r.service ?? 'No service', r.n]));
 	}
 
 	async saveParcel(number: string, parcel: Parcel) {

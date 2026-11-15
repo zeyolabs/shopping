@@ -26,7 +26,8 @@ describe('FulfilmentService filters and counts', () => {
 		const held = await order('paid', []);
 		const heldLabelled = await order('paid', []);
 		const shipped = await order('shipped', []);
-		await fulfilment.update(labelled.id, { labelCreatedAt: 5 });
+		const unpaid = await order('pending', []);
+		await fulfilment.update(labelled.id, { labelCreatedAt: 5, shippingService: 'Tracked 48' });
 		await fulfilment.update(held.id, { heldAt: 5 });
 		await fulfilment.update(heldLabelled.id, { heldAt: 5, labelCreatedAt: 5 });
 
@@ -38,13 +39,16 @@ describe('FulfilmentService filters and counts', () => {
 			[fresh.number, labelled.number, held.number, heldLabelled.number].sort()
 		);
 		expect(await numbers('shipped')).toEqual([shipped.number]);
+		expect(await numbers('unpaid')).toEqual([unpaid.number]);
+		expect(await fulfilment.readyByService()).toEqual({ 'Tracked 48': 1 });
 
 		expect(await fulfilment.counts()).toEqual({
-			all: 5,
+			all: 6,
 			'on-hold': 2,
 			ready: 1,
 			shipped: 1,
 			'to-ship': 4,
+			unpaid: 1,
 		});
 	});
 });
@@ -59,6 +63,8 @@ describe('FulfilmentService.counts on an empty shop', () => {
 			ready: 0,
 			shipped: 0,
 			'to-ship': 0,
+			unpaid: 0,
 		});
+		expect(await new FulfilmentService(db()).readyByService()).toEqual({});
 	});
 });
