@@ -25,7 +25,7 @@ const order: DispatchEmailData = {
 
 describe('dispatchEmail', () => {
 	it('links a tracked parcel to the Royal Mail tracker and the order page', () => {
-		const params = DispatchEmail.build(order);
+		const params = DispatchEmail.build(order, shopping());
 		expect(params.badge).toBe('Dispatched');
 		expect(params.heading).toBe('Your order is on its way, Sam');
 		expect(params.cta).toEqual({ href: trackingUrl('AB123456789GB'), label: 'Track your parcel' });
@@ -33,14 +33,17 @@ describe('dispatchEmail', () => {
 	});
 
 	it('links an untracked parcel to the order page', () => {
-		const params = DispatchEmail.build({ ...order, trackingNumber: null });
+		const params = DispatchEmail.build({ ...order, trackingNumber: null }, shopping());
 		expect(params.cta).toEqual({ href: orderUrl('PL-ABC234', 'tok123'), label: 'View your order' });
 		expect(params.footnote).toContain('untracked');
 	});
 
 	it('escapes the customer name in the html', () => {
 		const html = renderEmail(
-			DispatchEmail.build({ ...order, address: { ...order.address, name: '<b>Sam</b>' } })
+			DispatchEmail.build(
+				{ ...order, address: { ...order.address, name: '<b>Sam</b>' } },
+				shopping()
+			)
 		);
 		expect(html).not.toContain('<b>Sam</b>');
 	});

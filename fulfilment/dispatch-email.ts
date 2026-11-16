@@ -1,6 +1,7 @@
 import type { EmailParams } from '@zeyolabs/kit/utils/email';
 
-import { shopping } from '../config';
+import type { ShopSite } from '../config';
+
 import { Orders } from '../orders/library';
 
 export type DispatchEmailData = {
@@ -22,16 +23,16 @@ export type DispatchEmailData = {
 /** The dispatch email, as kit email params. */
 export const DispatchEmail = {
 	/** Sent when the order leaves the shop: where it is, and how to follow it. */
-	build(order: DispatchEmailData): EmailParams {
+	build(order: DispatchEmailData, site: ShopSite): EmailParams {
 		const firstName = order.address.name.split(' ')[0] || 'there';
 		const tracked = Boolean(order.trackingNumber);
 		return {
 			badge: 'Dispatched',
-			brand: shopping().brand,
+			brand: site.brand,
 			cta: tracked
 				? { href: Orders.trackingUrl(order.trackingNumber!), label: 'Track your parcel' }
 				: {
-						href: Orders.url(shopping().siteUrl, order.number, order.token),
+						href: Orders.url(site.siteUrl, order.number, order.token),
 						label: 'View your order',
 					},
 			eyebrow: `Order ${order.number}`,
@@ -43,11 +44,11 @@ export const DispatchEmail = {
 				`Your order ${order.number} has been dispatched by Royal Mail. UK orders usually arrive 2 to 10 working days after dispatch.`,
 				...(tracked
 					? [
-							`You can also see it any time on your order page: ${Orders.url(shopping().siteUrl, order.number, order.token)}`,
+							`You can also see it any time on your order page: ${Orders.url(site.siteUrl, order.number, order.token)}`,
 						]
 					: []),
 			],
-			preheader: `Order ${order.number} has been dispatched. Thank you for shopping with ${shopping().brand.name}.`,
+			preheader: `Order ${order.number} has been dispatched. Thank you for shopping with ${site.brand.name}.`,
 			sections: [
 				{
 					lines: [

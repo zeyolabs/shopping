@@ -19,7 +19,7 @@ objects, `library.ts`), **client** (one outside API, config passed in, `clients/
 (data access, a class that takes `db`, `service.server.ts`), **manager** (the edge's entry point
 where there is real work beyond data access, `manager.server.ts`). Remote functions
 (`client.remote.ts` for shoppers, `admin.remote.ts` for staff) resolve the db once and bind a
-service to a `const`. Services never read `shopping()` or secrets; managers and remote functions do.
+service to a `const`. Services never read `shopping()` or secrets; managers and remote functions do. The email builders (`OrderEmails`, `DispatchEmail`, `BackInStockEmail`) are libraries too: they take the shop's `ShopSite` (`brand`, `siteUrl`) as an argument, and `defaultShopMail` passes it in.
 
 | Folder                    | What                                                                                                                                                                                     |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

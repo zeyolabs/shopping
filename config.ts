@@ -64,6 +64,9 @@ export type CheckoutOptions = {
 	promotionCodes?: boolean;
 };
 
+/** Who the shop is and where it lives: what the emails need to name and link to it. */
+export type ShopSite = Pick<ShoppingConfig, 'brand' | 'siteUrl'>;
+
 /** Everything that differs between sites. The package holds no brand, address or account of its own. */
 export type ShoppingConfig = {
 	brand: EmailBrand;

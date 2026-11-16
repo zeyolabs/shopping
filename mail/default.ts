@@ -31,8 +31,9 @@ export function defaultShopMail({
 }): ShopMail {
 	return {
 		backInStock: async (alert) => {
-			const { brand } = shopping();
-			const email = BackInStockEmail.build(alert);
+			const site = shopping();
+			const { brand } = site;
+			const email = BackInStockEmail.build(alert, site);
 			await send({
 				from: { email: brand.supportEmail, name: brand.name },
 				html: renderEmail(email),
@@ -42,8 +43,9 @@ export function defaultShopMail({
 			});
 		},
 		newOrderAlert: async (order) => {
-			const { brand } = shopping();
-			const email = OrderEmails.shop(order);
+			const site = shopping();
+			const { brand } = site;
+			const email = OrderEmails.shop(order, site);
 			await send({
 				from: { email: brand.supportEmail, name: `${brand.name} website` },
 				html: renderEmail(email),
@@ -54,8 +56,9 @@ export function defaultShopMail({
 			});
 		},
 		orderConfirmed: async (order) => {
-			const { brand } = shopping();
-			const email = OrderEmails.customer(order);
+			const site = shopping();
+			const { brand } = site;
+			const email = OrderEmails.customer(order, site);
 			await send({
 				from: { email: brand.supportEmail, name: brand.name },
 				html: renderEmail(email),
@@ -65,8 +68,9 @@ export function defaultShopMail({
 			});
 		},
 		orderDispatched: async (order) => {
-			const { brand } = shopping();
-			const email = DispatchEmail.build(order);
+			const site = shopping();
+			const { brand } = site;
+			const email = DispatchEmail.build(order, site);
 			await send({
 				from: { email: brand.supportEmail, name: brand.name },
 				html: renderEmail(email),
