@@ -50,7 +50,7 @@
 		"./*": "./*.ts"
 	},
 	"dependencies": {
-		"@lucide/svelte": "1.52.0",
+		"@lucide/svelte": "1.73.0",
 		"stripe": "22.3.2",
 		"svelte-sonner": "1.2.3"
 	},
