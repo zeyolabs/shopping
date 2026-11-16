@@ -1,6 +1,7 @@
 import { renderEmail } from '@zeyolabs/kit/utils/email';
 import { describe, expect, it } from 'vitest';
 
+import { shopping } from '../config';
 import { type OrderEmailData, OrderEmails } from './email';
 
 const order: OrderEmailData = {
@@ -21,7 +22,7 @@ const order: OrderEmailData = {
 };
 
 describe('customerOrderEmail', () => {
-	const params = OrderEmails.customer(order);
+	const params = OrderEmails.customer(order, shopping());
 
 	it('greets by first name and shows the total', () => {
 		expect(params.heading).toBe('Thank you, Sam');
@@ -45,14 +46,14 @@ describe('customerOrderEmail', () => {
 	});
 
 	it('says free delivery when there is no charge', () => {
-		const html = renderEmail(OrderEmails.customer({ ...order, shippingPence: 0 }));
+		const html = renderEmail(OrderEmails.customer({ ...order, shippingPence: 0 }, shopping()));
 		expect(html).toContain('Free');
 	});
 });
 
 describe('shopOrderEmail', () => {
 	it('names the customer, email and phone', () => {
-		const params = OrderEmails.shop(order);
+		const params = OrderEmails.shop(order, shopping());
 		expect(params.heading).toBe('PL-ABC123: £40.50');
 		expect(params.intro[0]).toContain('sam@example.com');
 		expect(params.intro[0]).toContain('07700 900123');

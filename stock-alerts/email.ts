@@ -1,6 +1,7 @@
 import type { EmailParams } from '@zeyolabs/kit/utils/email';
 
-import { shopping } from '../config';
+import type { ShopSite } from '../config';
+
 import { Money } from '../utils/money';
 
 export type BackInStockEmailData = {
@@ -11,7 +12,7 @@ export type BackInStockEmailData = {
 };
 
 /** The product page the customer lands on from the email. */
-const productUrl = (slug: string): string => `${shopping().siteUrl}/product/${slug}`;
+const productUrl = (siteUrl: string, slug: string): string => `${siteUrl}/product/${slug}`;
 
 /** The back-in-stock email, as kit email params. */
 export const BackInStockEmail = {
@@ -19,9 +20,8 @@ export const BackInStockEmail = {
 	productUrl,
 
 	/** Sent once to each customer who asked to be told when a sold-out product is back. */
-	build(data: BackInStockEmailData): EmailParams {
-		const { brand } = shopping();
-		const url = productUrl(data.slug);
+	build(data: BackInStockEmailData, { brand, siteUrl }: ShopSite): EmailParams {
+		const url = productUrl(siteUrl, data.slug);
 		return {
 			badge: 'Back in stock',
 			brand,

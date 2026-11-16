@@ -1,6 +1,7 @@
 import type { EmailParams, EmailRow } from '@zeyolabs/kit/utils/email';
 
-import { shopping } from '../config';
+import type { ShopSite } from '../config';
+
 import { Money } from '../utils/money';
 
 export type OrderEmailData = {
@@ -63,14 +64,14 @@ function totalRows(order: OrderEmailData): EmailRow[] {
 /** The order emails, as kit email params (the shop renders and sends them). */
 export const OrderEmails = {
 	/** What the customer receives once payment has gone through. */
-	customer(order: OrderEmailData): EmailParams {
+	customer(order: OrderEmailData, site: ShopSite): EmailParams {
 		const firstName = order.address.name.split(' ')[0] || 'there';
 		return {
 			badge: 'Paid',
-			brand: shopping().brand,
+			brand: site.brand,
 			cta: order.orderUrl
 				? { href: order.orderUrl, label: 'View your order' }
-				: { href: `${shopping().siteUrl}/shipping`, label: 'Delivery and returns' },
+				: { href: `${site.siteUrl}/shipping`, label: 'Delivery and returns' },
 			eyebrow: `Order ${order.number}`,
 			footnote: `Keep this email as your receipt. Quote ${order.number} if you contact us.${order.orderUrl ? ' Your order link is private to you, so please do not share it.' : ''}`,
 			heading: `Thank you, ${firstName}`,
@@ -81,7 +82,7 @@ export const OrderEmails = {
 					? ['Use the link below to see when it is dispatched and to track it.']
 					: []),
 			],
-			preheader: `Order ${order.number} is confirmed. Thank you for shopping with ${shopping().brand.name}.`,
+			preheader: `Order ${order.number} is confirmed. Thank you for shopping with ${site.brand.name}.`,
 			sections: [
 				{ rows: itemRows(order), title: 'Your order' },
 				{ rows: totalRows(order) },
@@ -91,10 +92,10 @@ export const OrderEmails = {
 	},
 
 	/** The internal heads-up to the shop: who ordered what, and where it goes. */
-	shop(order: OrderEmailData): EmailParams {
+	shop(order: OrderEmailData, site: ShopSite): EmailParams {
 		return {
 			badge: 'Paid',
-			brand: shopping().brand,
+			brand: site.brand,
 			eyebrow: 'New order',
 			heading: `${order.number}: ${Money.format(order.totalPence)}`,
 			intro: [
