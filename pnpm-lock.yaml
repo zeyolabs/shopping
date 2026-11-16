@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       '@lucide/svelte':
-        specifier: 1.52.0
-        version: 1.52.0(svelte@5.57.3(@typescript-eslint/types@8.72.2))
+        specifier: 1.73.0
+        version: 1.73.0(svelte@5.57.3(@typescript-eslint/types@8.72.2))
       stripe:
         specifier: 22.3.2
         version: 22.3.2(@types/node@26.6.6)
@@ -415,6 +415,11 @@ packages:
 
   '@lucide/svelte@1.52.0':
     resolution: {integrity: sha512-bQ8t3IcZxWqAdmdMZPyZEv8Qf+MDgBAf7n43eRQoXyBeLWr8HWToiMIO6vKlHxC/lnMiCDdTzm09hjy92ch46A==}
+    peerDependencies:
+      svelte: ^5
+
+  '@lucide/svelte@1.73.0':
+    resolution: {integrity: sha512-Rz1uA9aTJ7HA/j2Hf9Dm2OVM8NtkzHnNeIQvVWoUkpf1ZD/7dR9cB4ftjbOiWAeJrKkEAVvTDrcVtITFdx6KAA==}
     peerDependencies:
       svelte: ^5
 
@@ -2461,6 +2466,10 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.6.0
 
   '@lucide/svelte@1.52.0(svelte@5.57.3(@typescript-eslint/types@8.72.2))':
+    dependencies:
+      svelte: 5.57.3(@typescript-eslint/types@8.72.2)
+
+  '@lucide/svelte@1.73.0(svelte@5.57.3(@typescript-eslint/types@8.72.2))':
     dependencies:
       svelte: 5.57.3(@typescript-eslint/types@8.72.2)
 
