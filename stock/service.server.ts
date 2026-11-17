@@ -13,7 +13,8 @@ export const MAX_COMPONENTS = 10;
 type ComponentRow = StockComponent & { componentId: number };
 
 /** The part of a paid order line the stock cares about. */
-export type PaidLine = { productId: number; quantity: number };
+/** A paid line. `singleUnits`: `quantity` is single units (a kit's part), taken as is, not counted as sold. */
+export type PaidLine = { productId: number; quantity: number; singleUnits?: boolean };
 
 /**
  * SQL for "this product can be bought right now": a plain product has at least one whole pack, a
@@ -152,6 +153,10 @@ export class StockService {
 		const packSize = new Map(rows.map((r) => [r.id, r.packSize]));
 		const statements = [];
 		for (const line of lines) {
+			if (line.singleUnits) {
+				statements.push(this.decrement(line.productId, line.quantity));
+				continue;
+			}
 			const parts = components.get(line.productId);
 			if (parts) {
 				for (const part of parts) {

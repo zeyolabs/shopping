@@ -20,7 +20,8 @@ const MIGRATIONS = [
 		variation_group_id integer, variation_label text)`,
 	`CREATE TABLE order_items (
 		id integer PRIMARY KEY AUTOINCREMENT, name text NOT NULL, order_id integer NOT NULL,
-		product_id integer, quantity integer NOT NULL, sku text NOT NULL, unit_price_pence integer NOT NULL)`,
+		product_id integer, quantity integer NOT NULL, single_units integer NOT NULL DEFAULT 0, sku text NOT NULL,
+		unit_price_pence integer NOT NULL)`,
 	'CREATE UNIQUE INDEX order_items_order_sku_unique ON order_items (order_id, sku)',
 	`CREATE TABLE product_components (
 		component_id integer NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
@@ -93,6 +94,18 @@ describe('StockService', () => {
 
 	it('setStock throws 404 for an unknown product', async () => {
 		await expect(service().setStock(999999, 1)).rejects.toThrow('not found');
+	});
+
+	it('paidStatements takes a kit part as single units and does not count it sold', async () => {
+		const switches = await product({ packSize: 10, stock: 30 });
+		await db().batch(
+			(await service().paidStatements([
+				{ productId: switches.id, quantity: 7, singleUnits: true },
+			])) as unknown as Parameters<ShopDb['batch']>[0]
+		);
+		const after = await read(switches.id);
+		expect(after.stock).toBe(23);
+		expect(after.sold).toBe(0);
 	});
 
 	it('paidStatements decrements stock in units, floors at 0 and counts sold', async () => {

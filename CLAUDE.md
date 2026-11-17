@@ -53,6 +53,15 @@ path (it sets `restockedAt`); `paidStatements` is the paid decrement, in the sam
 order items. Back-in-stock keys off `sellableSql`. Schema changes are additive; each app generates
 its migration and applies it to prod D1 before deploying a version that uses it.
 Refunds (`fulfilment/refund.server.ts`) read what is already refunded from the Stripe charge and record Stripe's total in `orders.refunded_pence`; an app must generate and apply that migration to prod D1 before deploying the version that has it.
+Bundles: a plain bundle adds its products to the basket as ordinary lines. A discounted bundle
+(`discountPercent`) or a kit (a `base` step: one product whose `slots` sets the size and whose price,
+or the step's `pricePence`, is the kit's price; `fill` fills every slot with single units; `cover`
+takes one product for every slot) stays one basket line, kept in the `basket_bundles` cookie and
+re-checked on every read. At checkout it is one Stripe line with its parts in metadata
+(`BundleParts`); the order records it plus each part at £0, and a kit's parts take stock in single
+units (`order_items.single_units`). The bundle columns and `single_units` are a schema change: each
+app generates and applies its migration before deploying.
+
 Signup form and checkout stay in the app (Turnstile / rate limiter): the product page takes an
 `outOfStock` snippet, the basket page takes the app's `startCheckout` remote function.
 

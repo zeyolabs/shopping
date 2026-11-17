@@ -335,3 +335,11 @@ CREATE TABLE `reviews` (
 CREATE UNIQUE INDEX `reviews_order_product_unique` ON `reviews` (`order_id`,`product_id`);--> statement-breakpoint
 CREATE INDEX `reviews_product_status_idx` ON `reviews` (`product_id`,`status`);--> statement-breakpoint
 ALTER TABLE `orders` ADD `stripe_invoice_id` text;
+--> statement-breakpoint
+ALTER TABLE `bundle_step_products` ADD `slots` integer;--> statement-breakpoint
+ALTER TABLE `bundle_steps` ADD `max_per_choice` integer;--> statement-breakpoint
+ALTER TABLE `bundle_steps` ADD `role` text DEFAULT 'pick' NOT NULL;--> statement-breakpoint
+ALTER TABLE `bundles` ADD `discount_percent` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE `order_items` ADD `single_units` integer DEFAULT false NOT NULL;
+--> statement-breakpoint
+ALTER TABLE `bundle_step_products` ADD `price_pence` integer;

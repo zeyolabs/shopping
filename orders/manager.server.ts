@@ -2,6 +2,7 @@ import type Stripe from 'stripe';
 
 import { logger } from '@zeyolabs/kit/server/logger';
 
+import { BundleParts } from '../bundles/library';
 import { ShopClients } from '../clients/shop.server';
 import { shopping } from '../config';
 import { ShippingService } from '../shipping/service.server';
@@ -62,17 +63,7 @@ export const OrderManager = {
 			}
 		);
 
-		const items: NewOrderItem[] = (session.line_items?.data ?? []).map((line) => {
-			const product = line.price?.product as Stripe.Product;
-			const productId = Number(product.metadata.productId);
-			return {
-				name: line.description ?? product.name,
-				productId: Number.isInteger(productId) ? productId : null,
-				quantity: line.quantity ?? 1,
-				sku: product.metadata.sku ?? '',
-				unitPricePence: line.price?.unit_amount ?? 0,
-			};
-		});
+		const items = await orderItems(service, session.line_items?.data ?? []);
 		if (!(await service.writeItems(order.id, items))) return;
 
 		// The customer is already charged and the order recorded: neither follow-up may fail the webhook.
@@ -130,3 +121,46 @@ export const OrderManager = {
 		return invoice.invoice_pdf ?? invoice.hosted_invoice_url ?? undefined;
 	},
 };
+
+/**
+ * The paid session's lines as order items. A grouped bundle is its own line at the price paid, then
+ * each part at no charge (sku `BUNDLE-<id>-<n>:<part sku>`), so its stock is taken when the items
+ * are written; a kit's parts are single units.
+ */
+async function orderItems(
+	service: OrderService,
+	lines: Stripe.LineItem[]
+): Promise<NewOrderItem[]> {
+	const items: NewOrderItem[] = [];
+	const bundled = lines.map((line) =>
+		BundleParts.decode((line.price?.product as Stripe.Product).metadata.bundleParts)
+	);
+	const names = await service.productNames([...new Set(bundled.flat().map((p) => p.productId))]);
+	for (const [n, line] of lines.entries()) {
+		const product = line.price?.product as Stripe.Product;
+		const productId = Number(product.metadata.productId);
+		const parts = bundled[n];
+		const sku = parts.length
+			? `${product.metadata.sku ?? 'BUNDLE'}-${n + 1}`
+			: (product.metadata.sku ?? '');
+		items.push({
+			name: line.description ?? product.name,
+			productId: !parts.length && Number.isInteger(productId) ? productId : null,
+			quantity: line.quantity ?? 1,
+			sku,
+			unitPricePence: line.price?.unit_amount ?? 0,
+		});
+		for (const part of parts) {
+			const known = names.get(part.productId);
+			items.push({
+				name: known?.name ?? `Product ${part.productId}`,
+				productId: part.productId,
+				quantity: part.quantity,
+				singleUnits: part.singleUnits,
+				sku: `${sku}:${known?.sku ?? part.productId}`,
+				unitPricePence: 0,
+			});
+		}
+	}
+	return items;
+}

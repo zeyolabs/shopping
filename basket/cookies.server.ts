@@ -1,8 +1,9 @@
 import type { Cookies } from '@sveltejs/kit';
 
-import { type Basket, BasketCookie } from './library';
+import { type Basket, type BasketBundle, BasketBundles, BasketCookie } from './library';
 
 const COOKIE = 'basket';
+const BUNDLES_COOKIE = 'basket_bundles';
 const SHIP_TO_COOKIE = 'ship_to';
 const OPTIONS = {
 	httpOnly: true,
@@ -16,10 +17,16 @@ const OPTIONS = {
 export const BasketCookies = {
 	clear(cookies: Cookies): void {
 		cookies.delete(COOKIE, { path: '/' });
+		cookies.delete(BUNDLES_COOKIE, { path: '/' });
 	},
 
 	read(cookies: Cookies): Basket {
 		return BasketCookie.parse(cookies.get(COOKIE));
+	},
+
+	/** Bundles kept as one line each (kits, discounted bundles). */
+	readBundles(cookies: Cookies): BasketBundle[] {
+		return BasketBundles.parse(cookies.get(BUNDLES_COOKIE));
 	},
 
 	/** The chosen country, or `fallback` (the shop's default) when unset or invalid. */
@@ -30,6 +37,11 @@ export const BasketCookies = {
 
 	write(cookies: Cookies, basket: Basket): void {
 		cookies.set(COOKIE, JSON.stringify(basket), OPTIONS);
+	},
+
+	writeBundles(cookies: Cookies, list: BasketBundle[]): void {
+		if (list.length === 0) cookies.delete(BUNDLES_COOKIE, { path: '/' });
+		else cookies.set(BUNDLES_COOKIE, JSON.stringify(list), OPTIONS);
 	},
 
 	writeShipTo(cookies: Cookies, country: string): void {
