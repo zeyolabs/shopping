@@ -56,6 +56,11 @@
 			"matchPackageNames": ["@zeyolabs/**"],
 			"minimumReleaseAge": null,
 			"schedule": ["at any time"]
+		},
+		{
+			"description": "ui 2026.1106.0 was mis-numbered (semver reads 1106 as newer than 11.31). Never pick it.",
+			"matchPackageNames": ["@zeyolabs/ui"],
+			"allowedVersions": "!/^2026\\.1106\\./"
 		}
 	]
 }
