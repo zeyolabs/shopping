@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import PageLinks from '../../ui/PageLinks.svelte';
 	import PageTitle from '../../ui/PageTitle.svelte';
 	import ProductCard from '../components/ProductCard.svelte';
 	import type { getShop } from '../client.remote';
@@ -17,12 +18,6 @@
 		shop: Awaited<ReturnType<typeof getShop>>;
 	} = $props();
 </script>
-
-<!-- In stock first; the database order (sort order, then name) is kept within each group. -->
-{let sorted = $derived([
-	...shop.products.filter((p) => p.stock > 0),
-	...shop.products.filter((p) => p.stock <= 0),
-])}
 
 <PageTitle {description} title="Shop" />
 
@@ -43,12 +38,14 @@
 	</ul>
 </nav>
 
-{#if sorted.length === 0}
+<!-- In stock first (the query sorts by it, then sort order and name), one page at a time. -->
+{#if shop.products.length === 0}
 	<p>No products available right now. Please check back soon.</p>
 {:else}
-	<ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-		{#each sorted as product (product.id)}
+	<ul class="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
+		{#each shop.products as product (product.id)}
 			<li><ProductCard {product} /></li>
 		{/each}
 	</ul>
+	<PageLinks page={shop.page} pages={shop.pages} />
 {/if}

@@ -9,6 +9,7 @@ import {
 	getUkShippingRate,
 	searchShop,
 } from './client.remote';
+import { Paging } from './library';
 import { CatalogueService } from './service.server';
 
 /**
@@ -24,12 +25,15 @@ export async function layoutLoad() {
 	return { menuCategories: await getMenuCategories() };
 }
 
-export async function shopLoad() {
-	return { shop: await getShop() };
+/** `/shop?page=N`. */
+export async function shopLoad({ url }: { url: URL }) {
+	return { shop: await getShop(Paging.parse(url.searchParams.get('page'))) };
 }
 
-export async function categoryLoad({ params }: SlugEvent) {
-	return { page: await getCategoryPage(params.slug ?? '') };
+/** `/category/<slug>?page=N`. */
+export async function categoryLoad({ params, url }: SlugEvent) {
+	const page = Paging.parse(url.searchParams.get('page'));
+	return { page: await getCategoryPage({ page, slug: params.slug ?? '' }) };
 }
 
 /** Legacy links (`/product/<old-slug>`, `/product/<parent>?variant=<code>`) redirect; unknown slugs 404. */

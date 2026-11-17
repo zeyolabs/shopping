@@ -96,3 +96,34 @@ export const ProductText = {
 		return paragraphs.length;
 	},
 };
+
+/** Listing pages (`?page=N`, 1-based). Pure. */
+export const Paging = {
+	/** Products per page: fills grids of 2, 3 and 4 columns evenly. */
+	PER_PAGE: 24,
+
+	/** Page count for `total` items; at least 1, so an empty listing still has its first page. */
+	pages(total: number): number {
+		return Math.max(1, Math.ceil(total / Paging.PER_PAGE));
+	},
+
+	/** `?page=` as a page number; anything that is not a whole number from 1 is page 1. */
+	parse(value: null | string): number {
+		const page = Number(value);
+		return Number.isInteger(page) && page >= 1 && page <= 10_000 ? page : 1;
+	},
+
+	/** The page numbers to link: first, last and the current one's neighbours, null for a gap. */
+	window(page: number, pages: number): (null | number)[] {
+		const shown = [...new Set([1, page, page + 1, page - 1, pages])]
+			.filter((n) => n >= 1 && n <= pages)
+			.toSorted((a, b) => a - b);
+		const out: (null | number)[] = [];
+		for (const [i, n] of shown.entries()) {
+			if (i > 0 && n - shown[i - 1] === 2) out.push(n - 1);
+			else if (i > 0 && n - shown[i - 1] > 2) out.push(null);
+			out.push(n);
+		}
+		return out;
+	},
+};

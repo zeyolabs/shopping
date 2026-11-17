@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ProductText } from './library';
+import { Paging, ProductText } from './library';
 
 describe('ProductText.parse', () => {
 	it('splits paragraphs, headings and spec lists', () => {
@@ -42,5 +42,26 @@ describe('ProductText.visibleCount', () => {
 		expect(ProductText.visibleCount(short)).toBe(1);
 		const long = [0, 1, 2].map(() => ({ heading: null, text: 'a'.repeat(400) }));
 		expect(ProductText.visibleCount(long)).toBe(1);
+	});
+});
+
+describe('Paging', () => {
+	it('parses ?page= and falls back to 1', () => {
+		expect(Paging.parse('3')).toBe(3);
+		for (const bad of [null, '', '0', '-2', '1.5', 'abc', '99999'])
+			expect(Paging.parse(bad)).toBe(1);
+	});
+
+	it('counts pages', () => {
+		expect(Paging.pages(0)).toBe(1);
+		expect(Paging.pages(24)).toBe(1);
+		expect(Paging.pages(25)).toBe(2);
+	});
+
+	it('links the ends and the neighbours, with gaps', () => {
+		expect(Paging.window(1, 1)).toEqual([1]);
+		expect(Paging.window(1, 4)).toEqual([1, 2, 3, 4]);
+		expect(Paging.window(6, 12)).toEqual([1, null, 5, 6, 7, null, 12]);
+		expect(Paging.window(3, 12)).toEqual([1, 2, 3, 4, null, 12]);
 	});
 });

@@ -17,18 +17,32 @@ export const getMenuCategories = Remote.Query(async () => {
 	return (await service.categories()).map(({ name, slug }) => ({ name, slug }));
 });
 
-export const getShop = Remote.Query(async () => {
+const PageParam = z.number().int().min(1).max(10_000);
+
+/** A page past the last one is a 404, so stale `?page=` links don't render an empty page. */
+function checkPage<T extends { page: number; pages: number }>(listing: T): T {
+	if (listing.page > listing.pages) throw Error404('Page not found');
+	return listing;
+}
+
+export const getShop = Remote.Query(PageParam, async (page) => {
 	const service = catalogue();
-	const [categories, products] = await Promise.all([service.categories(), service.products()]);
-	return { categories, products };
+	const [categories, listing] = await Promise.all([
+		service.categories(),
+		service.productPage(page),
+	]);
+	return { categories, ...checkPage(listing) };
 });
 
-export const getCategoryPage = Remote.Query(ShopSchema.SlugParam, async (slug) => {
-	const service = catalogue();
-	const category = await service.category(slug);
-	if (!category) throw Error404('Category not found');
-	return { category, products: await service.categoryProducts(category.id) };
-});
+export const getCategoryPage = Remote.Query(
+	z.object({ page: PageParam, slug: ShopSchema.SlugParam }),
+	async ({ page, slug }) => {
+		const service = catalogue();
+		const category = await service.category(slug);
+		if (!category) throw Error404('Category not found');
+		return { category, ...checkPage(await service.productPage(page, category.id)) };
+	}
+);
 
 export const getProduct = Remote.Query(ShopSchema.SlugParam, async (slug) => {
 	const db = shopping().db();

@@ -15,8 +15,12 @@
 	} = $props();
 
 	const context = shopContext();
-	// Canonical ignores the query string, so `?show=N` deep links don't count as duplicate pages.
-	const canonical = $derived(`${context.siteUrl}${page.url.pathname}`);
+	// Canonical drops the query string except `?page=N` (each listing page is its own page), so
+	// other parameters don't count as duplicate pages.
+	const listingPage = $derived(Number(page.url.searchParams.get('page')) || 1);
+	const canonical = $derived(
+		`${context.siteUrl}${page.url.pathname}${listingPage > 1 ? `?page=${listingPage}` : ''}`
+	);
 </script>
 
 <svelte:head>

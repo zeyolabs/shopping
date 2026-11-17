@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 
@@ -10,9 +10,9 @@ import {
 	products,
 	productSlugAliases,
 } from '../db/schema';
-import { StockService } from '../stock/service.server';
+import { sellableSql, StockService } from '../stock/service.server';
 import { CoverService } from './covers.server';
-import { Search } from './library';
+import { Paging, Search } from './library';
 
 type Product = typeof products.$inferSelect;
 
@@ -64,6 +64,36 @@ export class CatalogueService {
 			: [];
 
 		return { options, product, variationName: product.variationGroup?.name };
+	}
+
+	/**
+	 * One page of active products (all of them, or one category's): those that can be bought first,
+	 * then by sort order and name. `page` is 1-based; `pages` is at least 1.
+	 */
+	async productPage(page: number, categoryId?: number) {
+		const where = and(
+			eq(products.active, true),
+			categoryId === undefined
+				? undefined
+				: inArray(
+						products.id,
+						this.db
+							.select({ id: productCategories.productId })
+							.from(productCategories)
+							.where(eq(productCategories.categoryId, categoryId))
+					)
+		);
+		const [[{ total }], list] = await Promise.all([
+			this.db.select({ total: count() }).from(products).where(where),
+			this.db
+				.select()
+				.from(products)
+				.where(where)
+				.orderBy(desc(sellableSql), asc(products.sortOrder), asc(products.name))
+				.limit(Paging.PER_PAGE)
+				.offset((page - 1) * Paging.PER_PAGE),
+		]);
+		return { page, pages: Paging.pages(total), products: await this.withCovers(list), total };
 	}
 
 	/** Every active product, each with its cover image. */
@@ -125,17 +155,22 @@ export class CatalogueService {
 		};
 	}
 
-	/** Adds each product's cover image (lowest position). `stock` becomes what can be sold now. */
+	/**
+	 * Adds each product's cover image (lowest position). `stock` becomes what can be sold now, and
+	 * products that can be bought come first; within each half the order is unchanged.
+	 */
 	private async withCovers(list: Product[]) {
 		if (list.length === 0) return [];
 		const ids = list.map((p) => p.id);
 		const covers = new CoverService(this.db);
 		const stock = new StockService(this.db);
 		const [cover, sellable] = await Promise.all([covers.covers(ids), stock.availableMany(ids)]);
-		return list.map((product) => ({
-			...product,
-			cover: cover.get(product.id),
-			stock: sellable.get(product.id) ?? 0,
-		}));
+		return list
+			.map((product) => ({
+				...product,
+				cover: cover.get(product.id),
+				stock: sellable.get(product.id) ?? 0,
+			}))
+			.toSorted((a, b) => Number(b.stock > 0) - Number(a.stock > 0));
 	}
 }

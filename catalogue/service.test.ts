@@ -46,3 +46,35 @@ describe('CatalogueService over D1 limits', () => {
 		expect(await catalogue.search('keycap')).toHaveLength(48);
 	});
 });
+
+describe('CatalogueService listings', () => {
+	const { db, product } = shopTestDb();
+
+	it('lists products in stock first, keeping their order within each half', async () => {
+		await product({ name: 'A sold out', sortOrder: 1, stock: 0 });
+		await product({ name: 'B in stock', sortOrder: 2 });
+		await product({ name: 'C sold out', sortOrder: 3, stock: 0 });
+		await product({ name: 'D in stock', sortOrder: 4 });
+		const names = (await new CatalogueService(db()).products()).map((p) => p.name);
+		expect(names).toEqual(['B in stock', 'D in stock', 'A sold out', 'C sold out']);
+	});
+});
+
+describe('CatalogueService.productPage', () => {
+	const { db, product } = shopTestDb();
+
+	it('pages active products with the sellable ones first across pages', async () => {
+		for (let i = 0; i < 30; i++) {
+			await product({ name: `P${String(i).padStart(2, '0')}`, sortOrder: i, stock: i % 2 ? 5 : 0 });
+		}
+		await product({ active: false, name: 'Hidden' });
+		const catalogue = new CatalogueService(db());
+		const first = await catalogue.productPage(1);
+		expect(first).toMatchObject({ page: 1, pages: 2, total: 30 });
+		expect(first.products).toHaveLength(24);
+		expect(first.products.slice(0, 15).every((p) => p.stock > 0)).toBe(true);
+		expect(first.products[15].stock).toBe(0);
+		const second = await catalogue.productPage(2);
+		expect(second.products.map((p) => p.name)).toEqual(['P18', 'P20', 'P22', 'P24', 'P26', 'P28']);
+	});
+});
