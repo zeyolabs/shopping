@@ -6,6 +6,7 @@ import { Error400 } from '@zeyolabs/kit/utils/errors';
 
 import { BasketCookies } from '../basket/cookies.server';
 import { BasketService, type BasketSummary } from '../basket/service.server';
+import { BundleParts } from '../bundles/library';
 import { ShopClients } from '../clients/shop.server';
 import { shopping } from '../config';
 import { CustomerService } from '../customers/service.server';
@@ -30,10 +31,17 @@ export const CheckoutManager = {
 		const summary = await basket.summarise(
 			BasketCookies.read(cookies),
 			BasketCookies.readShipTo(cookies, config.shipping.defaultCountry),
-			config.shipping
+			config.shipping,
+			BasketCookies.readBundles(cookies)
 		);
 
-		if (summary.lines.length === 0) throw Error400('Your basket is empty.');
+		if (summary.lines.length === 0 && summary.bundles.length === 0) {
+			throw Error400('Your basket is empty.');
+		}
+		const brokenBundle = summary.bundles.find((b) => !b.available);
+		if (brokenBundle) {
+			throw Error400(`${brokenBundle.name}: ${brokenBundle.problem} Please remove it to continue.`);
+		}
 		const unavailable = summary.lines.find((line) => line.available < 1);
 		if (unavailable)
 			throw Error400(`${unavailable.name} is out of stock. Please remove it to continue.`);
@@ -86,20 +94,11 @@ function sessionParams(
 					},
 				}
 			: undefined,
-		line_items: summary.lines.map((line) => ({
-			price_data: {
-				currency: 'gbp',
-				product_data: {
-					images: line.cover
-						? [new URL(Images.url(imageBaseUrl, line.cover.src), origin).href]
-						: undefined,
-					metadata: { productId: String(line.id), sku: line.sku },
-					name: line.name,
-				},
-				unit_amount: line.pricePence,
-			},
-			quantity: line.available,
-		})),
+		line_items: [
+			...summary.lines.map((line) => productItem(line, imageBaseUrl, origin)),
+			...summary.bundles.map((bundle) => bundleItem(bundle, imageBaseUrl, origin)),
+		],
+
 		metadata: {
 			country: summary.country,
 			shippingService: summary.shipping.service,
@@ -123,5 +122,58 @@ function sessionParams(
 			},
 		],
 		success_url: `${origin}/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,
+	};
+}
+
+type LineItem = Stripe.Checkout.SessionCreateParams.LineItem;
+
+function productItem(
+	line: BasketSummary['lines'][number],
+	imageBaseUrl: string,
+	origin: string
+): LineItem {
+	return {
+		price_data: {
+			currency: 'gbp',
+			product_data: {
+				images: line.cover
+					? [new URL(Images.url(imageBaseUrl, line.cover.src), origin).href]
+					: undefined,
+				metadata: { productId: String(line.id), sku: line.sku },
+				name: line.name,
+			},
+			unit_amount: line.pricePence,
+		},
+		quantity: line.available,
+	};
+}
+
+/**
+ * A kit or discounted bundle as one Checkout line at its price. Its parts travel in the metadata
+ * (`BundleParts`) so the order can record them and take their stock once paid.
+ */
+function bundleItem(
+	bundle: BasketSummary['bundles'][number],
+	imageBaseUrl: string,
+	origin: string
+): LineItem {
+	return {
+		price_data: {
+			currency: 'gbp',
+			product_data: {
+				description: bundle.details.join(', ').slice(0, 500) || undefined,
+				images: bundle.cover
+					? [new URL(Images.url(imageBaseUrl, bundle.cover.src), origin).href]
+					: undefined,
+				metadata: {
+					bundleId: String(bundle.bundleId),
+					bundleParts: BundleParts.encode(bundle.parts),
+					sku: `BUNDLE-${bundle.bundleId}`,
+				},
+				name: bundle.name,
+			},
+			unit_amount: bundle.pricePence,
+		},
+		quantity: 1,
 	};
 }

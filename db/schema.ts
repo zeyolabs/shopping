@@ -260,6 +260,11 @@ export const orderItems = sqliteTable(
 			.references(() => orders.id, { onDelete: 'cascade' }),
 		productId: integer('product_id').references(() => products.id, { onDelete: 'set null' }),
 		quantity: integer('quantity').notNull(),
+		/**
+		 * True for a kit's parts: `quantity` is single units (16 switches), not purchases (packs), so
+		 * paying takes exactly that many from stock.
+		 */
+		singleUnits: integer('single_units', { mode: 'boolean' }).notNull().default(false),
 		sku: text('sku').notNull(),
 		unitPricePence: integer('unit_price_pence').notNull(),
 	},
@@ -314,14 +319,17 @@ export const reviews = sqliteTable(
 );
 
 /**
- * A bundle is built in steps: at each step the customer picks from that step's products. Adding a
- * bundle to the basket adds the chosen products as ordinary lines at their own prices, so stock,
- * shipping and orders work unchanged.
+ * A bundle is built in steps: at each step the customer picks from that step's products. A plain
+ * bundle adds the chosen products to the basket as ordinary lines at their own prices. A bundle with
+ * a discount, or a kit (it has a `base` step), goes in the basket as one line: a discounted bundle
+ * costs its products' prices less `discountPercent`, a kit costs its base's price.
  */
 export const bundles = sqliteTable('bundles', {
 	active: integer('active', { mode: 'boolean' }).notNull().default(true),
 	createdAt: integer('created_at').notNull(),
 	description: text('description').notNull().default(''),
+	/** Off the products' total when bought as this bundle, 0 to 90. Not applied to kits. */
+	discountPercent: integer('discount_percent').notNull().default(0),
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	/** File name in the product image bucket, shown on the bundle page. */
 	image: text('image'),
@@ -329,6 +337,15 @@ export const bundles = sqliteTable('bundles', {
 	slug: text('slug').notNull().unique(),
 	sortOrder: integer('sort_order').notNull().default(0),
 });
+
+/**
+ * How a step is chosen. `pick`: between `minChoices` and `maxChoices` different products. A kit's
+ * steps: `base`, one product whose `slots` sets the kit's size and whose price is the kit's price;
+ * `fill`, fill every slot with single units, repeats allowed up to `maxPerChoice` each; `cover`, one
+ * product, a single unit per slot (e.g. keycaps for every switch).
+ */
+export const BUNDLE_STEP_ROLES = ['pick', 'base', 'fill', 'cover'] as const;
+export type BundleStepRole = (typeof BUNDLE_STEP_ROLES)[number];
 
 /** One step of a bundle: pick between `minChoices` and `maxChoices` of its products. */
 export const bundleSteps = sqliteTable(
@@ -340,9 +357,12 @@ export const bundleSteps = sqliteTable(
 		description: text('description').notNull().default(''),
 		id: integer('id').primaryKey({ autoIncrement: true }),
 		maxChoices: integer('max_choices').notNull().default(1),
+		/** A `fill` step: the most slots one product may take. Null: no limit. */
+		maxPerChoice: integer('max_per_choice'),
 		/** 0 makes the step optional. */
 		minChoices: integer('min_choices').notNull().default(1),
 		position: integer('position').notNull().default(0),
+		role: text('role', { enum: BUNDLE_STEP_ROLES }).notNull().default('pick'),
 		title: text('title').notNull(),
 	},
 	(t) => [index('bundle_steps_bundle_idx').on(t.bundleId, t.position)]
@@ -353,9 +373,13 @@ export const bundleStepProducts = sqliteTable(
 	'bundle_step_products',
 	{
 		position: integer('position').notNull().default(0),
+		/** A kit's `base` option: the kit's price when not the product's own (a case sold alone for less). */
+		pricePence: integer('price_pence'),
 		productId: integer('product_id')
 			.notNull()
 			.references(() => products.id, { onDelete: 'cascade' }),
+		/** A kit's `base` option: how many slots it holds (a 4x4 tester holds 16). */
+		slots: integer('slots'),
 		stepId: integer('step_id')
 			.notNull()
 			.references(() => bundleSteps.id, { onDelete: 'cascade' }),

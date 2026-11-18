@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { shopContext } from '../../context';
+	import PageLinks from '../../ui/PageLinks.svelte';
 	import PageTitle from '../../ui/PageTitle.svelte';
 	import ProductCard from '../components/ProductCard.svelte';
 	import type { getCategoryPage } from '../client.remote';
@@ -26,9 +27,14 @@
 {#if data.products.length === 0}
 	<p>No products available right now. Please check back soon.</p>
 {:else}
-	<ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+	<p class="mb-4 text-sm text-[var(--txs)]">
+		{data.total}
+		{data.total === 1 ? 'product' : 'products'}{#if data.pages > 1}, page {data.page} of {data.pages}{/if}
+	</p>
+	<ul class="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
 		{#each data.products as product (product.id)}
 			<li><ProductCard {product} /></li>
 		{/each}
 	</ul>
+	<PageLinks page={data.page} pages={data.pages} />
 {/if}

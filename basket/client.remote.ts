@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { shopping } from '../config';
 import { ShippingService } from '../shipping/service.server';
 import { BasketCookies } from './cookies.server';
-import { BasketCookie } from './library';
+import { BasketBundles, BasketCookie } from './library';
 import { AddToBasketSchema, BasketQuantitySchema } from './schema';
 import { BasketService } from './service.server';
 
@@ -18,9 +18,23 @@ export const getBasket = Remote.Query(async () => {
 	return service.summarise(
 		BasketCookies.read(cookies),
 		BasketCookies.readShipTo(cookies, shipping.defaultCountry),
-		shipping
+		shipping,
+		BasketCookies.readBundles(cookies)
 	);
 });
+
+/** The basket's remove button on a kit or discounted bundle (they are one line, without − and +). */
+export const removeBundleFromBasket = Remote.Cmd(
+	z.object({ index: z.number().int().min(0).max(20) }),
+	async ({ index }) => {
+		const { cookies } = getRequestEvent();
+		BasketCookies.writeBundles(
+			cookies,
+			BasketBundles.remove(BasketCookies.readBundles(cookies), index)
+		);
+		await getBasket().refresh();
+	}
+);
 
 export const addToBasketForm = Remote.Form(AddToBasketSchema, async ({ productId, quantity }) => {
 	const { cookies } = getRequestEvent();

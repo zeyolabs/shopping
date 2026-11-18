@@ -3,11 +3,24 @@
 
 	import { shopContext } from '../context';
 
-	let { description, title }: { description: string; title: string } = $props();
+	let {
+		description,
+		heading = true,
+		title,
+	}: {
+		description: string;
+		/** False when the page renders its own `<h1>` (the product page puts it beside the gallery). */
+		heading?: boolean;
+		title: string;
+	} = $props();
 
 	const context = shopContext();
-	// Canonical ignores the query string, so `?show=N` deep links don't count as duplicate pages.
-	const canonical = $derived(`${context.siteUrl}${page.url.pathname}`);
+	// Canonical drops the query string except `?page=N` (each listing page is its own page), so
+	// other parameters don't count as duplicate pages.
+	const listingPage = $derived(Number(page.url.searchParams.get('page')) || 1);
+	const canonical = $derived(
+		`${context.siteUrl}${page.url.pathname}${listingPage > 1 ? `?page=${listingPage}` : ''}`
+	);
 </script>
 
 <svelte:head>
@@ -21,4 +34,6 @@
 	<meta content="website" property="og:type" />
 </svelte:head>
 
-<h1 class="mb-10 text-4xl font-semibold tracking-tight text-[var(--primary-strong)]">{title}</h1>
+{#if heading}
+	<h1 class="mb-10 text-4xl font-semibold tracking-tight text-[var(--primary-strong)]">{title}</h1>
+{/if}

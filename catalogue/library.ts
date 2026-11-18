@@ -36,3 +36,94 @@ function fitPattern(word: string): string {
 	}
 	return fitted;
 }
+
+export type ProductParagraph = { heading: null | string; text: string };
+export type ProductSpec = { label: string; value: string };
+
+const SPEC_LINE = /^([A-Za-z][\w ()%./&-]{0,29}):\s+(\S.{0,59})$/;
+const UNKNOWN_VALUE = /^(unknown|n\/a|none|-+)$/i;
+
+/**
+ * A product description is plain text. Blocks are separated by a blank line; a block whose lines
+ * are all short `Label: value` pairs (two or more) is a spec list, and a short first line without
+ * closing punctuation, followed by more lines, is that block's heading. Pure.
+ */
+export const ProductText = {
+	/** Descriptions longer than this show their first paragraphs and fold the rest behind "Read more". */
+	FOLD_AFTER_CHARS: 600,
+
+	parse(description: string): { paragraphs: ProductParagraph[]; specs: ProductSpec[] } {
+		const paragraphs: ProductParagraph[] = [];
+		const specs: ProductSpec[] = [];
+		const blocks = description
+			.replace(/\r\n?/g, '\n')
+			.split(/\n\s*\n/)
+			.map((block) =>
+				block
+					.split('\n')
+					.map((line) => line.trim())
+					.filter(Boolean)
+			)
+			.filter((lines) => lines.length > 0);
+
+		for (const lines of blocks) {
+			const pairs = lines.map((line) => SPEC_LINE.exec(line));
+			if (lines.length >= 2 && pairs.every(Boolean)) {
+				for (const pair of pairs) {
+					const value = pair![2].trim();
+					if (!UNKNOWN_VALUE.test(value)) specs.push({ label: pair![1].trim(), value });
+				}
+				continue;
+			}
+			const [first, ...rest] = lines;
+			const isHeading = rest.length > 0 && first.length <= 60 && !/[.!?:,;]$/.test(first);
+			paragraphs.push(
+				isHeading
+					? { heading: first, text: rest.join('\n') }
+					: { heading: null, text: lines.join('\n') }
+			);
+		}
+		return { paragraphs, specs };
+	},
+
+	/** How many leading paragraphs to show before folding: at least one, then up to `FOLD_AFTER_CHARS`. */
+	visibleCount(paragraphs: ProductParagraph[]): number {
+		let chars = 0;
+		for (const [i, p] of paragraphs.entries()) {
+			chars += (p.heading?.length ?? 0) + p.text.length;
+			if (chars > ProductText.FOLD_AFTER_CHARS) return Math.max(1, i);
+		}
+		return paragraphs.length;
+	},
+};
+
+/** Listing pages (`?page=N`, 1-based). Pure. */
+export const Paging = {
+	/** Products per page: fills grids of 2, 3 and 4 columns evenly. */
+	PER_PAGE: 24,
+
+	/** Page count for `total` items; at least 1, so an empty listing still has its first page. */
+	pages(total: number): number {
+		return Math.max(1, Math.ceil(total / Paging.PER_PAGE));
+	},
+
+	/** `?page=` as a page number; anything that is not a whole number from 1 is page 1. */
+	parse(value: null | string): number {
+		const page = Number(value);
+		return Number.isInteger(page) && page >= 1 && page <= 10_000 ? page : 1;
+	},
+
+	/** The page numbers to link: first, last and the current one's neighbours, null for a gap. */
+	window(page: number, pages: number): (null | number)[] {
+		const shown = [...new Set([1, page, page + 1, page - 1, pages])]
+			.filter((n) => n >= 1 && n <= pages)
+			.toSorted((a, b) => a - b);
+		const out: (null | number)[] = [];
+		for (const [i, n] of shown.entries()) {
+			if (i > 0 && n - shown[i - 1] === 2) out.push(n - 1);
+			else if (i > 0 && n - shown[i - 1] > 2) out.push(null);
+			out.push(n);
+		}
+		return out;
+	},
+};

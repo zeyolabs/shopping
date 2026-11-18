@@ -6,11 +6,13 @@
 		basketQuantityForm,
 		getBasket,
 		getShippableCountries,
+		removeBundleFromBasket,
 		setShipTo,
 	} from '../client.remote';
 	import { BasketQuantitySchema } from '../schema';
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
+	import Trash from '@lucide/svelte/icons/trash-2';
 	import { shopContext } from '../../context';
 	import { Images } from '../../utils/images';
 	import { Money } from '../../utils/money';
@@ -44,7 +46,7 @@
 <Boundary message="Could not load your basket.">
 	{let [summary, countries] = $derived(await Promise.all([getBasket(), getShippableCountries()]))}
 
-	{#if summary.lines.length === 0}
+	{#if summary.lines.length === 0 && summary.bundles.length === 0}
 		<p>Your basket is empty.</p>
 		<p class="mt-4"><a class="underline" href={resolve('/')}>Continue shopping</a></p>
 	{:else}
@@ -103,6 +105,49 @@
 					<p class="w-20 text-right">{Money.format(line.lineTotalPence)}</p>
 				</li>
 			{/each}
+			{#each summary.bundles as bundle (bundle.index)}
+				<li class="flex flex-wrap items-start gap-4 py-4">
+					{#if bundle.cover}
+						<img
+							class="size-20 object-cover"
+							alt={bundle.cover.alt || bundle.name}
+							src={Images.url(context.imageBaseUrl, bundle.cover.src)}
+						/>
+					{/if}
+					<div class="min-w-0 flex-1">
+						{#if bundle.slug}
+							<a class="font-medium" href={resolve('/bundle/[slug]', { slug: bundle.slug })}>
+								{bundle.name}
+							</a>
+						{:else}
+							<p class="font-medium">{bundle.name}</p>
+						{/if}
+						{#if bundle.details.length > 0}
+							<ul class="mt-1 text-sm text-[var(--txs)]">
+								{#each bundle.details as detail, i (i)}<li>{detail}</li>{/each}
+							</ul>
+						{/if}
+						{#if bundle.problem}
+							<p class="mt-1 text-sm text-[var(--danger)]">{bundle.problem}</p>
+						{/if}
+					</div>
+					<Button
+						aria-label="Remove {bundle.name}"
+						icon
+						onclick={() => removeBundleFromBasket({ index: bundle.index })}
+						size="sm"
+						variant="secondary"
+					>
+						<Trash size={14} />
+					</Button>
+					<p class="w-20 text-right">
+						{Money.format(bundle.pricePence)}
+						{#if bundle.listPricePence > bundle.pricePence}
+							<s class="block text-xs text-[var(--txt)]">{Money.format(bundle.listPricePence)}</s>
+						{/if}
+					</p>
+				</li>
+			{/each}
 		</ul>
 
 		<div class="mt-6 ml-auto flex max-w-xs flex-col gap-1">
@@ -150,7 +195,9 @@
 
 		<p class="mt-6 text-right">
 			<Button
-				disabled={!summary.shipping || summary.lines.some((line) => line.available < 1)}
+				disabled={!summary.shipping ||
+					summary.lines.some((line) => line.available < 1) ||
+					summary.bundles.some((bundle) => !bundle.available)}
 				loading={paying}
 				loadingMessage="Redirecting…"
 				onclick={checkout}

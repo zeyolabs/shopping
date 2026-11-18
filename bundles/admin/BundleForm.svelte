@@ -19,7 +19,21 @@
 	const form = saveBundleForm.for(b?.id ?? 'new');
 	const { steps } = form.fields;
 	const stepRows = $derived(steps.value() ?? []);
-	const newStep = { description: '', maxChoices: 1, minChoices: 1, skus: '', title: '' };
+	const newStep = {
+		description: '',
+		maxChoices: 1,
+		maxPerChoice: '',
+		minChoices: 1,
+		role: 'pick' as const,
+		skus: '',
+		title: '',
+	};
+	const ROLES = [
+		{ label: 'Pick products', value: 'pick' },
+		{ label: 'Kit base (sets price and slots)', value: 'base' },
+		{ label: 'Kit fill (one per slot)', value: 'fill' },
+		{ label: 'Kit cover (one product for every slot)', value: 'cover' },
+	] as const;
 
 	const input = 'mt-1 w-full rounded-md border border-[var(--line)] bg-white px-3 py-1.5';
 	const section = 'grid gap-4 rounded-xl border border-[var(--line)] bg-white p-5';
@@ -30,11 +44,16 @@
 	defaults={{
 		active: b?.active ?? false,
 		description: b?.description ?? '',
+		discountPercent: b?.discountPercent ?? 0,
 		image: b?.image ?? '',
 		name: b?.name ?? '',
 		slug: b?.slug ?? '',
 		sortOrder: b?.sortOrder ?? 0,
-		steps: b?.steps.map((s) => ({ ...s, skus: s.skus.join('\n') })) ?? [newStep],
+		steps: b?.steps.map((s) => ({
+			...s,
+			maxPerChoice: s.maxPerChoice ? String(s.maxPerChoice) : '',
+			skus: s.skus.join('\n'),
+		})) ?? [newStep],
 	}}
 	{form}
 	hidden={{ id: b?.id }}
@@ -51,8 +70,11 @@
 			<TextField name="image" {form} optional>Image file name</TextField>
 		</div>
 		<MessageField name="description" {form} optional>Description</MessageField>
-		<div class="grid gap-4 sm:grid-cols-2">
+		<div class="grid gap-4 sm:grid-cols-3">
 			<NumberField name="sortOrder" {form} inputmode="numeric">Sort order</NumberField>
+			<NumberField name="discountPercent" {form} inputmode="numeric">
+				Bundle discount % (not for kits)
+			</NumberField>
 			<CheckboxField name="active" {form}>On sale in the shop</CheckboxField>
 		</div>
 	</section>
@@ -79,6 +101,20 @@
 			</label>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<label class="text-sm font-medium">
+					Kind of step
+					<select {...steps[i].role.as('select')} class={input}>
+						{#each ROLES as role (role.value)}
+							<option value={role.value}>{role.label}</option>
+						{/each}
+					</select>
+				</label>
+				<label class="text-sm font-medium">
+					Kit fill: most slots per product (blank = no limit)
+					<input {...steps[i].maxPerChoice.as('text')} class={input} inputmode="numeric" />
+				</label>
+			</div>
+			<div class="grid gap-4 sm:grid-cols-2">
+				<label class="text-sm font-medium">
 					Fewest picks (0 = optional)
 					<input {...steps[i].minChoices.as('number')} class={input} min="0" />
 				</label>
@@ -88,7 +124,7 @@
 				</label>
 			</div>
 			<label class="text-sm font-medium">
-				Products offered, one SKU per line
+				Products offered, one SKU per line (a kit base as SKU=slots, e.g. BASE44=16)
 				<textarea {...steps[i].skus.as('text')} class="{input} min-h-28 font-mono"></textarea>
 			</label>
 		</section>

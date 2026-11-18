@@ -1,10 +1,11 @@
 import { Crypto } from '@zeyolabs/kit/utils/crypto';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 
-import { addresses, orderItems, orders } from '../db/schema';
+import { addresses, orderItems, orders, products } from '../db/schema';
 import { StockService } from '../stock/service.server';
+import { Batches } from '../utils/batches';
 
 export type NewOrderItem = Omit<typeof orderItems.$inferInsert, 'id' | 'orderId'>;
 type NewAddress = Omit<typeof addresses.$inferInsert, 'createdAt' | 'id'>;
@@ -69,6 +70,25 @@ export class OrderService {
 		return row !== undefined;
 	}
 
+	/** Names and SKUs by id, for a bundle's parts on a new order. */
+	async productNames(ids: number[]): Promise<Map<number, { name: string; sku: string }>> {
+		if (ids.length === 0) return new Map();
+		const rows = await Batches.rows(ids, (slice) =>
+			this.db
+				.select({
+					id: products.id,
+					label: products.variationLabel,
+					name: products.name,
+					sku: products.sku,
+				})
+				.from(products)
+				.where(inArray(products.id, slice))
+		);
+		return new Map(
+			rows.map((r) => [r.id, { name: r.label ? `${r.name} (${r.label})` : r.name, sku: r.sku }])
+		);
+	}
+
 	async setRoyalMailOrderId(orderId: number, royalMailOrderId: string) {
 		await this.db.update(orders).set({ royalMailOrderId }).where(eq(orders.id, orderId));
 	}
@@ -82,7 +102,9 @@ export class OrderService {
 		const stock = new StockService(this.db);
 		const stockStatements = await stock.paidStatements(
 			items.flatMap((item) =>
-				item.productId == null ? [] : [{ productId: item.productId, quantity: item.quantity }]
+				item.productId == null
+					? []
+					: [{ productId: item.productId, quantity: item.quantity, singleUnits: item.singleUnits }]
 			)
 		);
 		try {
