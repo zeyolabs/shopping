@@ -128,7 +128,7 @@
 						>Up</Button
 					>
 					<Button
-						onclick={() => images.set(imageRows.filter((_, j) => j !== i))}
+						onclick={() => images.set(imageRows.filter((_: unknown, j: number) => j !== i))}
 						size="sm"
 						variant="secondary">Remove</Button
 					>
@@ -222,7 +222,7 @@
 						min="1"
 					/>
 					<Button
-						onclick={() => components.set(componentRows.filter((_, j) => j !== i))}
+						onclick={() => components.set(componentRows.filter((_: unknown, j: number) => j !== i))}
 						size="sm"
 						variant="secondary">Remove</Button
 					>

@@ -11,6 +11,6 @@
 		"target": "esnext",
 		"types": ["@cloudflare/workers-types"]
 	},
-	"include": ["**/*.ts"],
+	"include": ["**/*.ts", "**/*.svelte", "app-routes.d.ts"],
 	"exclude": ["node_modules"]
 }

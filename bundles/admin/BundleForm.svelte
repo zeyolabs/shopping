@@ -85,7 +85,7 @@
 				<h2 class="font-semibold">Step {i + 1}</h2>
 				{#if stepRows.length > 1}
 					<Button
-						onclick={() => steps.set(stepRows.filter((_, j) => j !== i))}
+						onclick={() => steps.set(stepRows.filter((_: unknown, j: number) => j !== i))}
 						size="sm"
 						variant="secondary">Remove step</Button
 					>

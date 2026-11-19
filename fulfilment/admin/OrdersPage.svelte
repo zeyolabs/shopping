@@ -101,6 +101,8 @@
 		{#each Object.entries(await getReadyByService()) as [service, n] (service)}
 			<span class="text-sm text-[var(--muted)]">{service}: {n} ready</span>
 		{/each}
+
+		{#snippet pending()}{/snippet}
 	</Boundary>
 	<form
 		class="ml-auto"
