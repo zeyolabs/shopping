@@ -28,7 +28,7 @@
 <svelte:head><title>Reviews · Admin</title></svelte:head>
 
 <Title level={1} size="md">Reviews</Title>
-<Text class="mt-1 text-[var(--ink-muted)]">
+<Text class="mt-1" color="secondary">
 	Customers review items from their order page. A review shows on the product page once approved.
 </Text>
 
@@ -36,8 +36,8 @@
 	{#each REVIEW_STATUSES as s (s)}
 		<a
 			class="rounded-full border px-3 py-1 text-sm no-underline {s === status
-				? 'border-[var(--leaf-dark)] bg-[var(--leaf-dark)] text-white'
-				: 'border-[var(--line)] bg-white text-[var(--ink)]'}"
+				? 'border-[var(--acc)] bg-[var(--acc)] text-white'
+				: 'border-[var(--bd)] bg-white text-[var(--tx)]'}"
 			aria-current={s === status ? 'page' : undefined}
 			href="{resolve('/reviews')}?status={s}">{LABELS[s]}</a
 		>
@@ -47,13 +47,13 @@
 <Boundary message="Could not load reviews.">
 	{let rows = $derived(await getReviews(status))}
 	{#if rows.length === 0}
-		<Text class="mt-6 text-[var(--ink-muted)]">Nothing here.</Text>
+		<Text class="mt-6" color="secondary">Nothing here.</Text>
 	{:else}
 		<ul class="mt-4 space-y-4">
 			{#each rows as review (review.id)}
 				{const form = moderateReviewForm.for(review.id)}
-				<li class="rounded-xl border border-[var(--line)] bg-white p-4">
-					<Text class="text-[var(--ink-muted)]">
+				<li class="rounded-xl border border-[var(--bd)] bg-white p-4">
+					<Text color="secondary">
 						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the shop's own domain -->
 						<a href="{context.siteUrl}/product/{review.productSlug}" rel="noopener" target="_blank"
 							>{review.productName}</a
@@ -66,7 +66,7 @@
 					</Text>
 					<Text class="mt-2">
 						<!-- eslint-disable-next-line svelte/no-restricted-html-elements -- star glyphs with an aria-label, which Span does not take -->
-						<span class="text-[var(--leaf-dark)]" aria-label="{review.rating} out of 5"
+						<span class="text-[var(--acc)]" aria-label="{review.rating} out of 5"
 							>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span
 						>
 						{#if review.title}<strong class="ml-2">{review.title}</strong>{/if}
@@ -94,6 +94,6 @@
 		</ul>
 	{/if}
 	{#snippet pending()}
-		<Text class="mt-6 text-[var(--ink-muted)]">Loading…</Text>
+		<Text class="mt-6" color="secondary">Loading…</Text>
 	{/snippet}
 </Boundary>

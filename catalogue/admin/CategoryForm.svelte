@@ -27,7 +27,7 @@
 </script>
 
 <Form
-	class="grid max-w-xl gap-3 rounded-xl border border-[var(--line)] bg-white p-5"
+	class="grid max-w-xl gap-3 rounded-xl border border-[var(--bd)] bg-white p-5"
 	defaults={{
 		description: category?.description ?? '',
 		name: category?.name ?? '',

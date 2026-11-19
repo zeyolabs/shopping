@@ -76,14 +76,14 @@
 			{order.status === 'paid' ? 'To ship' : order.status}
 		</Badge>
 	</div>
-	<Text class="mt-1 text-[var(--ink-muted)]">
+	<Text class="mt-1" color="secondary">
 		Placed {date.format(order.createdAt)}{order.paidAt
 			? ` · paid ${date.format(order.paidAt)}`
 			: ''}
 	</Text>
 
 	<div class="mt-6 grid gap-6 md:grid-cols-2">
-		<section class="rounded-xl border border-[var(--line)] bg-white p-5">
+		<section class="rounded-xl border border-[var(--bd)] bg-white p-5">
 			<Title level={2} size="sm">Ship to</Title>
 			<address class="mt-2 not-italic select-all">
 				{order.address.name}<br />
@@ -98,18 +98,18 @@
 					? ` · ${order.address.phone}`
 					: ''}
 			</Text>
-			<Text class="mt-3 text-[var(--ink-muted)]">
+			<Text class="mt-3" color="secondary">
 				Service: {order.shippingService ?? 'n/a'}
 				{#if order.royalMailOrderId}· Click &amp; Drop order {order.royalMailOrderId}{/if}
 			</Text>
 		</section>
 
-		<section class="rounded-xl border border-[var(--line)] bg-white p-5">
+		<section class="rounded-xl border border-[var(--bd)] bg-white p-5">
 			<Title level={2} size="sm">Items</Title>
-			<ul class="mt-2 divide-y divide-[var(--line)]">
+			<ul class="mt-2 divide-y divide-[var(--bd)]">
 				{#each order.items as item (item.id)}
 					<li class="flex justify-between gap-4 py-2">
-						<Span>{item.name} <Span class="text-[var(--ink-muted)]">× {item.quantity}</Span></Span>
+						<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
 						<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
 					</li>
 				{/each}
@@ -145,12 +145,12 @@
 
 	{#if order.status === 'paid'}
 		{let stage = $derived(Packing.stage(order))}
-		<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
+		<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
 			<div class="flex flex-wrap items-center gap-3">
 				<Title level={2} size="sm">Packing</Title>
 				<Badge color={Packing.STAGE_COLORS[stage]}>{Packing.STAGE_LABELS[stage]}</Badge>
 			</div>
-			<Text class="mt-1 text-[var(--ink-muted)]">
+			<Text class="mt-1" color="secondary">
 				{#if order.heldAt}On hold since {date.format(order.heldAt)}.{/if}
 				{#if order.packingStartedAt}Packing started {date.format(order.packingStartedAt)}.{/if}
 				{#if order.packedAt}Packed {date.format(order.packedAt)}.{/if}
@@ -198,14 +198,14 @@
 				{/if}
 			</Form>
 
-			<Text class="mt-3 text-[var(--ink-muted)]">
+			<Text class="mt-3" color="secondary">
 				Printing the label sends the saved parcel details to Royal Mail and marks the order packed.
 				{#if order.labelCreatedAt}A label is already made, so later parcel changes will not change
 					it.{/if}
 			</Text>
 
 			<Title class="mt-6" level={3} size="sm">Parcel</Title>
-			<Text class="mt-1 text-[var(--ink-muted)]">
+			<Text class="mt-1" color="secondary">
 				{order.weightGrams === null
 					? `Estimated ${order.estimatedWeightGrams} g from the items. Weigh the parcel and correct it.`
 					: 'Weight and size go on the Royal Mail label.'}
@@ -252,10 +252,10 @@
 
 	{#if order.status === 'paid' || order.status === 'shipped'}
 		{let services = $derived(await getShippingServices())}
-		<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
+		<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
 			<details>
 				<summary class="cursor-pointer font-semibold">Edit contact, address and postage</summary>
-				<Text class="mt-2 text-[var(--ink-muted)]">
+				<Text class="mt-2" color="secondary">
 					For fixing a typo or a customer's request. If you change the country, check the postage
 					service still fits. {#if order.status === 'paid' && order.labelCreatedAt}The label is
 						already made, so after a change you need to print it again.{/if}
@@ -316,9 +316,9 @@
 
 	{#if (order.status === 'paid' || order.status === 'shipped') && order.stripePaymentIntentId && order.refundedPence < order.totalPence}
 		{let left = $derived(order.totalPence - order.refundedPence)}
-		<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
+		<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
 			<Title level={2} size="sm">Refund</Title>
-			<Text class="mt-1 text-[var(--ink-muted)]">
+			<Text class="mt-1" color="secondary">
 				Up to {Money.format(left)} can be refunded to the customer's card through Stripe. A full refund
 				marks the order refunded, even if it had shipped, and does not cancel a Royal Mail label. Stock
 				is not put back; do that on the stock page if the goods come back.
@@ -337,11 +337,11 @@
 		</section>
 	{/if}
 
-	<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
+	<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
 		<Title level={2} size="sm">Dispatch</Title>
 		{#if order.status === 'paid' || order.status === 'shipped'}
 			{#if order.shippedAt}
-				<Text class="mt-1 text-[var(--ink-muted)]">
+				<Text class="mt-1" color="secondary">
 					Dispatched {date.format(order.shippedAt)}.
 					{#if order.dispatchEmailedAt}
 						Customer emailed {date.format(order.dispatchEmailedAt)}.
@@ -350,7 +350,7 @@
 					{/if}
 				</Text>
 			{:else}
-				<Text class="mt-1 text-[var(--ink-muted)]">
+				<Text class="mt-1" color="secondary">
 					Enter the Royal Mail tracking number (leave blank if untracked), then mark it dispatched.
 					The customer is emailed straight away and their order page updates.
 				</Text>
@@ -399,6 +399,6 @@
 		{/if}
 	</section>
 	{#snippet pending()}
-		<Text class="mt-6 text-[var(--ink-muted)]">Loading…</Text>
+		<Text class="mt-6" color="secondary">Loading…</Text>
 	{/snippet}
 </Boundary>

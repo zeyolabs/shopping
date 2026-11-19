@@ -11,16 +11,16 @@
 <svelte:head><title>Stock</title></svelte:head>
 
 <Title level={1} size="md">Stock</Title>
-<Text class="mt-1 text-[var(--ink-muted)]">
+<Text class="mt-1" color="secondary">
 	Setting a sold-out product above 0 emails the customers waiting for it, up to 50 a minute, and
 	removes them from the list.
 </Text>
 
 <Boundary message="Could not load stock.">
 	{let rows = $derived(await getStock())}
-	<div class="mt-4 overflow-x-auto rounded-xl border border-[var(--line)] bg-white">
+	<div class="mt-4 overflow-x-auto rounded-xl border border-[var(--bd)] bg-white">
 		<table class="w-full text-left text-sm">
-			<thead class="border-b border-[var(--line)] text-[var(--ink-muted)]">
+			<thead class="border-b border-[var(--bd)] text-[var(--txs)]">
 				<tr>
 					<th class="px-4 py-2 font-medium">Product</th>
 					<th class="px-4 py-2 font-medium">SKU</th>
@@ -28,7 +28,7 @@
 					<th class="px-4 py-2 text-right font-medium">Stock</th>
 				</tr>
 			</thead>
-			<tbody class="divide-y divide-[var(--line)]">
+			<tbody class="divide-y divide-[var(--bd)]">
 				{#each rows as row (row.id)}
 					<tr>
 						<td class="px-4 py-2 font-medium">
@@ -50,6 +50,6 @@
 		</table>
 	</div>
 	{#snippet pending()}
-		<Text class="mt-6 text-[var(--ink-muted)]">Loading…</Text>
+		<Text class="mt-6" color="secondary">Loading…</Text>
 	{/snippet}
 </Boundary>

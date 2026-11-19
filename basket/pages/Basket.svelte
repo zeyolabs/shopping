@@ -53,7 +53,7 @@
 		<Text>Your basket is empty.</Text>
 		<Text class="mt-4"><a class="underline" href={resolve('/')}>Continue shopping</a></Text>
 	{:else}
-		<ul class="divide-y divide-[var(--line)]">
+		<ul class="divide-y divide-[var(--bd)]">
 			{#each summary.lines as line (line.id)}
 				<li class="flex flex-wrap items-center gap-4 py-4">
 					{#if line.cover}

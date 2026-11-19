@@ -38,8 +38,8 @@
 		return next;
 	}
 
-	const input = 'w-full rounded-md border border-[var(--line)] bg-white px-3 py-1.5';
-	const section = 'grid gap-4 rounded-xl border border-[var(--line)] bg-white p-5';
+	const input = 'w-full rounded-md border border-[var(--bd)] bg-white px-3 py-1.5';
+	const section = 'grid gap-4 rounded-xl border border-[var(--bd)] bg-white p-5';
 </script>
 
 <Form
@@ -83,7 +83,7 @@
 		</div>
 		<CheckboxField name="active" {form}>On sale in the shop</CheckboxField>
 		{#if p && slug && p.slug !== slug}
-			<Text class="text-[var(--ink-muted)]">
+			<Text color="secondary">
 				The old URL /product/{p.slug} will redirect to the new one.
 			</Text>
 		{/if}
@@ -102,16 +102,14 @@
 	<section class={section}>
 		<div>
 			<Title level={2} size="sm">Images</Title>
-			<Text class="text-[var(--ink-muted)]">
-				File names in the product image bucket. The first is the cover.
-			</Text>
+			<Text color="secondary">File names in the product image bucket. The first is the cover.</Text>
 		</div>
 		<ul class="space-y-3">
 			{#each imageRows as row, i (i)}
 				<li class="flex flex-wrap items-center gap-3">
 					{#if row.src}
 						<img
-							class="size-14 rounded-md border border-[var(--line)] object-cover"
+							class="size-14 rounded-md border border-[var(--bd)] object-cover"
 							alt=""
 							src={Images.url(context.imageBaseUrl, row.src)}
 						/>
@@ -155,7 +153,7 @@
 					{category.name}
 				</label>
 			{:else}
-				<Text class="text-[var(--ink-muted)]">No categories yet.</Text>
+				<Text color="secondary">No categories yet.</Text>
 			{/each}
 		</div>
 	</section>
@@ -163,7 +161,7 @@
 	<section class={section}>
 		<div>
 			<Title level={2} size="sm">Variation</Title>
-			<Text class="text-[var(--ink-muted)]">
+			<Text color="secondary">
 				Products in the same group show as options of each other, e.g. group "Colour", option
 				"Black".
 			</Text>
@@ -187,7 +185,7 @@
 	<section class={section}>
 		<div>
 			<Title level={2} size="sm">Stock and shipping</Title>
-			<Text class="text-[var(--ink-muted)]">
+			<Text color="secondary">
 				Stock itself is set on the Stock page{p ? ` (now ${p.stock} units)` : ''}.
 			</Text>
 		</div>
@@ -205,7 +203,7 @@
 	<section class={section}>
 		<div>
 			<Title level={2} size="sm">Made of other products</Title>
-			<Text class="text-[var(--ink-muted)]">
+			<Text color="secondary">
 				Leave empty for a normal product. A combined product has no stock of its own: it sells as
 				many complete sets as its parts allow, and selling one takes stock from the parts.
 			</Text>

@@ -38,8 +38,8 @@
 		{ label: 'Kit cover (one product for every slot)', value: 'cover' },
 	] as const;
 
-	const input = 'mt-1 w-full rounded-md border border-[var(--line)] bg-white px-3 py-1.5';
-	const section = 'grid gap-4 rounded-xl border border-[var(--line)] bg-white p-5';
+	const input = 'mt-1 w-full rounded-md border border-[var(--bd)] bg-white px-3 py-1.5';
+	const section = 'grid gap-4 rounded-xl border border-[var(--bd)] bg-white p-5';
 </script>
 
 <Form

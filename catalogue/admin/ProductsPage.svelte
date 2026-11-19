@@ -19,15 +19,14 @@
 	<Title level={1} size="md">Products</Title>
 	<div class="flex gap-2 text-sm">
 		<a
-			class="rounded-md border border-[var(--line)] bg-white px-3 py-1.5"
+			class="rounded-md border border-[var(--bd)] bg-white px-3 py-1.5"
 			href={resolve('/categories')}>Categories</a
 		>
-		<a
-			class="rounded-md border border-[var(--line)] bg-white px-3 py-1.5"
-			href={resolve('/bundles')}>Bundles</a
+		<a class="rounded-md border border-[var(--bd)] bg-white px-3 py-1.5" href={resolve('/bundles')}
+			>Bundles</a
 		>
 		<a
-			class="rounded-md bg-[var(--leaf-dark)] px-3 py-1.5 text-white no-underline"
+			class="rounded-md bg-[var(--acc)] px-3 py-1.5 text-white no-underline"
 			href={resolve('/products/new')}>New product</a
 		>
 	</div>
@@ -47,7 +46,7 @@
 	<input
 		id="product-q"
 		name="q"
-		class="w-full max-w-sm rounded-md border border-[var(--line)] bg-white px-3 py-1.5"
+		class="w-full max-w-sm rounded-md border border-[var(--bd)] bg-white px-3 py-1.5"
 		placeholder="Name or SKU"
 		type="search"
 		value={q}
@@ -56,9 +55,9 @@
 
 <Boundary message="Could not load products.">
 	{let rows = $derived(await getAdminProducts(q))}
-	<div class="mt-4 overflow-x-auto rounded-xl border border-[var(--line)] bg-white">
+	<div class="mt-4 overflow-x-auto rounded-xl border border-[var(--bd)] bg-white">
 		<table class="w-full text-left text-sm">
-			<thead class="border-b border-[var(--line)] text-[var(--ink-muted)]">
+			<thead class="border-b border-[var(--bd)] text-[var(--txs)]">
 				<tr>
 					<th class="px-4 py-2 font-medium">Product</th>
 					<th class="px-4 py-2 font-medium">SKU</th>
@@ -66,7 +65,7 @@
 					<th class="px-4 py-2 text-right font-medium">Stock</th>
 				</tr>
 			</thead>
-			<tbody class="divide-y divide-[var(--line)]">
+			<tbody class="divide-y divide-[var(--bd)]">
 				{#each rows as row (row.id)}
 					<tr>
 						<td class="px-4 py-2">
@@ -80,12 +79,12 @@
 						<td class="px-4 py-2 text-right">{row.stock}</td>
 					</tr>
 				{:else}
-					<tr><td class="px-4 py-6 text-[var(--ink-muted)]" colspan="4">No products found.</td></tr>
+					<tr><td class="px-4 py-6 text-[var(--txs)]" colspan="4">No products found.</td></tr>
 				{/each}
 			</tbody>
 		</table>
 	</div>
 	{#snippet pending()}
-		<Text class="mt-6 text-[var(--ink-muted)]">Loading…</Text>
+		<Text class="mt-6" color="secondary">Loading…</Text>
 	{/snippet}
 </Boundary>

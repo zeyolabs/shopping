@@ -23,6 +23,6 @@
 		<ProductForm {options} {product} />
 	{/key}
 	{#snippet pending()}
-		<Text class="text-[var(--ink-muted)]">Loading…</Text>
+		<Text color="secondary">Loading…</Text>
 	{/snippet}
 </Boundary>
