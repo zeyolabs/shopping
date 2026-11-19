@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 
 	import type { getShop } from '../client.remote';
@@ -29,16 +30,14 @@
 {/if}
 
 <nav class="mb-8" aria-label="Categories">
-	<ul class="flex flex-wrap gap-2">
+	<Cluster gap="xs">
 		{#each shop.categories as category (category.id)}
-			<li>
-				<a
-					class="inline-block rounded-full border border-[var(--bd)] px-3.5 py-1.5 text-sm hover:border-[var(--primary-strong)] hover:bg-[var(--primary-soft)]"
-					href={resolve('/category/[slug]', { slug: category.slug })}>{category.name}</a
-				>
-			</li>
+			<a
+				class="inline-block rounded-full border border-[var(--bd)] px-3.5 py-1.5 hover:border-[var(--primary-strong)] hover:bg-[var(--primary-soft)]"
+				href={resolve('/category/[slug]', { slug: category.slug })}>{category.name}</a
+			>
 		{/each}
-	</ul>
+	</Cluster>
 </nav>
 
 <!-- In stock first (the query sorts by it, then sort order and name), one page at a time. -->

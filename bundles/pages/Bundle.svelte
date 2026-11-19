@@ -4,6 +4,7 @@
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
@@ -211,52 +212,54 @@
 						{#if step.role === 'fill'}
 							{const n = $derived(counts(step.id).get(product.id) ?? 0)}
 							<div
-								class="flex w-full items-center gap-3 rounded-xl border p-2 transition {n > 0
+								class="w-full rounded-xl border p-2 transition {n > 0
 									? 'border-[var(--primary-strong)] bg-[var(--primary-soft)]'
 									: 'border-[var(--bd)] bg-white'} {sold ? 'opacity-50' : ''}"
 							>
-								{#if product.cover}
-									<img
-										class="size-14 shrink-0 rounded-md object-cover"
-										alt={product.cover.alt || product.name}
-										loading="lazy"
-										src={Images.url(context.imageBaseUrl, product.cover.src)}
-									/>
-								{/if}
-								<div class="min-w-0 flex-1">
-									<Span class="block" bold>{label}</Span>
-									<Span class="block" color="secondary" size="sm">
-										{sold ? 'Out of stock' : priceLabel(step, product)}
-									</Span>
-								</div>
-								<div class="flex shrink-0 items-center gap-1">
-									<Button
-										aria-label="One fewer {product.name}"
-										disabled={n === 0}
-										icon
-										onclick={() => adjust(step, product, -1)}
-										size="sm"
-										variant="secondary"
-									>
-										<Minus size={14} />
-									</Button>
-									<div class="w-6 text-center" aria-live="polite"><Span bold>{n}</Span></div>
-									<Button
-										aria-label="One more {product.name}"
-										disabled={sold || locked || !canAdd(step, product)}
-										icon
-										onclick={() => adjust(step, product, 1)}
-										size="sm"
-										variant="secondary"
-									>
-										<Plus size={14} />
-									</Button>
-								</div>
+								<Cluster gap="sm" nowrap>
+									{#if product.cover}
+										<img
+											class="size-14 shrink-0 rounded-md object-cover"
+											alt={product.cover.alt || product.name}
+											loading="lazy"
+											src={Images.url(context.imageBaseUrl, product.cover.src)}
+										/>
+									{/if}
+									<div class="min-w-0 flex-1">
+										<Span class="block" bold>{label}</Span>
+										<Span class="block" color="secondary" size="sm">
+											{sold ? 'Out of stock' : priceLabel(step, product)}
+										</Span>
+									</div>
+									<Cluster class="shrink-0" gap="xs" nowrap>
+										<Button
+											aria-label="One fewer {product.name}"
+											disabled={n === 0}
+											icon
+											onclick={() => adjust(step, product, -1)}
+											size="sm"
+											variant="secondary"
+										>
+											<Minus size={14} />
+										</Button>
+										<div class="w-6 text-center" aria-live="polite"><Span bold>{n}</Span></div>
+										<Button
+											aria-label="One more {product.name}"
+											disabled={sold || locked || !canAdd(step, product)}
+											icon
+											onclick={() => adjust(step, product, 1)}
+											size="sm"
+											variant="secondary"
+										>
+											<Plus size={14} />
+										</Button>
+									</Cluster>
+								</Cluster>
 							</div>
 						{:else}
 							{const on = $derived(chosen(step.id).has(product.id))}
 							<button
-								class="flex w-full items-center gap-3 rounded-xl border p-2 text-left transition {on
+								class="w-full rounded-xl border p-2 text-left transition {on
 									? 'border-[var(--primary-strong)] bg-[var(--primary-soft)]'
 									: 'border-[var(--bd)] bg-white hover:border-[var(--primary-strong)]'} disabled:opacity-50 disabled:hover:border-[var(--bd)]"
 								aria-pressed={on}
@@ -264,20 +267,22 @@
 								onclick={() => toggle(step, product.id)}
 								type="button"
 							>
-								{#if product.cover}
-									<img
-										class="size-14 shrink-0 rounded-md object-cover"
-										alt={product.cover.alt || product.name}
-										loading="lazy"
-										src={Images.url(context.imageBaseUrl, product.cover.src)}
-									/>
-								{/if}
-								<Span class="min-w-0">
-									<Span class="block" bold>{label}</Span>
-									<Span class="block" color="secondary" size="sm">
-										{sold ? 'Out of stock' : priceLabel(step, product)}
+								<Cluster gap="sm" nowrap>
+									{#if product.cover}
+										<img
+											class="size-14 shrink-0 rounded-md object-cover"
+											alt={product.cover.alt || product.name}
+											loading="lazy"
+											src={Images.url(context.imageBaseUrl, product.cover.src)}
+										/>
+									{/if}
+									<Span class="min-w-0">
+										<Span class="block" bold>{label}</Span>
+										<Span class="block" color="secondary" size="sm">
+											{sold ? 'Out of stock' : priceLabel(step, product)}
+										</Span>
 									</Span>
-								</Span>
+								</Cluster>
 							</button>
 						{/if}
 					</li>
@@ -287,24 +292,24 @@
 	{/each}
 </ol>
 
-<div
-	class="sticky bottom-0 mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--bd)] bg-white py-4"
->
-	<Text class="flex items-baseline gap-2">
-		<Span color="secondary">Total</Span>
-		<strong class="text-xl">{Money.format(totalPence)}</strong>
-		{#if totalPence < listPence}
-			<s class="text-sm text-[var(--txt)]">{Money.format(listPence)}</s>
-		{/if}
-	</Text>
-	<div class="flex items-center gap-3">
-		{#if missing}<Span color="secondary">{missing.title}: {rule(missing)}</Span>{/if}
-		<Button
-			disabled={busy || soldOut !== undefined || missing !== undefined || totalPence === 0}
-			onclick={add}
-			size="lg"
-		>
-			Add bundle to basket
-		</Button>
-	</div>
+<div class="sticky bottom-0 mt-10 border-t border-[var(--bd)] bg-white py-4">
+	<Cluster gap="sm" justify="between">
+		<Cluster gap="xs">
+			<Span color="secondary">Total</Span>
+			<Span bold size="xl">{Money.format(totalPence)}</Span>
+			{#if totalPence < listPence}
+				<Span color="tertiary"><s>{Money.format(listPence)}</s></Span>
+			{/if}
+		</Cluster>
+		<Cluster gap="sm">
+			{#if missing}<Span color="secondary">{missing.title}: {rule(missing)}</Span>{/if}
+			<Button
+				disabled={busy || soldOut !== undefined || missing !== undefined || totalPence === 0}
+				onclick={add}
+				size="lg"
+			>
+				Add bundle to basket
+			</Button>
+		</Cluster>
+	</Cluster>
 </div>

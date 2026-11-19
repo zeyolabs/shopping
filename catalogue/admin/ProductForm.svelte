@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { CheckboxField, Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
@@ -106,34 +107,36 @@
 		</div>
 		<ul class="space-y-3">
 			{#each imageRows as row, i (i)}
-				<li class="flex flex-wrap items-center gap-3">
-					{#if row.src}
-						<img
-							class="size-14 rounded-md border border-[var(--bd)] object-cover"
-							alt=""
-							src={Images.url(context.imageBaseUrl, row.src)}
+				<li>
+					<Cluster gap="sm">
+						{#if row.src}
+							<img
+								class="size-14 rounded-md border border-[var(--bd)] object-cover"
+								alt=""
+								src={Images.url(context.imageBaseUrl, row.src)}
+							/>
+						{/if}
+						<input
+							{...images[i].src.as('text')}
+							class="{input} w-56"
+							aria-label="Image {i + 1} file name"
+							placeholder="file.avif"
 						/>
-					{/if}
-					<input
-						{...images[i].src.as('text')}
-						class="{input} w-56"
-						aria-label="Image {i + 1} file name"
-						placeholder="file.avif"
-					/>
-					<input
-						{...images[i].alt.as('text')}
-						class="{input} flex-1"
-						aria-label="Image {i + 1} alt text"
-						placeholder="Alt text"
-					/>
-					<Button onclick={() => images.set(up(imageRows, i))} size="sm" variant="secondary"
-						>Up</Button
-					>
-					<Button
-						onclick={() => images.set(imageRows.filter((_: unknown, j: number) => j !== i))}
-						size="sm"
-						variant="secondary">Remove</Button
-					>
+						<input
+							{...images[i].alt.as('text')}
+							class="{input} flex-1"
+							aria-label="Image {i + 1} alt text"
+							placeholder="Alt text"
+						/>
+						<Button onclick={() => images.set(up(imageRows, i))} size="sm" variant="secondary"
+							>Up</Button
+						>
+						<Button
+							onclick={() => images.set(imageRows.filter((_: unknown, j: number) => j !== i))}
+							size="sm"
+							variant="secondary">Remove</Button
+						>
+					</Cluster>
 				</li>
 			{/each}
 		</ul>
@@ -148,10 +151,13 @@
 		<Title level={2} size="sm">Categories</Title>
 		<div class="grid gap-2 sm:grid-cols-2">
 			{#each options.categories as category (category.id)}
-				<label class="flex items-center gap-2 text-sm">
-					<input {...form.fields.categoryIds.as('checkbox', String(category.id))} />
-					{category.name}
-				</label>
+				<Cluster gap="xs" nowrap>
+					<input
+						id="category-{category.id}"
+						{...form.fields.categoryIds.as('checkbox', String(category.id))}
+					/>
+					<label for="category-{category.id}">{category.name}</label>
+				</Cluster>
 			{:else}
 				<Text color="secondary">No categories yet.</Text>
 			{/each}
@@ -167,7 +173,7 @@
 			</Text>
 		</div>
 		<div class="grid gap-4 sm:grid-cols-2">
-			<label class="text-sm font-medium">
+			<label class="form-label">
 				Group
 				<input
 					{...form.fields.variationGroup.as('text')}
@@ -210,24 +216,27 @@
 		</div>
 		<ul class="space-y-2">
 			{#each componentRows as _, i (i)}
-				<li class="flex items-center gap-3">
-					<input
-						{...components[i].sku.as('text')}
-						class="{input} w-56"
-						aria-label="Part {i + 1} SKU"
-						placeholder="SKU"
-					/>
-					<input
-						{...components[i].quantity.as('number')}
-						class="{input} w-24"
-						aria-label="Part {i + 1} quantity"
-						min="1"
-					/>
-					<Button
-						onclick={() => components.set(componentRows.filter((_: unknown, j: number) => j !== i))}
-						size="sm"
-						variant="secondary">Remove</Button
-					>
+				<li>
+					<Cluster gap="sm">
+						<input
+							{...components[i].sku.as('text')}
+							class="{input} w-56"
+							aria-label="Part {i + 1} SKU"
+							placeholder="SKU"
+						/>
+						<input
+							{...components[i].quantity.as('number')}
+							class="{input} w-24"
+							aria-label="Part {i + 1} quantity"
+							min="1"
+						/>
+						<Button
+							onclick={() =>
+								components.set(componentRows.filter((_: unknown, j: number) => j !== i))}
+							size="sm"
+							variant="secondary">Remove</Button
+						>
+					</Cluster>
 				</li>
 			{/each}
 		</ul>
@@ -241,11 +250,11 @@
 		{/if}
 	</section>
 
-	<div class="flex items-center gap-4">
+	<Cluster gap="md">
 		<Button {form} loadingMessage="Saving…">Save product</Button>
 		{#if p?.active}
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the shop's own domain -->
 			<a href="{context.siteUrl}/product/{p.slug}" rel="noopener" target="_blank">View in shop</a>
 		{/if}
-	</div>
+	</Cluster>
 </Form>

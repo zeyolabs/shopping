@@ -76,7 +76,7 @@
 		<Text class="mt-1" color="secondary">
 			<Span bold>{Money.format(product.pricePence)}</Span>
 			{#if onSale}
-				<s class="ml-1 text-sm">{Money.format(product.comparePricePence!)}</s>
+				<s class="ml-1">{Money.format(product.comparePricePence!)}</s>
 			{/if}
 		</Text>
 	</div>

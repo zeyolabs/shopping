@@ -2,6 +2,7 @@
 	import type { Snippet } from 'svelte';
 
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -48,20 +49,22 @@
 	{:else}
 		<ul class="mt-2 divide-y divide-[var(--bd)] border-y border-[var(--bd)]">
 			{#each data.orders as order (order.number)}
-				<li class="flex flex-wrap items-center justify-between gap-2 py-3">
-					<Span>
-						{#if order.path}
-							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the order's private path -->
-							<a class="font-medium underline" href={order.path}>{order.number}</a>
-						{:else}
-							<Span bold>{order.number}</Span>
-						{/if}
-						<Span color="secondary">· {date.format(order.createdAt)}</Span>
-					</Span>
-					<Span>
-						<Span color="secondary">{STATUS[order.status] ?? order.status}</Span>
-						· {Money.format(order.totalPence)}
-					</Span>
+				<li class="py-3">
+					<Cluster gap="xs" justify="between">
+						<Span>
+							{#if order.path}
+								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the order's private path -->
+								<a class="underline" href={order.path}><Span bold>{order.number}</Span></a>
+							{:else}
+								<Span bold>{order.number}</Span>
+							{/if}
+							<Span color="secondary">· {date.format(order.createdAt)}</Span>
+						</Span>
+						<Span>
+							<Span color="secondary">{STATUS[order.status] ?? order.status}</Span>
+							· {Money.format(order.totalPence)}
+						</Span>
+					</Cluster>
 				</li>
 			{/each}
 		</ul>

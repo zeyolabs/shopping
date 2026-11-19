@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { CheckboxField, Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
 	import type { getAdminBundle } from '../admin.remote';
@@ -94,16 +95,16 @@
 					>
 				{/if}
 			</div>
-			<label class="text-sm font-medium">
+			<label class="form-label">
 				Title, e.g. "Choose your switches"
 				<input {...steps[i].title.as('text')} class={input} />
 			</label>
-			<label class="text-sm font-medium">
+			<label class="form-label">
 				Help text (optional)
 				<input {...steps[i].description.as('text')} class={input} />
 			</label>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<label class="text-sm font-medium">
+				<label class="form-label">
 					Kind of step
 					<select {...steps[i].role.as('select')} class={input}>
 						{#each ROLES as role (role.value)}
@@ -111,22 +112,22 @@
 						{/each}
 					</select>
 				</label>
-				<label class="text-sm font-medium">
+				<label class="form-label">
 					Kit fill: most slots per product (blank = no limit)
 					<input {...steps[i].maxPerChoice.as('text')} class={input} inputmode="numeric" />
 				</label>
 			</div>
 			<div class="grid gap-4 sm:grid-cols-2">
-				<label class="text-sm font-medium">
+				<label class="form-label">
 					Fewest picks (0 = optional)
 					<input {...steps[i].minChoices.as('number')} class={input} min="0" />
 				</label>
-				<label class="text-sm font-medium">
+				<label class="form-label">
 					Most picks
 					<input {...steps[i].maxChoices.as('number')} class={input} min="1" />
 				</label>
 			</div>
-			<label class="text-sm font-medium">
+			<label class="form-label">
 				Products offered, one SKU per line (a kit base as SKU=slots, e.g. BASE44=16)
 				<textarea {...steps[i].skus.as('text')} class="{input} min-h-28 font-mono"></textarea>
 			</label>
@@ -136,11 +137,11 @@
 		<Button onclick={() => steps.set([...stepRows, newStep])} variant="secondary">Add step</Button>
 	</div>
 
-	<div class="flex items-center gap-4">
+	<Cluster gap="md">
 		<Button {form} loadingMessage="Saving…">Save bundle</Button>
 		{#if b?.active}
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the shop's own domain -->
 			<a href="{context.siteUrl}/bundle/{b.slug}" rel="noopener" target="_blank">View in shop</a>
 		{/if}
-	</div>
+	</Cluster>
 </Form>

@@ -7,6 +7,8 @@
 	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import { Select } from '@zeyolabs/ui/form/primitives';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Stack from '@zeyolabs/ui/layout/Stack.svelte';
 	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -55,105 +57,114 @@
 	{:else}
 		<ul class="divide-y divide-[var(--bd)]">
 			{#each summary.lines as line (line.id)}
-				<li class="flex flex-wrap items-center gap-4 py-4">
-					{#if line.cover}
-						<img
-							class="size-20 object-cover"
-							alt={line.cover.alt || line.name}
-							src={Images.url(context.imageBaseUrl, line.cover.src)}
-						/>
-					{/if}
-					<div class="min-w-0 flex-1">
-						<a class="font-medium" href={resolve('/product/[slug]', { slug: line.slug })}>
-							{line.name}
-						</a>
-						<Text>{Money.format(line.pricePence)}</Text>
-						{#if line.available < line.quantity}
-							<Text class="text-[var(--danger)]">
-								{line.available === 0 ? 'Out of stock' : `Only ${line.available} available`}
-							</Text>
+				<li class="py-4">
+					<Cluster gap="md">
+						{#if line.cover}
+							<img
+								class="size-20 object-cover"
+								alt={line.cover.alt || line.name}
+								src={Images.url(context.imageBaseUrl, line.cover.src)}
+							/>
 						{/if}
-					</div>
-					{const form = basketQuantityForm.for(line.id)}
-					<Form
-						class="flex items-center gap-2"
-						{form}
-						hidden={{ productId: line.id }}
-						reset={false}
-						schema={BasketQuantitySchema}
-					>
-						<Button
-							{...form.fields.quantity.as('submit', line.quantity - 1)}
-							aria-label="Decrease quantity of {line.name}"
+						<div class="min-w-0 flex-1">
+							<a href={resolve('/product/[slug]', { slug: line.slug })}>
+								<Span bold>{line.name}</Span>
+							</a>
+							<Text>{Money.format(line.pricePence)}</Text>
+							{#if line.available < line.quantity}
+								<Text color="error">
+									{line.available === 0 ? 'Out of stock' : `Only ${line.available} available`}
+								</Text>
+							{/if}
+						</div>
+						{const form = basketQuantityForm.for(line.id)}
+						<Form
 							{form}
-							icon
-							size="sm"
-							variant="secondary"
+							hidden={{ productId: line.id }}
+							reset={false}
+							schema={BasketQuantitySchema}
 						>
-							<Minus size={14} />
-						</Button>
-						<Span class="w-6" centered>{line.quantity}</Span>
-						<Button
-							{...form.fields.quantity.as('submit', line.quantity + 1)}
-							aria-label="Increase quantity of {line.name}"
-							disabled={line.quantity >= line.limit}
-							{form}
-							icon
-							size="sm"
-							variant="secondary"
-						>
-							<Plus size={14} />
-						</Button>
-					</Form>
-					<Text class="w-20 text-right">{Money.format(line.lineTotalPence)}</Text>
+							<Cluster gap="xs" nowrap>
+								<Button
+									{...form.fields.quantity.as('submit', line.quantity - 1)}
+									aria-label="Decrease quantity of {line.name}"
+									{form}
+									icon
+									size="sm"
+									variant="secondary"
+								>
+									<Minus size={14} />
+								</Button>
+								<Span class="w-6" centered>{line.quantity}</Span>
+								<Button
+									{...form.fields.quantity.as('submit', line.quantity + 1)}
+									aria-label="Increase quantity of {line.name}"
+									disabled={line.quantity >= line.limit}
+									{form}
+									icon
+									size="sm"
+									variant="secondary"
+								>
+									<Plus size={14} />
+								</Button>
+							</Cluster>
+						</Form>
+						<Text class="w-20 text-right">{Money.format(line.lineTotalPence)}</Text>
+					</Cluster>
 				</li>
 			{/each}
 			{#each summary.bundles as bundle (bundle.index)}
-				<li class="flex flex-wrap items-start gap-4 py-4">
-					{#if bundle.cover}
-						<img
-							class="size-20 object-cover"
-							alt={bundle.cover.alt || bundle.name}
-							src={Images.url(context.imageBaseUrl, bundle.cover.src)}
-						/>
-					{/if}
-					<div class="min-w-0 flex-1">
-						{#if bundle.slug}
-							<a class="font-medium" href={resolve('/bundle/[slug]', { slug: bundle.slug })}>
-								{bundle.name}
-							</a>
-						{:else}
-							<Text bold>{bundle.name}</Text>
+				<li class="py-4">
+					<Cluster gap="md">
+						{#if bundle.cover}
+							<img
+								class="size-20 object-cover"
+								alt={bundle.cover.alt || bundle.name}
+								src={Images.url(context.imageBaseUrl, bundle.cover.src)}
+							/>
 						{/if}
-						{#if bundle.details.length > 0}
-							<ul class="mt-1 text-sm text-[var(--txs)]">
-								{#each bundle.details as detail, i (i)}<li>{detail}</li>{/each}
-							</ul>
-						{/if}
-						{#if bundle.problem}
-							<Text class="mt-1 text-[var(--danger)]">{bundle.problem}</Text>
-						{/if}
-					</div>
-					<Button
-						aria-label="Remove {bundle.name}"
-						icon
-						onclick={() => removeBundleFromBasket({ index: bundle.index })}
-						size="sm"
-						variant="secondary"
-					>
-						<Trash size={14} />
-					</Button>
-					<Text class="w-20 text-right">
-						{Money.format(bundle.pricePence)}
-						{#if bundle.listPricePence > bundle.pricePence}
-							<s class="block text-xs text-[var(--txt)]">{Money.format(bundle.listPricePence)}</s>
-						{/if}
-					</Text>
+						<div class="min-w-0 flex-1">
+							{#if bundle.slug}
+								<a href={resolve('/bundle/[slug]', { slug: bundle.slug })}>
+									<Span bold>{bundle.name}</Span>
+								</a>
+							{:else}
+								<Text bold>{bundle.name}</Text>
+							{/if}
+							{#if bundle.details.length > 0}
+								<ul class="mt-1">
+									{#each bundle.details as detail, i (i)}<li>
+											<Text color="secondary">{detail}</Text>
+										</li>{/each}
+								</ul>
+							{/if}
+							{#if bundle.problem}
+								<Text class="mt-1" color="error">{bundle.problem}</Text>
+							{/if}
+						</div>
+						<Button
+							aria-label="Remove {bundle.name}"
+							icon
+							onclick={() => removeBundleFromBasket({ index: bundle.index })}
+							size="sm"
+							variant="secondary"
+						>
+							<Trash size={14} />
+						</Button>
+						<Text class="w-20 text-right">
+							{Money.format(bundle.pricePence)}
+							{#if bundle.listPricePence > bundle.pricePence}
+								<Span class="block" color="tertiary" size="sm"
+									><s>{Money.format(bundle.listPricePence)}</s></Span
+								>
+							{/if}
+						</Text>
+					</Cluster>
 				</li>
 			{/each}
 		</ul>
 
-		<div class="mt-6 ml-auto flex max-w-xs flex-col gap-1">
+		<Stack class="mt-6 ml-auto max-w-xs" gap="xs">
 			<label class="form-label" for="ship-to">Deliver to</label>
 			<Select
 				id="ship-to"
@@ -165,7 +176,7 @@
 				placeholder="Choose a country"
 				value={summary.country}
 			/>
-		</div>
+		</Stack>
 
 		<dl class="mt-4 ml-auto grid max-w-xs grid-cols-2 gap-y-1">
 			<dt>Subtotal</dt>
@@ -178,11 +189,11 @@
 						? 'Free'
 						: Money.format(summary.shippingPence)}
 			</dd>
-			<dt class="font-medium">Total</dt>
-			<dd class="text-right font-medium">{Money.format(summary.totalPence)}</dd>
+			<dt><Span bold>Total</Span></dt>
+			<dd class="text-right"><Span bold>{Money.format(summary.totalPence)}</Span></dd>
 		</dl>
 		{#if summary.shipping === null}
-			<Text class="mt-2 text-right text-[var(--danger)]">
+			<Text class="mt-2 text-right" color="error">
 				We cannot ship this order to the selected country.
 			</Text>
 		{:else}

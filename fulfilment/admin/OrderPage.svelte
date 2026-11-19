@@ -5,6 +5,7 @@
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import { CheckboxField, Form, NumberField, SelectField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
@@ -64,7 +65,7 @@
 
 <Boundary message="Could not load this order." statusMessages={{ 404: 'Order not found.' }}>
 	{let order = $derived(await getOrder(number))}
-	<div class="mt-4 flex flex-wrap items-center gap-3">
+	<Cluster class="mt-4" gap="sm">
 		<Title level={1} size="md">{order.number}</Title>
 		<Badge
 			color={order.status === 'paid'
@@ -75,7 +76,7 @@
 		>
 			{order.status === 'paid' ? 'To ship' : order.status}
 		</Badge>
-	</div>
+	</Cluster>
 	<Text class="mt-1" color="secondary">
 		Placed {date.format(order.createdAt)}{order.paidAt
 			? ` · paid ${date.format(order.paidAt)}`
@@ -108,13 +109,15 @@
 			<Title level={2} size="sm">Items</Title>
 			<ul class="mt-2 divide-y divide-[var(--bd)]">
 				{#each order.items as item (item.id)}
-					<li class="flex justify-between gap-4 py-2">
-						<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
-						<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
+					<li class="py-2">
+						<Cluster gap="sm" justify="between" nowrap>
+							<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
+							<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
+						</Cluster>
 					</li>
 				{/each}
 			</ul>
-			<dl class="mt-3 space-y-1 text-sm">
+			<dl class="mt-3 space-y-1">
 				<div class="flex justify-between">
 					<dt>Subtotal</dt>
 					<dd>{Money.format(order.subtotalPence)}</dd>
@@ -129,9 +132,9 @@
 					<dt>Delivery</dt>
 					<dd>{order.shippingPence === 0 ? 'Free' : Money.format(order.shippingPence)}</dd>
 				</div>
-				<div class="flex justify-between font-semibold">
-					<dt>Total</dt>
-					<dd>{Money.format(order.totalPence)}</dd>
+				<div class="flex justify-between">
+					<dt><Span bold>Total</Span></dt>
+					<dd><Span bold>{Money.format(order.totalPence)}</Span></dd>
 				</div>
 				{#if order.refundedPence > 0}
 					<div class="flex justify-between">
@@ -146,10 +149,10 @@
 	{#if order.status === 'paid'}
 		{let stage = $derived(Packing.stage(order))}
 		<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
-			<div class="flex flex-wrap items-center gap-3">
+			<Cluster gap="sm">
 				<Title level={2} size="sm">Packing</Title>
 				<Badge color={Packing.STAGE_COLORS[stage]}>{Packing.STAGE_LABELS[stage]}</Badge>
-			</div>
+			</Cluster>
 			<Text class="mt-1" color="secondary">
 				{#if order.heldAt}On hold since {date.format(order.heldAt)}.{/if}
 				{#if order.packingStartedAt}Packing started {date.format(order.packingStartedAt)}.{/if}
@@ -157,45 +160,47 @@
 				{#if order.labelCreatedAt}Label created {date.format(order.labelCreatedAt)}.{/if}
 			</Text>
 			<Form
-				class="mt-4 flex flex-wrap gap-2"
+				class="mt-4"
 				form={updateOrderForm}
 				hidden={{ number: order.number }}
 				schema={OrderStepSchema}
 			>
-				{#if stage === 'new'}
-					<Button {...updateOrderForm.fields.step.as('submit', 'start')} form={updateOrderForm}
-						>Start packing</Button
-					>
-				{:else if stage === 'packing'}
-					<Button
-						{...updateOrderForm.fields.step.as('submit', 'pack')}
-						form={updateOrderForm}
-						variant="secondary"
-					>
-						Mark packed
-					</Button>
-				{:else if stage === 'packed' || stage === 'label'}
-					<Button disabled={printing} onclick={() => printLabel(order.number)}>
-						{order.labelCreatedAt ? 'Reprint label' : 'Print label'}
-					</Button>
-				{/if}
-				{#if stage === 'held'}
-					<Button
-						{...updateOrderForm.fields.step.as('submit', 'release')}
-						form={updateOrderForm}
-						variant="secondary"
-					>
-						Release hold
-					</Button>
-				{:else if stage !== 'label'}
-					<Button
-						{...updateOrderForm.fields.step.as('submit', 'hold')}
-						form={updateOrderForm}
-						variant="secondary"
-					>
-						Put on hold
-					</Button>
-				{/if}
+				<Cluster gap="xs">
+					{#if stage === 'new'}
+						<Button {...updateOrderForm.fields.step.as('submit', 'start')} form={updateOrderForm}
+							>Start packing</Button
+						>
+					{:else if stage === 'packing'}
+						<Button
+							{...updateOrderForm.fields.step.as('submit', 'pack')}
+							form={updateOrderForm}
+							variant="secondary"
+						>
+							Mark packed
+						</Button>
+					{:else if stage === 'packed' || stage === 'label'}
+						<Button disabled={printing} onclick={() => printLabel(order.number)}>
+							{order.labelCreatedAt ? 'Reprint label' : 'Print label'}
+						</Button>
+					{/if}
+					{#if stage === 'held'}
+						<Button
+							{...updateOrderForm.fields.step.as('submit', 'release')}
+							form={updateOrderForm}
+							variant="secondary"
+						>
+							Release hold
+						</Button>
+					{:else if stage !== 'label'}
+						<Button
+							{...updateOrderForm.fields.step.as('submit', 'hold')}
+							form={updateOrderForm}
+							variant="secondary"
+						>
+							Put on hold
+						</Button>
+					{/if}
+				</Cluster>
 			</Form>
 
 			<Text class="mt-3" color="secondary">
@@ -254,7 +259,8 @@
 		{let services = $derived(await getShippingServices())}
 		<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
 			<details>
-				<summary class="cursor-pointer font-semibold">Edit contact, address and postage</summary>
+				<summary class="cursor-pointer"><Span bold>Edit contact, address and postage</Span></summary
+				>
 				<Text class="mt-2" color="secondary">
 					For fixing a typo or a customer's request. If you change the country, check the postage
 					service still fits. {#if order.status === 'paid' && order.labelCreatedAt}The label is

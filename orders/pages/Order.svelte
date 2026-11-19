@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -47,18 +48,20 @@
 	{:else}
 		<ol class="mt-6 space-y-3">
 			{#each steps as step (step.label)}
-				<li class="flex items-center gap-3">
-					<div
-						class="grid size-6 place-items-center rounded-full text-xs {step.done
-							? 'bg-[var(--primary-strong)] text-white'
-							: 'border border-[var(--bd)] text-[var(--txs)]'}"
-						aria-hidden="true"
-					>
-						{step.done ? '✓' : ''}
-					</div>
-					<Span bold={step.done} color={step.done ? undefined : 'secondary'}>
-						{step.label}{step.done && step.when ? `: ${date.format(step.when)}` : ''}
-					</Span>
+				<li>
+					<Cluster gap="sm" nowrap>
+						<div
+							class="grid size-6 place-items-center rounded-full {step.done
+								? 'bg-[var(--primary-strong)] text-white'
+								: 'border border-[var(--bd)] text-[var(--txs)]'}"
+							aria-hidden="true"
+						>
+							<Span size="xs">{step.done ? '✓' : ''}</Span>
+						</div>
+						<Span bold={step.done} color={step.done ? undefined : 'secondary'}>
+							{step.label}{step.done && step.when ? `: ${date.format(step.when)}` : ''}
+						</Span>
+					</Cluster>
 				</li>
 			{/each}
 		</ol>
@@ -83,9 +86,11 @@
 	<Title class="mt-8" level={2} size="sm">Items</Title>
 	<ul class="mt-2 divide-y divide-[var(--bd)] border-y border-[var(--bd)]">
 		{#each data.items as item (item.name)}
-			<li class="flex justify-between gap-4 py-3">
-				<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
-				<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
+			<li class="py-3">
+				<Cluster gap="sm" justify="between" nowrap>
+					<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
+					<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
+				</Cluster>
 			</li>
 		{/each}
 	</ul>
@@ -105,9 +110,9 @@
 			<dt>Delivery</dt>
 			<dd>{order.shippingPence === 0 ? 'Free' : Money.format(order.shippingPence)}</dd>
 		</div>
-		<div class="flex justify-between font-semibold">
-			<dt>Total</dt>
-			<dd>{Money.format(order.totalPence)}</dd>
+		<div class="flex justify-between">
+			<dt><Span bold>Total</Span></dt>
+			<dd><Span bold>{Money.format(order.totalPence)}</Span></dd>
 		</div>
 	</dl>
 

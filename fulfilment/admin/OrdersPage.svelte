@@ -5,6 +5,7 @@
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
@@ -86,45 +87,47 @@
 
 <Title level={1} size="md">Orders</Title>
 
-<nav class="mt-4 flex flex-wrap items-center gap-2" aria-label="Order filter">
-	{#each ORDER_FILTERS as f (f)}
-		<!-- eslint-disable svelte/no-navigation-without-resolve -- href() resolves the path -->
-		<a
-			class="rounded-full border px-3 py-1 text-sm no-underline {f === filter
-				? 'border-[var(--acc)] bg-[var(--acc)] text-white'
-				: 'border-[var(--bd)] bg-white text-[var(--tx)]'}"
-			aria-current={f === filter ? 'page' : undefined}
-			href={href({ filter: f })}
-		>
-			{FILTER_LABELS[f]}
-			({(await getOrderCounts())[f]})
-		</a>
-		<!-- eslint-enable svelte/no-navigation-without-resolve -->
-	{/each}
-	<Boundary message="Could not load ready counts.">
-		{#each Object.entries(await getReadyByService()) as [service, n] (service)}
-			<Span color="secondary">{service}: {n} ready</Span>
+<nav class="mt-4" aria-label="Order filter">
+	<Cluster gap="xs">
+		{#each ORDER_FILTERS as f (f)}
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- href() resolves the path -->
+			<a
+				class="rounded-full border px-3 py-1 no-underline {f === filter
+					? 'border-[var(--acc)] bg-[var(--acc)] text-white'
+					: 'border-[var(--bd)] bg-white text-[var(--tx)]'}"
+				aria-current={f === filter ? 'page' : undefined}
+				href={href({ filter: f })}
+			>
+				{FILTER_LABELS[f]}
+				({(await getOrderCounts())[f]})
+			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		{/each}
+		<Boundary message="Could not load ready counts.">
+			{#each Object.entries(await getReadyByService()) as [service, n] (service)}
+				<Span color="secondary">{service}: {n} ready</Span>
+			{/each}
 
-		{#snippet pending()}{/snippet}
-	</Boundary>
-	<form
-		class="ml-auto"
-		onsubmit={(event) => {
-			event.preventDefault();
-			const input = new FormData(event.currentTarget).get('q');
-			// eslint-disable-next-line svelte/no-navigation-without-resolve -- href() already resolves the path
-			goto(href({ q: typeof input === 'string' ? input.trim() : '' }));
-		}}
-	>
-		<input
-			name="q"
-			class="w-56 rounded-md border border-[var(--bd)] px-3 py-1.5 text-sm"
-			placeholder="Order, email or name"
-			type="search"
-			value={q}
-		/>
-	</form>
+			{#snippet pending()}{/snippet}
+		</Boundary>
+		<form
+			class="ml-auto"
+			onsubmit={(event) => {
+				event.preventDefault();
+				const input = new FormData(event.currentTarget).get('q');
+				// eslint-disable-next-line svelte/no-navigation-without-resolve -- href() already resolves the path
+				goto(href({ q: typeof input === 'string' ? input.trim() : '' }));
+			}}
+		>
+			<input
+				name="q"
+				class="w-56 rounded-md border border-[var(--bd)] px-3 py-1.5"
+				placeholder="Order, email or name"
+				type="search"
+				value={q}
+			/>
+		</form>
+	</Cluster>
 </nav>
 
 <Boundary message="Could not load orders.">
@@ -137,9 +140,10 @@
 		</Text>
 	{:else}
 		{#if filter === 'ready'}
-			<div class="mt-4 flex flex-wrap items-center gap-4 text-sm">
-				<label class="flex items-center gap-2">
+			<Cluster class="mt-4" gap="md">
+				<Cluster gap="xs" nowrap>
 					<input
+						id="select-ready"
 						checked={rows.length > 0 &&
 							chosen.length === Math.min(rows.length, BULK_DISPATCH_LIMIT)}
 						onchange={(event) => {
@@ -149,30 +153,30 @@
 						}}
 						type="checkbox"
 					/>
-					Select {Math.min(rows.length, BULK_DISPATCH_LIMIT)}
-				</label>
-				<label class="flex items-center gap-2">
-					<input type="checkbox" bind:checked={sendEmail} />
-					Email the customers
-				</label>
+					<label for="select-ready">Select {Math.min(rows.length, BULK_DISPATCH_LIMIT)}</label>
+				</Cluster>
+				<Cluster gap="xs" nowrap>
+					<input id="email-customers" type="checkbox" bind:checked={sendEmail} />
+					<label for="email-customers">Email the customers</label>
+				</Cluster>
 				<Button
 					disabled={chosen.length === 0 || dispatching}
 					onclick={() => dispatchSelected(chosen)}
 				>
 					Dispatch {chosen.length} order{chosen.length === 1 ? '' : 's'}
 				</Button>
-			</div>
+			</Cluster>
 		{/if}
 		<div class="mt-4 overflow-x-auto rounded-xl border border-[var(--bd)] bg-white">
-			<table class="w-full text-left text-sm">
+			<table class="w-full text-left">
 				<thead class="border-b border-[var(--bd)] text-[var(--txs)]">
 					<tr>
 						{#if filter === 'ready'}<th class="w-8 px-4 py-2"></th>{/if}
-						<th class="px-4 py-2 font-medium">Order</th>
-						<th class="px-4 py-2 font-medium">Placed</th>
-						<th class="px-4 py-2 font-medium">Customer</th>
-						<th class="px-4 py-2 text-right font-medium">Total</th>
-						<th class="px-4 py-2 font-medium">Status</th>
+						<th class="px-4 py-2"><Span bold>Order</Span></th>
+						<th class="px-4 py-2"><Span bold>Placed</Span></th>
+						<th class="px-4 py-2"><Span bold>Customer</Span></th>
+						<th class="px-4 py-2 text-right"><Span bold>Total</Span></th>
+						<th class="px-4 py-2"><Span bold>Status</Span></th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-[var(--bd)]">
@@ -192,8 +196,10 @@
 									/>
 								</td>
 							{/if}
-							<td class="px-4 py-2 font-medium">
-								<a href={resolve('/orders/[number]', { number: row.number })}>{row.number}</a>
+							<td class="px-4 py-2">
+								<a href={resolve('/orders/[number]', { number: row.number })}
+									><Span bold>{row.number}</Span></a
+								>
 							</td>
 							<td class="px-4 py-2 whitespace-nowrap">{date.format(row.createdAt)}</td>
 							<td class="px-4 py-2">
