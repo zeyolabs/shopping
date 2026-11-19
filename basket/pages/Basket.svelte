@@ -1,7 +1,22 @@
 <script lang="ts">
-	import { ErrorMessage } from '../../utils/errors';
 	import { resolve } from '$app/paths';
+	import Minus from '@lucide/svelte/icons/minus';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Trash from '@lucide/svelte/icons/trash-2';
+	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import { Form } from '@zeyolabs/ui/form';
+	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import { Select } from '@zeyolabs/ui/form/primitives';
+	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import { toast } from 'svelte-sonner';
+
+	import { shopContext } from '../../context';
 	import PageTitle from '../../ui/PageTitle.svelte';
+	import { ErrorMessage } from '../../utils/errors';
+	import { Images } from '../../utils/images';
+	import { Money } from '../../utils/money';
 	import {
 		basketQuantityForm,
 		getBasket,
@@ -10,18 +25,6 @@
 		setShipTo,
 	} from '../client.remote';
 	import { BasketQuantitySchema } from '../schema';
-	import Minus from '@lucide/svelte/icons/minus';
-	import Plus from '@lucide/svelte/icons/plus';
-	import Trash from '@lucide/svelte/icons/trash-2';
-	import { shopContext } from '../../context';
-	import { Images } from '../../utils/images';
-	import { Money } from '../../utils/money';
-	import { toast } from 'svelte-sonner';
-	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
-	import { Form } from '@zeyolabs/ui/form';
-	import Button from '@zeyolabs/ui/form/Button.svelte';
-	import { Select } from '@zeyolabs/ui/form/primitives';
-	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
 
 	/** The app's own checkout remote function, which rate-limits before calling `createCheckout`. */
 	let { startCheckout }: { startCheckout: () => Promise<{ url: string }> } = $props();
@@ -47,10 +50,10 @@
 	{let [summary, countries] = $derived(await Promise.all([getBasket(), getShippableCountries()]))}
 
 	{#if summary.lines.length === 0 && summary.bundles.length === 0}
-		<p>Your basket is empty.</p>
-		<p class="mt-4"><a class="underline" href={resolve('/')}>Continue shopping</a></p>
+		<Text>Your basket is empty.</Text>
+		<Text class="mt-4"><a class="underline" href={resolve('/')}>Continue shopping</a></Text>
 	{:else}
-		<ul class="divide-y divide-[var(--line)]">
+		<ul class="divide-y divide-[var(--bd)]">
 			{#each summary.lines as line (line.id)}
 				<li class="flex flex-wrap items-center gap-4 py-4">
 					{#if line.cover}
@@ -64,11 +67,11 @@
 						<a class="font-medium" href={resolve('/product/[slug]', { slug: line.slug })}>
 							{line.name}
 						</a>
-						<p>{Money.format(line.pricePence)}</p>
+						<Text>{Money.format(line.pricePence)}</Text>
 						{#if line.available < line.quantity}
-							<p class="text-sm text-[var(--danger)]">
+							<Text class="text-[var(--danger)]">
 								{line.available === 0 ? 'Out of stock' : `Only ${line.available} available`}
-							</p>
+							</Text>
 						{/if}
 					</div>
 					{const form = basketQuantityForm.for(line.id)}
@@ -89,7 +92,7 @@
 						>
 							<Minus size={14} />
 						</Button>
-						<span class="w-6 text-center">{line.quantity}</span>
+						<Span class="w-6" centered>{line.quantity}</Span>
 						<Button
 							{...form.fields.quantity.as('submit', line.quantity + 1)}
 							aria-label="Increase quantity of {line.name}"
@@ -102,7 +105,7 @@
 							<Plus size={14} />
 						</Button>
 					</Form>
-					<p class="w-20 text-right">{Money.format(line.lineTotalPence)}</p>
+					<Text class="w-20 text-right">{Money.format(line.lineTotalPence)}</Text>
 				</li>
 			{/each}
 			{#each summary.bundles as bundle (bundle.index)}
@@ -120,7 +123,7 @@
 								{bundle.name}
 							</a>
 						{:else}
-							<p class="font-medium">{bundle.name}</p>
+							<Text bold>{bundle.name}</Text>
 						{/if}
 						{#if bundle.details.length > 0}
 							<ul class="mt-1 text-sm text-[var(--txs)]">
@@ -128,7 +131,7 @@
 							</ul>
 						{/if}
 						{#if bundle.problem}
-							<p class="mt-1 text-sm text-[var(--danger)]">{bundle.problem}</p>
+							<Text class="mt-1 text-[var(--danger)]">{bundle.problem}</Text>
 						{/if}
 					</div>
 					<Button
@@ -140,12 +143,12 @@
 					>
 						<Trash size={14} />
 					</Button>
-					<p class="w-20 text-right">
+					<Text class="w-20 text-right">
 						{Money.format(bundle.pricePence)}
 						{#if bundle.listPricePence > bundle.pricePence}
 							<s class="block text-xs text-[var(--txt)]">{Money.format(bundle.listPricePence)}</s>
 						{/if}
-					</p>
+					</Text>
 				</li>
 			{/each}
 		</ul>
@@ -179,21 +182,21 @@
 			<dd class="text-right font-medium">{Money.format(summary.totalPence)}</dd>
 		</dl>
 		{#if summary.shipping === null}
-			<p class="mt-2 text-right text-sm text-[var(--danger)]">
+			<Text class="mt-2 text-right text-[var(--danger)]">
 				We cannot ship this order to the selected country.
-			</p>
+			</Text>
 		{:else}
-			<p class="mt-2 text-right text-sm">
+			<Text class="mt-2 text-right">
 				{summary.shipping.name}, {summary.shipping.deliveryTime}.
-			</p>
+			</Text>
 		{/if}
 		{#if summary.domestic && summary.shippingPence > 0}
-			<p class="mt-2 text-right text-sm">
+			<Text class="mt-2 text-right">
 				Free UK delivery on orders of {Money.format(summary.freeShippingFromPence)} or more.
-			</p>
+			</Text>
 		{/if}
 
-		<p class="mt-6 text-right">
+		<Text class="mt-6 text-right">
 			<Button
 				disabled={!summary.shipping ||
 					summary.lines.some((line) => line.available < 1) ||
@@ -205,7 +208,7 @@
 			>
 				Checkout
 			</Button>
-		</p>
+		</Text>
 	{/if}
 
 	{#snippet pending()}

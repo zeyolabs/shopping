@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { ShopDb } from '../db/index';
+import type { OrderStatus } from '../db/schema';
 
 import * as schema from '../db/schema';
 
@@ -34,11 +35,7 @@ export function shopTestDb() {
 		return row;
 	}
 
-	async function order(
-		status: 'cancelled' | 'paid' | 'shipped',
-		productIds: number[],
-		email = 'a@b.test'
-	) {
+	async function order(status: OrderStatus, productIds: number[], email = 'a@b.test') {
 		n++;
 		const [address] = await db()
 			.insert(schema.addresses)

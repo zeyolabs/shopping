@@ -1,14 +1,18 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import PageTitle from '../../ui/PageTitle.svelte';
-	import { getOrderPage } from '../client.remote';
-	import { getOrderReviews } from '../../reviews/client.remote';
-	import ReviewForm from '../../reviews/components/ReviewForm.svelte';
-	import { shopContext } from '../../context';
-	import { Money } from '../../utils/money';
-	import { Orders } from '../library';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
+	import { shopContext } from '../../context';
+	import { getOrderReviews } from '../../reviews/client.remote';
+	import ReviewForm from '../../reviews/components/ReviewForm.svelte';
+	import PageTitle from '../../ui/PageTitle.svelte';
+	import { Money } from '../../utils/money';
+	import { getOrderPage } from '../client.remote';
+	import { Orders } from '../library';
 
 	const context = shopContext();
 	const date = new Intl.DateTimeFormat('en-GB', { dateStyle: 'long', timeZone: 'Europe/London' });
@@ -32,54 +36,56 @@
 		{ done: order.shippedAt !== null, label: 'Dispatched', when: order.shippedAt },
 	])}
 
-	<p class="text-[var(--txs)]">Order <strong class="text-[var(--tx)]">{order.number}</strong></p>
+	<Text color="secondary">Order <strong class="text-[var(--tx)]">{order.number}</strong></Text>
 
 	{#if cancelled}
-		<p class="mt-4 rounded-2xl border border-[var(--bd)] p-4">
+		<Text class="mt-4 rounded-2xl border border-[var(--bd)] p-4">
 			This order was {order.status}. Email
 			<a class="underline" href="mailto:{context.supportEmail}">{context.supportEmail}</a> if you have
 			any questions.
-		</p>
+		</Text>
 	{:else}
 		<ol class="mt-6 space-y-3">
 			{#each steps as step (step.label)}
 				<li class="flex items-center gap-3">
-					<span
+					<div
 						class="grid size-6 place-items-center rounded-full text-xs {step.done
 							? 'bg-[var(--primary-strong)] text-white'
 							: 'border border-[var(--bd)] text-[var(--txs)]'}"
-						aria-hidden="true">{step.done ? '✓' : ''}</span
+						aria-hidden="true"
 					>
-					<span class={step.done ? 'font-medium' : 'text-[var(--txs)]'}>
+						{step.done ? '✓' : ''}
+					</div>
+					<Span bold={step.done} color={step.done ? undefined : 'secondary'}>
 						{step.label}{step.done && step.when ? `: ${date.format(step.when)}` : ''}
-					</span>
+					</Span>
 				</li>
 			{/each}
 		</ol>
 
 		{#if order.shippedAt && tracking}
-			<p class="mt-4">
+			<Text class="mt-4">
 				Tracking number:
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external Royal Mail URL -->
 				<a class="underline" href={tracking} rel="noopener" target="_blank"
 					>{order.trackingNumber}</a
 				>
-			</p>
+			</Text>
 		{:else if order.shippedAt}
-			<p class="mt-4 text-[var(--txs)]">This parcel is sent untracked.</p>
+			<Text class="mt-4" color="secondary">This parcel is sent untracked.</Text>
 		{:else}
-			<p class="mt-4 text-[var(--txs)]">
+			<Text class="mt-4" color="secondary">
 				We will dispatch your order soon. This page updates as soon as it is on its way.
-			</p>
+			</Text>
 		{/if}
 	{/if}
 
-	<h2 class="mt-8 text-lg font-semibold">Items</h2>
+	<Title class="mt-8" level={2} size="sm">Items</Title>
 	<ul class="mt-2 divide-y divide-[var(--bd)] border-y border-[var(--bd)]">
 		{#each data.items as item (item.name)}
 			<li class="flex justify-between gap-4 py-3">
-				<span>{item.name} <span class="text-[var(--txs)]">× {item.quantity}</span></span>
-				<span>{Money.format(item.quantity * item.unitPricePence)}</span>
+				<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
+				<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
 			</li>
 		{/each}
 	</ul>
@@ -106,15 +112,15 @@
 	</dl>
 
 	{#if order.hasInvoice}
-		<p class="mt-3 text-right">
+		<Text class="mt-3 text-right">
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- server route, opens Stripe's PDF -->
 			<a class="underline" href="{page.url.pathname}/invoice" rel="external"
 				>Download invoice (PDF)</a
 			>
-		</p>
+		</Text>
 	{/if}
 
-	<h2 class="mt-8 text-lg font-semibold">Delivering to</h2>
+	<Title class="mt-8" level={2} size="sm">Delivering to</Title>
 	<address class="mt-2 not-italic">
 		{data.address.name}<br />
 		{data.address.line1}<br />
@@ -128,20 +134,20 @@
 		await getOrderReviews({ number: order.number, token: page.params.token ?? '' })
 	)}
 	{#if reviewable.items.length > 0}
-		<h2 class="mt-8 text-lg font-semibold">Review your items</h2>
+		<Title class="mt-8" level={2} size="sm">Review your items</Title>
 		<ul class="mt-2 space-y-6">
 			{#each reviewable.items as item (item.productId)}
 				<li class="rounded-2xl border border-[var(--bd)] p-4">
-					<p class="font-medium">{item.name}</p>
+					<Text bold>{item.name}</Text>
 					{#if item.review}
-						<p class="mt-1 text-sm text-[var(--txs)]">
+						<Text class="mt-1" color="secondary">
 							Reviewed, {item.review.rating} of 5.
 							{item.review.status === 'pending'
 								? 'It will appear once we have checked it.'
 								: item.review.status === 'approved'
 									? 'It is on the product page.'
 									: ''}
-						</p>
+						</Text>
 					{:else}
 						<ReviewForm
 							name={item.name}
@@ -155,11 +161,11 @@
 		</ul>
 	{/if}
 
-	<p class="mt-8 text-[var(--txs)]">
+	<Text class="mt-8" color="secondary">
 		Need help? Email <a class="underline" href="mailto:{context.supportEmail}"
 			>{context.supportEmail}</a
 		>, quoting {order.number}.
-	</p>
+	</Text>
 
 	{#snippet pending()}
 		<SkeletonCard lines={4} />

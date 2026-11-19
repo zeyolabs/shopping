@@ -77,6 +77,8 @@ from `__fixtures__/schema.sql`, an app's generated migrations; regenerate it whe
 - Remote functions and components follow the consuming app's remote-function rules (Pure Leaves
   `docs/sveltekit-remote.md`): queries awaited in markup inside `<Boundary>`, never in `<script>`;
   no remote calls in `$effect`; public pages load on the server; form controls via `.as()`.
+- Text goes through `Title`/`Text`/`Span` from `@zeyolabs/ui/text`, never raw `h1`-`h6`/`p`/`span`
+  (lint error); sizes and weights through their props, not classes.
 - Shipped as source; `exports`/`files` must cover every public file.
 - Money is integer pence, GBP only for now (`money.ts`). Timestamps are epoch ms.
 - Dependency versions are exact; `svelte`, `@sveltejs/kit`, `drizzle-orm`, `zod` and the other

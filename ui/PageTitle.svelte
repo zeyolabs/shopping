@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
 
 	import { shopContext } from '../context';
 
@@ -35,5 +36,5 @@
 </svelte:head>
 
 {#if heading}
-	<h1 class="mb-10 text-4xl font-semibold tracking-tight text-[var(--primary-strong)]">{title}</h1>
+	<Title class="mb-10 text-[var(--primary-strong)]" level={1}>{title}</Title>
 {/if}

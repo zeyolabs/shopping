@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import type { getAdminBundle } from '../admin.remote';
-	import { saveBundleForm } from '../admin.remote';
-	import { BundleFormSchema } from '../schema';
-	import { shopContext } from '../../context';
 	import { CheckboxField, Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
+	import type { getAdminBundle } from '../admin.remote';
+
+	import { shopContext } from '../../context';
+	import { saveBundleForm } from '../admin.remote';
+	import { BundleFormSchema } from '../schema';
 
 	type Bundle = Awaited<ReturnType<typeof getAdminBundle>>;
 
@@ -35,8 +38,8 @@
 		{ label: 'Kit cover (one product for every slot)', value: 'cover' },
 	] as const;
 
-	const input = 'mt-1 w-full rounded-md border border-[var(--line)] bg-white px-3 py-1.5';
-	const section = 'grid gap-4 rounded-xl border border-[var(--line)] bg-white p-5';
+	const input = 'mt-1 w-full rounded-md border border-[var(--bd)] bg-white px-3 py-1.5';
+	const section = 'grid gap-4 rounded-xl border border-[var(--bd)] bg-white p-5';
 </script>
 
 <Form
@@ -82,10 +85,10 @@
 	{#each stepRows as _, i (i)}
 		<section class={section}>
 			<div class="flex items-center justify-between">
-				<h2 class="font-semibold">Step {i + 1}</h2>
+				<Title level={2} size="sm">Step {i + 1}</Title>
 				{#if stepRows.length > 1}
 					<Button
-						onclick={() => steps.set(stepRows.filter((_, j) => j !== i))}
+						onclick={() => steps.set(stepRows.filter((_: unknown, j: number) => j !== i))}
 						size="sm"
 						variant="secondary">Remove step</Button
 					>

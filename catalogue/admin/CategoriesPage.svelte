@@ -1,9 +1,13 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { getAdminCategories } from '../admin.remote';
-	import CategoryForm from './CategoryForm.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
+	import { getAdminCategories } from '../admin.remote';
+	import CategoryForm from './CategoryForm.svelte';
 
 	type Category = {
 		description: string;
@@ -19,9 +23,9 @@
 
 <svelte:head><title>Categories · Admin</title></svelte:head>
 
-<p class="text-sm"><a href={resolve('/products')}>← Products</a></p>
+<Text><a href={resolve('/products')}>← Products</a></Text>
 <div class="mt-2 flex items-center justify-between">
-	<h1 class="text-2xl font-semibold">Categories</h1>
+	<Title level={1} size="md">Categories</Title>
 	<Button onclick={() => (editing = null)}>New category</Button>
 </div>
 
@@ -33,21 +37,20 @@
 
 <Boundary message="Could not load categories.">
 	{let rows = $derived(await getAdminCategories())}
-	<ul class="mt-4 divide-y divide-[var(--line)] rounded-xl border border-[var(--line)] bg-white">
+	<ul class="mt-4 divide-y divide-[var(--bd)] rounded-xl border border-[var(--bd)] bg-white">
 		{#each rows as row (row.id)}
 			<li class="flex items-center justify-between gap-3 px-4 py-2 text-sm">
-				<span
+				<Span
 					><strong>{row.name}</strong>
-					<span class="text-[var(--ink-muted)]">/category/{row.slug} · {row.products} products</span
-					></span
+					<Span color="secondary">/category/{row.slug} · {row.products} products</Span></Span
 				>
 				<button class="underline" onclick={() => (editing = row)} type="button">Edit</button>
 			</li>
 		{:else}
-			<li class="px-4 py-6 text-[var(--ink-muted)]">No categories yet.</li>
+			<li class="px-4 py-6 text-[var(--txs)]">No categories yet.</li>
 		{/each}
 	</ul>
 	{#snippet pending()}
-		<p class="mt-6 text-[var(--ink-muted)]">Loading…</p>
+		<Text class="mt-6" color="secondary">Loading…</Text>
 	{/snippet}
 </Boundary>

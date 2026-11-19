@@ -26,11 +26,11 @@
 		{/if}
 		{#each Paging.window(page, pages) as n, i (n ?? `gap-${i}`)}
 			{#if n === null}
-				<span class="{box} text-[var(--txt)]" aria-hidden="true">…</span>
+				<div class="{box} text-[var(--txt)]" aria-hidden="true">…</div>
 			{:else if n === page}
-				<span class="{box} bg-[var(--primary-strong)] font-medium text-white" aria-current="page">
+				<div class="{box} bg-[var(--primary-strong)] font-medium text-white" aria-current="page">
 					{n}
-				</span>
+				</div>
 			{:else}
 				<a class={link} aria-label="Page {n}" href={href(n)}>{n}</a>
 			{/if}

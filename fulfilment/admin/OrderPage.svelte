@@ -1,7 +1,20 @@
 <script lang="ts">
-	import { ErrorMessage } from '../../utils/errors';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
+	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import { CheckboxField, Form, NumberField, SelectField, TextField } from '@zeyolabs/ui/form';
+	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+	import { toast } from 'svelte-sonner';
+
+	import { PACKAGE_FORMATS } from '../../db/schema';
+	import { Orders } from '../../orders/library';
+	import { ErrorMessage } from '../../utils/errors';
+	import { FormInput } from '../../utils/form-input';
+	import { Money } from '../../utils/money';
 	import {
 		createOrderLabel,
 		detailsForm,
@@ -12,6 +25,7 @@
 		shipForm,
 		updateOrderForm,
 	} from '../admin.remote';
+	import { Packing } from '../library';
 	import {
 		OrderDetailsSchema,
 		OrderStepSchema,
@@ -19,16 +33,6 @@
 		RefundSchema,
 		ShipSchema,
 	} from '../schema';
-	import { Money } from '../../utils/money';
-	import { FormInput } from '../../utils/form-input';
-	import { Orders } from '../../orders/library';
-	import { toast } from 'svelte-sonner';
-	import { PACKAGE_FORMATS } from '../../db/schema';
-	import { Packing } from '../library';
-	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
-	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
-	import { CheckboxField, Form, NumberField, SelectField, TextField } from '@zeyolabs/ui/form';
-	import Button from '@zeyolabs/ui/form/Button.svelte';
 
 	const number = $derived(page.params.number ?? '');
 
@@ -56,12 +60,12 @@
 
 <svelte:head><title>{number} · Admin</title></svelte:head>
 
-<p><a href={resolve('/orders')}>← Orders</a></p>
+<Text><a href={resolve('/orders')}>← Orders</a></Text>
 
 <Boundary message="Could not load this order." statusMessages={{ 404: 'Order not found.' }}>
 	{let order = $derived(await getOrder(number))}
 	<div class="mt-4 flex flex-wrap items-center gap-3">
-		<h1 class="text-2xl font-semibold">{order.number}</h1>
+		<Title level={1} size="md">{order.number}</Title>
 		<Badge
 			color={order.status === 'paid'
 				? 'warning'
@@ -72,15 +76,15 @@
 			{order.status === 'paid' ? 'To ship' : order.status}
 		</Badge>
 	</div>
-	<p class="mt-1 text-sm text-[var(--ink-muted)]">
+	<Text class="mt-1" color="secondary">
 		Placed {date.format(order.createdAt)}{order.paidAt
 			? ` · paid ${date.format(order.paidAt)}`
 			: ''}
-	</p>
+	</Text>
 
 	<div class="mt-6 grid gap-6 md:grid-cols-2">
-		<section class="rounded-xl border border-[var(--line)] bg-white p-5">
-			<h2 class="font-semibold">Ship to</h2>
+		<section class="rounded-xl border border-[var(--bd)] bg-white p-5">
+			<Title level={2} size="sm">Ship to</Title>
 			<address class="mt-2 not-italic select-all">
 				{order.address.name}<br />
 				{order.address.line1}<br />
@@ -89,24 +93,24 @@
 				{order.address.postcode}<br />
 				{order.address.country}
 			</address>
-			<p class="mt-3 text-sm">
+			<Text class="mt-3">
 				<a href="mailto:{order.email}">{order.email}</a>{order.address.phone
 					? ` · ${order.address.phone}`
 					: ''}
-			</p>
-			<p class="mt-3 text-sm text-[var(--ink-muted)]">
+			</Text>
+			<Text class="mt-3" color="secondary">
 				Service: {order.shippingService ?? 'n/a'}
 				{#if order.royalMailOrderId}· Click &amp; Drop order {order.royalMailOrderId}{/if}
-			</p>
+			</Text>
 		</section>
 
-		<section class="rounded-xl border border-[var(--line)] bg-white p-5">
-			<h2 class="font-semibold">Items</h2>
-			<ul class="mt-2 divide-y divide-[var(--line)]">
+		<section class="rounded-xl border border-[var(--bd)] bg-white p-5">
+			<Title level={2} size="sm">Items</Title>
+			<ul class="mt-2 divide-y divide-[var(--bd)]">
 				{#each order.items as item (item.id)}
 					<li class="flex justify-between gap-4 py-2">
-						<span>{item.name} <span class="text-[var(--ink-muted)]">× {item.quantity}</span></span>
-						<span>{Money.format(item.quantity * item.unitPricePence)}</span>
+						<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
+						<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
 					</li>
 				{/each}
 			</ul>
@@ -141,17 +145,17 @@
 
 	{#if order.status === 'paid'}
 		{let stage = $derived(Packing.stage(order))}
-		<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
+		<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
 			<div class="flex flex-wrap items-center gap-3">
-				<h2 class="font-semibold">Packing</h2>
+				<Title level={2} size="sm">Packing</Title>
 				<Badge color={Packing.STAGE_COLORS[stage]}>{Packing.STAGE_LABELS[stage]}</Badge>
 			</div>
-			<p class="mt-1 text-sm text-[var(--ink-muted)]">
+			<Text class="mt-1" color="secondary">
 				{#if order.heldAt}On hold since {date.format(order.heldAt)}.{/if}
 				{#if order.packingStartedAt}Packing started {date.format(order.packingStartedAt)}.{/if}
 				{#if order.packedAt}Packed {date.format(order.packedAt)}.{/if}
 				{#if order.labelCreatedAt}Label created {date.format(order.labelCreatedAt)}.{/if}
-			</p>
+			</Text>
 			<Form
 				class="mt-4 flex flex-wrap gap-2"
 				form={updateOrderForm}
@@ -194,18 +198,18 @@
 				{/if}
 			</Form>
 
-			<p class="mt-3 text-sm text-[var(--ink-muted)]">
+			<Text class="mt-3" color="secondary">
 				Printing the label sends the saved parcel details to Royal Mail and marks the order packed.
 				{#if order.labelCreatedAt}A label is already made, so later parcel changes will not change
 					it.{/if}
-			</p>
+			</Text>
 
-			<h3 class="mt-6 font-medium">Parcel</h3>
-			<p class="mt-1 text-sm text-[var(--ink-muted)]">
+			<Title class="mt-6" level={3} size="sm">Parcel</Title>
+			<Text class="mt-1" color="secondary">
 				{order.weightGrams === null
 					? `Estimated ${order.estimatedWeightGrams} g from the items. Weigh the parcel and correct it.`
 					: 'Weight and size go on the Royal Mail label.'}
-			</p>
+			</Text>
 			<Form
 				class="mt-3 grid gap-4"
 				defaults={{
@@ -248,14 +252,14 @@
 
 	{#if order.status === 'paid' || order.status === 'shipped'}
 		{let services = $derived(await getShippingServices())}
-		<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
+		<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
 			<details>
 				<summary class="cursor-pointer font-semibold">Edit contact, address and postage</summary>
-				<p class="mt-2 text-sm text-[var(--ink-muted)]">
+				<Text class="mt-2" color="secondary">
 					For fixing a typo or a customer's request. If you change the country, check the postage
 					service still fits. {#if order.status === 'paid' && order.labelCreatedAt}The label is
 						already made, so after a change you need to print it again.{/if}
-				</p>
+				</Text>
 				<Form
 					class="mt-4 grid gap-4"
 					defaults={{
@@ -312,13 +316,13 @@
 
 	{#if (order.status === 'paid' || order.status === 'shipped') && order.stripePaymentIntentId && order.refundedPence < order.totalPence}
 		{let left = $derived(order.totalPence - order.refundedPence)}
-		<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
-			<h2 class="font-semibold">Refund</h2>
-			<p class="mt-1 text-sm text-[var(--ink-muted)]">
+		<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
+			<Title level={2} size="sm">Refund</Title>
+			<Text class="mt-1" color="secondary">
 				Up to {Money.format(left)} can be refunded to the customer's card through Stripe. A full refund
 				marks the order refunded, even if it had shipped, and does not cancel a Royal Mail label. Stock
 				is not put back; do that on the stock page if the goods come back.
-			</p>
+			</Text>
 			<Form
 				class="mt-4 grid gap-4"
 				defaults={{ amount: FormInput.penceToPounds(left) }}
@@ -333,23 +337,23 @@
 		</section>
 	{/if}
 
-	<section class="mt-6 max-w-xl rounded-xl border border-[var(--line)] bg-white p-5">
-		<h2 class="font-semibold">Dispatch</h2>
+	<section class="mt-6 max-w-xl rounded-xl border border-[var(--bd)] bg-white p-5">
+		<Title level={2} size="sm">Dispatch</Title>
 		{#if order.status === 'paid' || order.status === 'shipped'}
 			{#if order.shippedAt}
-				<p class="mt-1 text-sm text-[var(--ink-muted)]">
+				<Text class="mt-1" color="secondary">
 					Dispatched {date.format(order.shippedAt)}.
 					{#if order.dispatchEmailedAt}
 						Customer emailed {date.format(order.dispatchEmailedAt)}.
 					{:else}
 						The customer has <strong>not</strong> been emailed.
 					{/if}
-				</p>
+				</Text>
 			{:else}
-				<p class="mt-1 text-sm text-[var(--ink-muted)]">
+				<Text class="mt-1" color="secondary">
 					Enter the Royal Mail tracking number (leave blank if untracked), then mark it dispatched.
 					The customer is emailed straight away and their order page updates.
-				</p>
+				</Text>
 			{/if}
 			<Form
 				class="mt-4 grid gap-4"
@@ -370,31 +374,31 @@
 				</div>
 			</Form>
 		{:else}
-			<p class="mt-1 text-sm">This order is {order.status}, so it cannot be dispatched.</p>
+			<Text class="mt-1">This order is {order.status}, so it cannot be dispatched.</Text>
 		{/if}
 
 		{#if order.trackingNumber}
-			<p class="mt-4 text-sm">
+			<Text class="mt-4">
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external Royal Mail URL -->
 				<a href={Orders.trackingUrl(order.trackingNumber)} rel="noopener" target="_blank"
 					>Track {order.trackingNumber} on Royal Mail</a
 				>
-			</p>
+			</Text>
 		{/if}
 		{#if order.stripeInvoiceId}
-			<p class="mt-2 text-sm">
+			<Text class="mt-2">
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- server route, opens Stripe's PDF -->
 				<a href="/orders/{order.number}/invoice" rel="external" target="_blank">Invoice (PDF)</a>
-			</p>
+			</Text>
 		{/if}
 		{#if order.customerUrl}
-			<p class="mt-2 text-sm">
+			<Text class="mt-2">
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- absolute URL on the shop domain -->
 				<a href={order.customerUrl} rel="noopener" target="_blank">Customer's order page</a>
-			</p>
+			</Text>
 		{/if}
 	</section>
 	{#snippet pending()}
-		<p class="mt-6 text-[var(--ink-muted)]">Loading…</p>
+		<Text class="mt-6" color="secondary">Loading…</Text>
 	{/snippet}
 </Boundary>

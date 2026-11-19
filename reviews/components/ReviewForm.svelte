@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { reviewForm } from '../client.remote';
-	import { ReviewSchema } from '../schema';
 	import { Form, MessageField, SelectField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+
+	import { reviewForm } from '../client.remote';
+	import { ReviewSchema } from '../schema';
 
 	let {
 		name,

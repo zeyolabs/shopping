@@ -42,7 +42,7 @@
 		"lint": "eslint . --cache --cache-location .cache/.eslintcache --cache-strategy content",
 		"test": "vitest run",
 		"fmt": "prettier --write .",
-		"check": "prettier --check . && pnpm lint && pnpm test"
+		"check": "prettier --check . && pnpm lint && svelte-check --tsconfig ./tsconfig.json && pnpm test"
 	},
 	"exports": {
 		"./*.svelte": "./*.svelte",
@@ -67,8 +67,8 @@
 		"@eslint/compat": "2.1.1",
 		"@eslint/js": "10.0.1",
 		"@sveltejs/kit": "3.2.0",
-		"@zeyolabs/kit": "2026.11.34",
-		"@zeyolabs/ui": "2026.11.31",
+		"@zeyolabs/kit": "2026.11.36",
+		"@zeyolabs/ui": "2026.11.32",
 		"drizzle-orm": "0.45.4",
 		"eslint": "10.15.0",
 		"eslint-config-prettier": "10.1.8",
@@ -80,6 +80,7 @@
 		"prettier": "3.10.1",
 		"prettier-plugin-svelte": "4.1.1",
 		"svelte": "5.57.3",
+		"svelte-check": "4.7.8",
 		"svelte-eslint-parser": "1.10.1",
 		"typescript": "6.0.3",
 		"typescript-eslint": "8.72.2",

@@ -2,21 +2,26 @@
 	import type { Snippet } from 'svelte';
 
 	import { resolve } from '$app/paths';
-	import PageTitle from '../../ui/PageTitle.svelte';
-	import Reviews from '../../reviews/components/Reviews.svelte';
-	import Stars from '../../ui/Stars.svelte';
-	import { addToBasketForm } from '../../basket/client.remote';
-	import { AddToBasketSchema } from '../../basket/schema';
-	import type { getProduct } from '../client.remote';
 	import ShoppingBasket from '@lucide/svelte/icons/shopping-basket';
-	import { shopContext } from '../../context';
-	import { Images } from '../../utils/images';
-	import { Money } from '../../utils/money';
-	import { Stock } from '../../stock/library';
-	import { ProductText } from '../library';
 	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import ImageGallery from '@zeyolabs/ui/gallery/ImageGallery.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
+	import type { getProduct } from '../client.remote';
+
+	import { addToBasketForm } from '../../basket/client.remote';
+	import { AddToBasketSchema } from '../../basket/schema';
+	import { shopContext } from '../../context';
+	import Reviews from '../../reviews/components/Reviews.svelte';
+	import { Stock } from '../../stock/library';
+	import PageTitle from '../../ui/PageTitle.svelte';
+	import Stars from '../../ui/Stars.svelte';
+	import { Images } from '../../utils/images';
+	import { Money } from '../../utils/money';
+	import { ProductText } from '../library';
 
 	let {
 		data,
@@ -63,14 +68,12 @@
 	</div>
 
 	<div class="flex flex-col">
-		<h1 class="text-3xl font-semibold tracking-tight text-[var(--tx)] sm:text-4xl">
-			{product.name}
-		</h1>
+		<Title level={1} size="lg">{product.name}</Title>
 
 		{#if data.reviews.average !== null}
 			<a
 				class="mt-3 flex w-fit items-center gap-2 text-sm text-[var(--txs)] no-underline hover:text-[var(--tx)]"
-				href="#reviews-heading"
+				href="#reviews"
 			>
 				<Stars rating={data.reviews.average} size="text-sm" />
 				{data.reviews.count}
@@ -79,38 +82,39 @@
 		{/if}
 
 		<div class="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-			<span class="text-3xl font-semibold text-[var(--tx)]">{Money.format(product.pricePence)}</span
-			>
+			<!-- eslint-disable-next-line svelte/no-restricted-html-elements -- the price is display-sized, bigger than any Span size -->
+			<span class="text-3xl font-semibold">{Money.format(product.pricePence)}</span>
 			{#if saving > 0}
 				<s class="text-lg text-[var(--txt)]">{Money.format(product.comparePricePence!)}</s>
-				<span
-					class="rounded-full bg-[var(--primary-soft)] px-2.5 py-0.5 text-sm font-medium text-[var(--primary-strong)]"
+				<Span
+					class="rounded-full bg-[var(--primary-soft)] px-2.5 py-0.5 text-[var(--primary-strong)]"
+					bold
 				>
 					Save {saving}%
-				</span>
+				</Span>
 			{/if}
 		</div>
 		{#if product.packSize > 1}
-			<p class="mt-1 text-sm text-[var(--txs)]">Pack of {product.packSize}</p>
+			<Text class="mt-1" color="secondary">Pack of {product.packSize}</Text>
 		{/if}
 
 		{#if product.shortDescription}
-			<p class="mt-5 text-[var(--txs)]">{product.shortDescription}</p>
+			<Text class="mt-5" color="secondary">{product.shortDescription}</Text>
 		{/if}
 
 		{#if data.options.length > 1}
 			<div class="mt-6">
-				<p class="text-sm font-medium text-[var(--tx)]">{data.variationName}</p>
+				<Text bold>{data.variationName}</Text>
 				<ul class="mt-2 flex flex-wrap gap-2">
 					{#each data.options as option (option.slug)}
 						<li>
 							{#if option.slug === product.slug}
-								<span
+								<div
 									class="inline-flex rounded-full border-2 border-[var(--primary-strong)] bg-[var(--primary-soft)] px-4 py-1.5 text-sm font-medium text-[var(--primary-strong)]"
 									aria-current="true"
 								>
 									{option.label}
-								</span>
+								</div>
 							{:else}
 								<a
 									class="inline-flex rounded-full border-2 border-[var(--bd)] px-4 py-1.5 text-sm text-[var(--tx)] no-underline transition hover:border-[var(--primary-strong)] hover:text-[var(--tx)]"
@@ -125,11 +129,12 @@
 			</div>
 		{/if}
 
-		<p class="mt-6 flex items-center gap-2 text-sm font-medium text-[var(--tx)]">
+		<Text class="mt-6 flex items-center gap-2" bold>
+			<!-- eslint-disable-next-line svelte/no-restricted-html-elements -- a colour dot inside the line of text -->
 			<span class="size-2.5 rounded-full {STOCK_DOT[stockBadge.kind]}" aria-hidden="true"></span>
 			{#if stockBadge.kind === 'out'}Out of stock{:else if stockBadge.kind === 'low'}Only {stockBadge.count}
 				left{:else}In stock{/if}
-		</p>
+		</Text>
 
 		{#if product.stock > 0}
 			{const form = addToBasketForm.for(product.id)}
@@ -173,13 +178,15 @@
 	>
 		{#if text.paragraphs.length > 0}
 			<div class="max-w-prose">
-				<h2 class="text-xl font-semibold tracking-tight text-[var(--tx)]">About this product</h2>
+				<Title level={2} size="md">About this product</Title>
 				{#snippet paragraph(p: { heading: null | string; text: string })}
 					<div class="mt-5">
-						{#if p.heading}<h3 class="text-base font-semibold tracking-normal text-[var(--tx)]">
+						{#if p.heading}<Title level={3} size="sm">
 								{p.heading}
-							</h3>{/if}
-						<p class="whitespace-pre-line text-[var(--txs)] {p.heading ? 'mt-1' : ''}">{p.text}</p>
+							</Title>{/if}
+						<Text class="whitespace-pre-line {p.heading ? 'mt-1' : ''}" color="secondary"
+							>{p.text}</Text
+						>
 					</div>
 				{/snippet}
 				{#each text.paragraphs.slice(0, visible) as p, i (i)}
@@ -201,7 +208,7 @@
 		{/if}
 		{#if text.specs.length > 4}
 			<div>
-				<h2 class="text-xl font-semibold tracking-tight text-[var(--tx)]">Specifications</h2>
+				<Title level={2} size="md">Specifications</Title>
 				<dl class="mt-5 divide-y divide-[var(--bd)] border-y border-[var(--bd)] text-sm">
 					{#each text.specs as spec (spec.label)}
 						<div class="flex justify-between gap-6 py-2.5">

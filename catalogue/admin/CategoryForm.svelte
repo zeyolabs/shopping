@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { saveCategoryForm } from '../admin.remote';
-	import { CategoryFormSchema } from '../schema';
 	import { Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+
+	import { saveCategoryForm } from '../admin.remote';
+	import { CategoryFormSchema } from '../schema';
 
 	type Category = {
 		description: string;
@@ -26,7 +27,7 @@
 </script>
 
 <Form
-	class="grid max-w-xl gap-3 rounded-xl border border-[var(--line)] bg-white p-5"
+	class="grid max-w-xl gap-3 rounded-xl border border-[var(--bd)] bg-white p-5"
 	defaults={{
 		description: category?.description ?? '',
 		name: category?.name ?? '',

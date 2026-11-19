@@ -1,7 +1,10 @@
 <script lang="ts">
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+
+	import type { searchShop } from '../client.remote';
+
 	import PageTitle from '../../ui/PageTitle.svelte';
 	import ProductCard from '../components/ProductCard.svelte';
-	import type { searchShop } from '../client.remote';
 
 	let {
 		search,
@@ -36,14 +39,16 @@
 </form>
 
 {#if search.query === ''}
-	<p class="text-[var(--txs)]">Type what you are looking for.</p>
+	<Text color="secondary">Type what you are looking for.</Text>
 {:else if search.products.length === 0}
-	<p>Nothing matches "{search.query}". Try fewer or different words.</p>
+	<Text>Nothing matches "{search.query}". Try fewer or different words.</Text>
 {:else}
-	<p class="mb-4 text-[var(--txs)]" aria-live="polite">
-		{search.products.length === 48 ? 'Top 48' : search.products.length}
-		{search.products.length === 1 ? 'result' : 'results'} for "{search.query}"
-	</p>
+	<div class="mb-4" aria-live="polite">
+		<Text color="secondary">
+			{search.products.length === 48 ? 'Top 48' : search.products.length}
+			{search.products.length === 1 ? 'result' : 'results'} for "{search.query}"
+		</Text>
+	</div>
 	<ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 		{#each search.products as product (product.id)}
 			<li><ProductCard {product} /></li>

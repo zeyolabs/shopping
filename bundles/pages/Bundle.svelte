@@ -1,17 +1,21 @@
 <script lang="ts">
-	import { ErrorMessage } from '../../utils/errors';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import PageTitle from '../../ui/PageTitle.svelte';
-	import { addBundleToBasket, type getBundle } from '../client.remote';
-	import { shopContext } from '../../context';
-	import { Images } from '../../utils/images';
-	import { Money } from '../../utils/money';
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
-	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-	import { toast } from 'svelte-sonner';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+	import { toast } from 'svelte-sonner';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+
+	import { shopContext } from '../../context';
+	import PageTitle from '../../ui/PageTitle.svelte';
+	import { ErrorMessage } from '../../utils/errors';
+	import { Images } from '../../utils/images';
+	import { Money } from '../../utils/money';
+	import { addBundleToBasket, type getBundle } from '../client.remote';
 
 	let {
 		bundle,
@@ -20,8 +24,8 @@
 		bundle: Awaited<ReturnType<typeof getBundle>>;
 	} = $props();
 
-	type Step = (typeof bundle.steps)[number];
 	type Option = Step['products'][number];
+	type Step = (typeof bundle.steps)[number];
 
 	const context = shopContext();
 	/** pick / base / cover steps: step id to the chosen product ids. */
@@ -58,7 +62,7 @@
 		if (step.role === 'base') filled.clear();
 	}
 
-	function adjust(step: Step, product: Option, by: 1 | -1) {
+	function adjust(step: Step, product: Option, by: -1 | 1) {
 		const map = filled.get(step.id) ?? new SvelteMap<number, number>();
 		const next = (map.get(product.id) ?? 0) + by;
 		if (next <= 0) map.delete(product.id);
@@ -170,33 +174,33 @@
 <PageTitle description={bundle.description.slice(0, 160)} title={bundle.name} />
 
 {#if bundle.description}
-	<p class="-mt-4 mb-4 max-w-prose whitespace-pre-line text-[var(--txs)]">{bundle.description}</p>
+	<Text class="-mt-4 mb-4 max-w-prose whitespace-pre-line" color="secondary"
+		>{bundle.description}</Text
+	>
 {/if}
 {#if !kit && bundle.discountPercent > 0}
-	<p
-		class="mb-8 inline-flex rounded-full bg-[var(--primary-soft)] px-3 py-1 text-sm font-medium text-[var(--primary-strong)]"
+	<Text
+		class="mb-8 inline-flex rounded-full bg-[var(--primary-soft)] px-3 py-1 text-[var(--primary-strong)]"
+		bold
 	>
 		{bundle.discountPercent}% off when bought as a bundle
-	</p>
+	</Text>
 {/if}
 
 {#if soldOut}
-	<p
-		class="mb-6 rounded-xl border border-[var(--bd)] bg-[var(--sfh)] px-4 py-3 text-sm text-[var(--tx)]"
-		role="status"
-	>
-		Not available right now: every {soldOut.title.toLowerCase()} option is sold out.
-	</p>
+	<div class="mb-6 rounded-xl border border-[var(--bd)] bg-[var(--sfh)] px-4 py-3" role="status">
+		<Text>Not available right now: every {soldOut.title.toLowerCase()} option is sold out.</Text>
+	</div>
 {/if}
 
 <ol class="mt-4 space-y-10">
 	{#each bundle.steps as step, i (step.id)}
 		{const locked = $derived((step.role === 'fill' || step.role === 'cover') && slots === 0)}
 		<li class={locked ? 'opacity-50' : ''}>
-			<h2 class="text-lg font-semibold tracking-normal">{i + 1}. {step.title}</h2>
-			<p class="text-sm text-[var(--txs)]">
+			<Title level={2} size="sm">{i + 1}. {step.title}</Title>
+			<Text color="secondary">
 				{rule(step)}{step.description ? ` · ${step.description}` : ''}
-			</p>
+			</Text>
 			<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				{#each step.products as product (product.id)}
 					{const sold = $derived(out(step, product))}
@@ -219,13 +223,13 @@
 										src={Images.url(context.imageBaseUrl, product.cover.src)}
 									/>
 								{/if}
-								<span class="min-w-0 flex-1">
-									<span class="block text-sm font-medium">{label}</span>
-									<span class="block text-xs text-[var(--txs)]">
+								<div class="min-w-0 flex-1">
+									<Span class="block" bold>{label}</Span>
+									<Span class="block" color="secondary" size="sm">
 										{sold ? 'Out of stock' : priceLabel(step, product)}
-									</span>
-								</span>
-								<span class="flex shrink-0 items-center gap-1">
+									</Span>
+								</div>
+								<div class="flex shrink-0 items-center gap-1">
 									<Button
 										aria-label="One fewer {product.name}"
 										disabled={n === 0}
@@ -236,7 +240,7 @@
 									>
 										<Minus size={14} />
 									</Button>
-									<span class="w-6 text-center text-sm font-medium" aria-live="polite">{n}</span>
+									<div class="w-6 text-center" aria-live="polite"><Span bold>{n}</Span></div>
 									<Button
 										aria-label="One more {product.name}"
 										disabled={sold || locked || !canAdd(step, product)}
@@ -247,7 +251,7 @@
 									>
 										<Plus size={14} />
 									</Button>
-								</span>
+								</div>
 							</div>
 						{:else}
 							{const on = $derived(chosen(step.id).has(product.id))}
@@ -268,12 +272,12 @@
 										src={Images.url(context.imageBaseUrl, product.cover.src)}
 									/>
 								{/if}
-								<span class="min-w-0">
-									<span class="block text-sm font-medium">{label}</span>
-									<span class="block text-xs text-[var(--txs)]">
+								<Span class="min-w-0">
+									<Span class="block" bold>{label}</Span>
+									<Span class="block" color="secondary" size="sm">
 										{sold ? 'Out of stock' : priceLabel(step, product)}
-									</span>
-								</span>
+									</Span>
+								</Span>
 							</button>
 						{/if}
 					</li>
@@ -286,16 +290,15 @@
 <div
 	class="sticky bottom-0 mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--bd)] bg-white py-4"
 >
-	<p class="flex items-baseline gap-2">
-		<span class="text-[var(--txs)]">Total</span>
+	<Text class="flex items-baseline gap-2">
+		<Span color="secondary">Total</Span>
 		<strong class="text-xl">{Money.format(totalPence)}</strong>
 		{#if totalPence < listPence}
 			<s class="text-sm text-[var(--txt)]">{Money.format(listPence)}</s>
 		{/if}
-	</p>
+	</Text>
 	<div class="flex items-center gap-3">
-		{#if missing}<span class="text-sm text-[var(--txs)]">{missing.title}: {rule(missing)}</span
-			>{/if}
+		{#if missing}<Span color="secondary">{missing.title}: {rule(missing)}</Span>{/if}
 		<Button
 			disabled={busy || soldOut !== undefined || missing !== undefined || totalPence === 0}
 			onclick={add}

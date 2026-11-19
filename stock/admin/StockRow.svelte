@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { setStockForm } from '../admin.remote';
-	import { StockSchema } from '../schema';
 	import { Form, NumberField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
+
+	import { setStockForm } from '../admin.remote';
+	import { StockSchema } from '../schema';
 
 	let { id, name, stock }: { id: number; name: string; stock: number } = $props();
 
