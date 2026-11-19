@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+
 	import { shopContext } from '../../context';
+	import { Stock } from '../../stock/library';
 	import { Images } from '../../utils/images';
 	import { Money } from '../../utils/money';
-	import { Stock } from '../../stock/library';
 
 	type Product = {
 		comparePricePence: null | number;
@@ -47,29 +50,34 @@
 			/>
 		{/if}
 		{#if badge.kind === 'out'}
-			<span
-				class="absolute top-2 left-2 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-[var(--txs)] shadow-sm"
-				>Out of stock</span
+			<Span
+				class="absolute top-2 left-2 rounded-full bg-white/95 px-2.5 py-1 shadow-sm"
+				bold
+				color="secondary"
+				size="sm">Out of stock</Span
 			>
 		{:else if badge.kind === 'low'}
-			<span
-				class="absolute top-2 left-2 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-[var(--txs)] shadow-sm"
-				>Only {badge.count} left</span
+			<Span
+				class="absolute top-2 left-2 rounded-full bg-white/95 px-2.5 py-1 shadow-sm"
+				bold
+				color="secondary"
+				size="sm">Only {badge.count} left</Span
 			>
 		{:else if onSale}
-			<span
-				class="absolute top-2 left-2 rounded-full bg-[var(--primary-strong)] px-2.5 py-1 text-xs font-medium text-white"
-				>Sale</span
+			<Span
+				class="absolute top-2 left-2 rounded-full bg-[var(--primary-strong)] px-2.5 py-1 text-white"
+				bold
+				size="sm">Sale</Span
 			>
 		{/if}
 	</div>
 	<div class="px-2 pt-3 pb-2">
-		<p class="leading-snug font-medium">{product.name}</p>
-		<p class="mt-1 text-[var(--txs)]">
-			<span class="font-medium text-[var(--tx)]">{Money.format(product.pricePence)}</span>
+		<Text bold>{product.name}</Text>
+		<Text class="mt-1" color="secondary">
+			<Span bold>{Money.format(product.pricePence)}</Span>
 			{#if onSale}
 				<s class="ml-1 text-sm">{Money.format(product.comparePricePence!)}</s>
 			{/if}
-		</p>
+		</Text>
 	</div>
 </a>

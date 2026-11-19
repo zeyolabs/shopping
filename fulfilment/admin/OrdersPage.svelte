@@ -2,16 +2,20 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { BULK_DISPATCH_LIMIT, FILTER_LABELS, ORDER_FILTERS, type OrderFilter } from '../filters';
-	import { dispatchOrders, getOrderCounts, getOrders, getReadyByService } from '../admin.remote';
-	import { ErrorMessage } from '../../utils/errors';
-	import { toast } from 'svelte-sonner';
-	import Button from '@zeyolabs/ui/form/Button.svelte';
-	import { Money } from '../../utils/money';
-	import { SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
-	import { Packing } from '../library';
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+	import { toast } from 'svelte-sonner';
+	import { SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
+
+	import { ErrorMessage } from '../../utils/errors';
+	import { Money } from '../../utils/money';
+	import { dispatchOrders, getOrderCounts, getOrders, getReadyByService } from '../admin.remote';
+	import { BULK_DISPATCH_LIMIT, FILTER_LABELS, ORDER_FILTERS, type OrderFilter } from '../filters';
+	import { Packing } from '../library';
 
 	const filter = $derived.by((): OrderFilter => {
 		const value = page.url.searchParams.get('filter');
@@ -80,7 +84,7 @@
 
 <svelte:head><title>Orders · Admin</title></svelte:head>
 
-<h1 class="text-2xl font-semibold">Orders</h1>
+<Title level={1} size="md">Orders</Title>
 
 <nav class="mt-4 flex flex-wrap items-center gap-2" aria-label="Order filter">
 	{#each ORDER_FILTERS as f (f)}
@@ -99,7 +103,7 @@
 	{/each}
 	<Boundary message="Could not load ready counts.">
 		{#each Object.entries(await getReadyByService()) as [service, n] (service)}
-			<span class="text-sm text-[var(--muted)]">{service}: {n} ready</span>
+			<Span class="text-[var(--muted)]">{service}: {n} ready</Span>
 		{/each}
 
 		{#snippet pending()}{/snippet}
@@ -128,9 +132,9 @@
 	<!-- Only orders still on screen: a search or tab change must not dispatch hidden ticks. -->
 	{let chosen = $derived(rows.map((r) => r.number).filter((n) => selected.has(n)))}
 	{#if rows.length === 0}
-		<p class="mt-6 text-[var(--ink-muted)]">
+		<Text class="mt-6 text-[var(--ink-muted)]">
 			{filter === 'to-ship' && !q ? 'Nothing to ship. All caught up.' : 'No orders match.'}
-		</p>
+		</Text>
 	{:else}
 		{#if filter === 'ready'}
 			<div class="mt-4 flex flex-wrap items-center gap-4 text-sm">
@@ -148,7 +152,7 @@
 					Select {Math.min(rows.length, BULK_DISPATCH_LIMIT)}
 				</label>
 				<label class="flex items-center gap-2">
-					<input bind:checked={sendEmail} type="checkbox" />
+					<input type="checkbox" bind:checked={sendEmail} />
 					Email the customers
 				</label>
 				<Button
@@ -194,8 +198,8 @@
 							<td class="px-4 py-2 whitespace-nowrap">{date.format(row.createdAt)}</td>
 							<td class="px-4 py-2">
 								{row.name}
-								<span class="block text-xs text-[var(--ink-muted)]"
-									>{row.email} · {row.country}</span
+								<Span class="block text-[var(--ink-muted)]" size="sm"
+									>{row.email} · {row.country}</Span
 								>
 							</td>
 							<td class="px-4 py-2 text-right whitespace-nowrap">{Money.format(row.totalPence)}</td>
@@ -214,6 +218,6 @@
 		</div>
 	{/if}
 	{#snippet pending()}
-		<p class="mt-6 text-[var(--ink-muted)]">Loading…</p>
+		<Text class="mt-6 text-[var(--ink-muted)]">Loading…</Text>
 	{/snippet}
 </Boundary>

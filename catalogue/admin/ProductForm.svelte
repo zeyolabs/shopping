@@ -1,17 +1,21 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import type { getAdminProduct, getProductOptions } from '../admin.remote';
-	import { saveProductForm } from '../admin.remote';
-	import { shopContext } from '../../context';
-	import { Images } from '../../utils/images';
-	import { FormInput } from '../../utils/form-input';
-	import { ProductFormSchema } from '../schema';
 	import { CheckboxField, Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
 
-	type Product = Awaited<ReturnType<typeof getAdminProduct>>;
+	import type { getAdminProduct, getProductOptions } from '../admin.remote';
+
+	import { shopContext } from '../../context';
+	import { FormInput } from '../../utils/form-input';
+	import { Images } from '../../utils/images';
+	import { saveProductForm } from '../admin.remote';
+	import { ProductFormSchema } from '../schema';
+
 	type Options = Awaited<ReturnType<typeof getProductOptions>>;
+	type Product = Awaited<ReturnType<typeof getAdminProduct>>;
 
 	let { options, product }: { options: Options; product: null | Product } = $props();
 
@@ -69,7 +73,7 @@
 	schema={ProductFormSchema}
 >
 	<section class={section}>
-		<h2 class="font-semibold">Basics</h2>
+		<Title level={2} size="sm">Basics</Title>
 		<TextField name="name" {form}>Name</TextField>
 		<div class="grid gap-4 sm:grid-cols-2">
 			<TextField name="slug" {form} optional placeholder="made from the name">Slug (URL)</TextField>
@@ -79,14 +83,14 @@
 		</div>
 		<CheckboxField name="active" {form}>On sale in the shop</CheckboxField>
 		{#if p && slug && p.slug !== slug}
-			<p class="text-sm text-[var(--ink-muted)]">
+			<Text class="text-[var(--ink-muted)]">
 				The old URL /product/{p.slug} will redirect to the new one.
-			</p>
+			</Text>
 		{/if}
 	</section>
 
 	<section class={section}>
-		<h2 class="font-semibold">Description</h2>
+		<Title level={2} size="sm">Description</Title>
 		<TextField name="shortDescription" {form} optional>
 			Short description (search results, top of the page)
 		</TextField>
@@ -97,10 +101,10 @@
 
 	<section class={section}>
 		<div>
-			<h2 class="font-semibold">Images</h2>
-			<p class="text-sm text-[var(--ink-muted)]">
+			<Title level={2} size="sm">Images</Title>
+			<Text class="text-[var(--ink-muted)]">
 				File names in the product image bucket. The first is the cover.
-			</p>
+			</Text>
 		</div>
 		<ul class="space-y-3">
 			{#each imageRows as row, i (i)}
@@ -143,7 +147,7 @@
 	</section>
 
 	<section class={section}>
-		<h2 class="font-semibold">Categories</h2>
+		<Title level={2} size="sm">Categories</Title>
 		<div class="grid gap-2 sm:grid-cols-2">
 			{#each options.categories as category (category.id)}
 				<label class="flex items-center gap-2 text-sm">
@@ -151,18 +155,18 @@
 					{category.name}
 				</label>
 			{:else}
-				<p class="text-sm text-[var(--ink-muted)]">No categories yet.</p>
+				<Text class="text-[var(--ink-muted)]">No categories yet.</Text>
 			{/each}
 		</div>
 	</section>
 
 	<section class={section}>
 		<div>
-			<h2 class="font-semibold">Variation</h2>
-			<p class="text-sm text-[var(--ink-muted)]">
+			<Title level={2} size="sm">Variation</Title>
+			<Text class="text-[var(--ink-muted)]">
 				Products in the same group show as options of each other, e.g. group "Colour", option
 				"Black".
-			</p>
+			</Text>
 		</div>
 		<div class="grid gap-4 sm:grid-cols-2">
 			<label class="text-sm font-medium">
@@ -182,10 +186,10 @@
 
 	<section class={section}>
 		<div>
-			<h2 class="font-semibold">Stock and shipping</h2>
-			<p class="text-sm text-[var(--ink-muted)]">
+			<Title level={2} size="sm">Stock and shipping</Title>
+			<Text class="text-[var(--ink-muted)]">
 				Stock itself is set on the Stock page{p ? ` (now ${p.stock} units)` : ''}.
-			</p>
+			</Text>
 		</div>
 		<div class="grid gap-4 sm:grid-cols-3">
 			<NumberField name="massGrams" {form} inputmode="numeric">Weight (g)</NumberField>
@@ -200,11 +204,11 @@
 
 	<section class={section}>
 		<div>
-			<h2 class="font-semibold">Made of other products</h2>
-			<p class="text-sm text-[var(--ink-muted)]">
+			<Title level={2} size="sm">Made of other products</Title>
+			<Text class="text-[var(--ink-muted)]">
 				Leave empty for a normal product. A combined product has no stock of its own: it sells as
 				many complete sets as its parts allow, and selling one takes stock from the parts.
-			</p>
+			</Text>
 		</div>
 		<ul class="space-y-2">
 			{#each componentRows as _, i (i)}

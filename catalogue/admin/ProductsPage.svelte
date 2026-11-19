@@ -2,10 +2,13 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { getAdminProducts } from '../admin.remote';
-	import { Money } from '../../utils/money';
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
+	import { Money } from '../../utils/money';
+	import { getAdminProducts } from '../admin.remote';
 
 	const q = $derived(page.url.searchParams.get('q') ?? '');
 </script>
@@ -13,7 +16,7 @@
 <svelte:head><title>Products · Admin</title></svelte:head>
 
 <div class="flex flex-wrap items-center justify-between gap-3">
-	<h1 class="text-2xl font-semibold">Products</h1>
+	<Title level={1} size="md">Products</Title>
 	<div class="flex gap-2 text-sm">
 		<a
 			class="rounded-md border border-[var(--line)] bg-white px-3 py-1.5"
@@ -83,6 +86,6 @@
 		</table>
 	</div>
 	{#snippet pending()}
-		<p class="mt-6 text-[var(--ink-muted)]">Loading…</p>
+		<Text class="mt-6 text-[var(--ink-muted)]">Loading…</Text>
 	{/snippet}
 </Boundary>

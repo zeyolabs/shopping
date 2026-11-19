@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
 	import { getAdminProduct, getProductOptions } from '../admin.remote';
 	import ProductForm from './ProductForm.svelte';
-	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 
 	/** The product to edit; leave out for a new one. */
 	let { id }: { id?: number } = $props();
@@ -10,8 +13,8 @@
 
 <svelte:head><title>{id ? 'Edit product' : 'New product'} · Admin</title></svelte:head>
 
-<p class="text-sm"><a href={resolve('/products')}>← Products</a></p>
-<h1 class="mt-2 mb-6 text-2xl font-semibold">{id ? 'Edit product' : 'New product'}</h1>
+<Text><a href={resolve('/products')}>← Products</a></Text>
+<Title class="mt-2 mb-6" level={1} size="md">{id ? 'Edit product' : 'New product'}</Title>
 
 <Boundary message="Could not load the product." statusMessages={{ 404: 'Product not found.' }}>
 	{let options = $derived(await getProductOptions())}
@@ -20,6 +23,6 @@
 		<ProductForm {options} {product} />
 	{/key}
 	{#snippet pending()}
-		<p class="text-[var(--ink-muted)]">Loading…</p>
+		<Text class="text-[var(--ink-muted)]">Loading…</Text>
 	{/snippet}
 </Boundary>

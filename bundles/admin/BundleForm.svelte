@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import type { getAdminBundle } from '../admin.remote';
-	import { saveBundleForm } from '../admin.remote';
-	import { BundleFormSchema } from '../schema';
-	import { shopContext } from '../../context';
 	import { CheckboxField, Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
+	import type { getAdminBundle } from '../admin.remote';
+
+	import { shopContext } from '../../context';
+	import { saveBundleForm } from '../admin.remote';
+	import { BundleFormSchema } from '../schema';
 
 	type Bundle = Awaited<ReturnType<typeof getAdminBundle>>;
 
@@ -82,7 +85,7 @@
 	{#each stepRows as _, i (i)}
 		<section class={section}>
 			<div class="flex items-center justify-between">
-				<h2 class="font-semibold">Step {i + 1}</h2>
+				<Title level={2} size="sm">Step {i + 1}</Title>
 				{#if stepRows.length > 1}
 					<Button
 						onclick={() => steps.set(stepRows.filter((_: unknown, j: number) => j !== i))}

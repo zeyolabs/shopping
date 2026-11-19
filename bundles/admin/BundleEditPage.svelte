@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
 	import { getAdminBundle } from '../admin.remote';
 	import BundleForm from './BundleForm.svelte';
-	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 
 	/** The bundle to edit; leave out for a new one. */
 	let { id }: { id?: number } = $props();
@@ -10,8 +13,8 @@
 
 <svelte:head><title>{id ? 'Edit bundle' : 'New bundle'} · Admin</title></svelte:head>
 
-<p class="text-sm"><a href={resolve('/bundles')}>← Bundles</a></p>
-<h1 class="mt-2 mb-6 text-2xl font-semibold">{id ? 'Edit bundle' : 'New bundle'}</h1>
+<Text><a href={resolve('/bundles')}>← Bundles</a></Text>
+<Title class="mt-2 mb-6" level={1} size="md">{id ? 'Edit bundle' : 'New bundle'}</Title>
 
 <Boundary message="Could not load the bundle." statusMessages={{ 404: 'Bundle not found.' }}>
 	{let bundle = $derived(id ? await getAdminBundle(id) : null)}
@@ -19,6 +22,6 @@
 		<BundleForm {bundle} />
 	{/key}
 	{#snippet pending()}
-		<p class="text-[var(--ink-muted)]">Loading…</p>
+		<Text class="text-[var(--ink-muted)]">Loading…</Text>
 	{/snippet}
 </Boundary>

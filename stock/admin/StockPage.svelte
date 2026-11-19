@@ -1,17 +1,20 @@
 <script lang="ts">
-	import { getStock } from '../admin.remote';
-	import StockRow from './StockRow.svelte';
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
+	import { getStock } from '../admin.remote';
+	import StockRow from './StockRow.svelte';
 </script>
 
 <svelte:head><title>Stock</title></svelte:head>
 
-<h1 class="text-2xl font-semibold">Stock</h1>
-<p class="mt-1 text-sm text-[var(--ink-muted)]">
+<Title level={1} size="md">Stock</Title>
+<Text class="mt-1 text-[var(--ink-muted)]">
 	Setting a sold-out product above 0 emails the customers waiting for it, up to 50 a minute, and
 	removes them from the list.
-</p>
+</Text>
 
 <Boundary message="Could not load stock.">
 	{let rows = $derived(await getStock())}
@@ -47,6 +50,6 @@
 		</table>
 	</div>
 	{#snippet pending()}
-		<p class="mt-6 text-[var(--ink-muted)]">Loading…</p>
+		<Text class="mt-6 text-[var(--ink-muted)]">Loading…</Text>
 	{/snippet}
 </Boundary>

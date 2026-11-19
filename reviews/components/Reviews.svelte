@@ -1,4 +1,8 @@
 <script lang="ts">
+	import Span from '@zeyolabs/ui/text/Span.svelte';
+	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
+
 	import Stars from '../../ui/Stars.svelte';
 
 	type Review = {
@@ -16,31 +20,31 @@
 	const date = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeZone: 'Europe/London' });
 </script>
 
-<section class="mt-12" aria-labelledby="reviews-heading">
-	<h2 id="reviews-heading" class="text-xl font-semibold">Reviews</h2>
+<section id="reviews" class="mt-12" aria-label="Reviews">
+	<Title level={2} size="md">Reviews</Title>
 	{#if reviews.count === 0 || reviews.average === null}
-		<p class="mt-2 text-[var(--txs)]">
+		<Text class="mt-2" color="secondary">
 			No reviews yet. Bought this? You can review it from your order page.
-		</p>
+		</Text>
 	{:else}
-		<p class="mt-2 flex items-center gap-2">
+		<Text class="mt-2 flex items-center gap-2">
 			<Stars rating={reviews.average} />
-			<span
+			<Span
 				>{reviews.average} out of 5, from {reviews.count}
-				{reviews.count === 1 ? 'review' : 'reviews'}</span
+				{reviews.count === 1 ? 'review' : 'reviews'}</Span
 			>
-		</p>
+		</Text>
 		<ul class="mt-4 divide-y divide-[var(--bd)] border-y border-[var(--bd)]">
 			{#each reviews.list as review (review.id)}
 				<li class="py-4">
-					<p class="flex flex-wrap items-center gap-2">
+					<Text class="flex flex-wrap items-center gap-2">
 						<Stars rating={review.rating} size="text-sm" />
 						{#if review.title}<strong>{review.title}</strong>{/if}
-					</p>
-					<p class="mt-2 whitespace-pre-line">{review.body}</p>
-					<p class="mt-2 text-sm text-[var(--txs)]">
+					</Text>
+					<Text class="mt-2 whitespace-pre-line">{review.body}</Text>
+					<Text class="mt-2" color="secondary">
 						{review.name}, verified buyer, {date.format(review.createdAt)}
-					</p>
+					</Text>
 				</li>
 			{/each}
 		</ul>
