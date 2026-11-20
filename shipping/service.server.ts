@@ -14,6 +14,11 @@ export type ShippingQuote = {
 	service: string;
 };
 
+type QuoteInput = { country: string; subtotalPence: number; weightGrams: number };
+
+/** Stripe Checkout offers at most this many shipping options. */
+export const MAX_SHIPPING_OPTIONS = 5;
+
 /** Countries and postage rates: data access, with the shop's postage rules passed in. */
 export class ShippingService {
 	constructor(private readonly db: ShopDb) {}
@@ -27,18 +32,23 @@ export class ShippingService {
 			.orderBy(asc(countries.name));
 	}
 
+	/** The cheapest postage for this parcel, or null when nothing can send it (see `quotes`). */
+	async quote(rules: ShippingRules, input: QuoteInput): Promise<null | ShippingQuote> {
+		const [cheapest] = await this.quotes(rules, input);
+		return cheapest ?? null;
+	}
+
 	/**
-	 * The cheapest postage for a parcel of `weightGrams` to `country`, or null when that country
-	 * isn't enabled, the parcel is heavier than every band, or the order value rules postage out.
+	 * Every service that can send a parcel of `weightGrams` to `country`, each at its cheapest band,
+	 * cheapest first: at most `MAX_SHIPPING_OPTIONS`, the most Stripe Checkout offers. Empty when
+	 * that country isn't enabled, the parcel is heavier than every band, or the order value rules
+	 * postage out.
 	 */
-	async quote(
-		rules: ShippingRules,
-		input: { country: string; subtotalPence: number; weightGrams: number }
-	): Promise<null | ShippingQuote> {
+	async quotes(rules: ShippingRules, input: QuoteInput): Promise<ShippingQuote[]> {
 		const country = await this.db.query.countries.findFirst({
 			where: and(eq(countries.code, input.country), eq(countries.enabled, true)),
 		});
-		if (!country) return null;
+		if (!country) return [];
 
 		const bands = await this.db
 			.select()
@@ -46,24 +56,27 @@ export class ShippingService {
 			.where(
 				and(eq(shippingRates.zone, country.zone), gte(shippingRates.maxGrams, input.weightGrams))
 			)
-			.orderBy(asc(shippingRates.pricePence));
-		const rate = bands[0];
-		if (!rate) return null;
-
-		const pricePence = Postage.charge(rules, {
-			basePence: rate.pricePence,
-			subtotalPence: input.subtotalPence,
-			zone: country.zone,
-		});
-		if (pricePence === null) return null;
-
-		return {
-			deliveryTime: rate.deliveryTime,
-			name: rate.name,
-			pricePence,
-			royalMailServiceCode: rate.royalMailServiceCode,
-			service: rate.service,
-		};
+			.orderBy(asc(shippingRates.pricePence), asc(shippingRates.maxGrams));
+		const seen = new Set<string>();
+		const quotes: ShippingQuote[] = [];
+		for (const rate of bands) {
+			if (seen.has(rate.service)) continue;
+			seen.add(rate.service);
+			const pricePence = Postage.charge(rules, {
+				basePence: rate.pricePence,
+				subtotalPence: input.subtotalPence,
+				zone: country.zone,
+			});
+			if (pricePence === null) return [];
+			quotes.push({
+				deliveryTime: rate.deliveryTime,
+				name: rate.name,
+				pricePence,
+				royalMailServiceCode: rate.royalMailServiceCode,
+				service: rate.service,
+			});
+		}
+		return quotes.slice(0, MAX_SHIPPING_OPTIONS);
 	}
 
 	/** The Click & Drop service code configured for a chosen service, if any. */

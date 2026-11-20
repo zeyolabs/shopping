@@ -59,8 +59,11 @@ export type BasketSummary = {
 	/** UK orders at or above this subtotal ship free. */
 	freeShippingFromPence: number;
 	lines: BasketLine[];
-	/** Null when nothing can ship to `country` for this basket. */
+	/** The cheapest option; null when nothing can ship to `country` for this basket. */
 	shipping: null | ShippingQuote;
+	/** Every service that can send it, cheapest first; the customer picks one at checkout. */
+	shippingOptions: ShippingQuote[];
+	/** The cheapest option's price, so `totalPence` is the lowest the order can cost. */
 	shippingPence: number;
 	subtotalPence: number;
 	totalPence: number;
@@ -91,6 +94,7 @@ export class BasketService {
 				...offer,
 				lines: [],
 				shipping: null,
+				shippingOptions: [],
 				shippingPence: 0,
 				subtotalPence: 0,
 				totalPence: 0,
@@ -138,10 +142,11 @@ export class BasketService {
 			lines.reduce((sum, line) => sum + line.available * line.massGrams, 0) +
 			ready.reduce((sum, b) => sum + b.massGrams, 0);
 		const shippingService = new ShippingService(this.db);
-		const shipping =
+		const shippingOptions =
 			subtotalPence > 0
-				? await shippingService.quote(rules, { country, subtotalPence, weightGrams })
-				: null;
+				? await shippingService.quotes(rules, { country, subtotalPence, weightGrams })
+				: [];
+		const shipping = shippingOptions[0] ?? null;
 		const shippingPence = shipping?.pricePence ?? 0;
 		return {
 			bundles: bundleLines,
@@ -150,6 +155,7 @@ export class BasketService {
 			...offer,
 			lines,
 			shipping,
+			shippingOptions,
 			shippingPence,
 			subtotalPence,
 			totalPence: subtotalPence + shippingPence,

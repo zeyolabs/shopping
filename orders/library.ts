@@ -1,8 +1,25 @@
 // No 0/O/1/I: the number is read out over the phone.
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+/** Just what `chosenService` reads of a Checkout Session. */
+type SessionShipping = {
+	metadata: null | Record<string, string>;
+	shipping_cost: null | { shipping_rate: null | string | { metadata: Record<string, string> } };
+};
+
 /** Order numbers and links. Pure (apart from the random number). */
 export const Orders = {
+	/**
+	 * The postage service the customer chose at checkout: the chosen rate's `service` (fetched with
+	 * `shipping_cost.shipping_rate` expanded). Sessions started before customers could choose kept it
+	 * in the session's metadata.
+	 */
+	chosenService(session: SessionShipping): null | string {
+		const rate = session.shipping_cost?.shipping_rate;
+		const chosen = rate && typeof rate === 'object' ? rate.metadata.service : undefined;
+		return chosen ?? session.metadata?.shippingService ?? null;
+	},
+
 	/** A new public order number, e.g. `PL-ABC234`. */
 	newNumber(prefix: string): string {
 		const bytes = crypto.getRandomValues(new Uint8Array(6));
