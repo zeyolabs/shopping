@@ -7,6 +7,7 @@ import type { Basket, BasketBundle } from './library';
 import { type BundlePart, BundleService } from '../bundles/service.server';
 import { CoverService } from '../catalogue/covers.server';
 import { products } from '../db/schema';
+import { Parcels } from '../shipping/library';
 import { type ShippingQuote, ShippingService } from '../shipping/service.server';
 import { StockService } from '../stock/service.server';
 import { ErrorMessage } from '../utils/errors';
@@ -137,10 +138,14 @@ export class BasketService {
 		const weightGrams =
 			lines.reduce((sum, line) => sum + line.available * line.massGrams, 0) +
 			ready.reduce((sum, b) => sum + b.massGrams, 0);
+		const format = await this.formatOf([
+			...lines.filter((line) => line.available > 0).map((line) => line.id),
+			...ready.flatMap((b) => b.parts.map((part) => part.productId)),
+		]);
 		const shippingService = new ShippingService(this.db);
 		const shipping =
 			subtotalPence > 0
-				? await shippingService.quote(rules, { country, subtotalPence, weightGrams })
+				? await shippingService.quote(rules, { country, format, subtotalPence, weightGrams })
 				: null;
 		const shippingPence = shipping?.pricePence ?? 0;
 		return {
@@ -252,5 +257,15 @@ export class BasketService {
 				slug: bundle.bundle.slug,
 			};
 		});
+	}
+
+	/** The Royal Mail size these products need together: the largest of theirs. */
+	private async formatOf(productIds: number[]) {
+		if (productIds.length === 0) return Parcels.largest([]);
+		const rows = await this.db
+			.selectDistinct({ format: products.shippingFormat })
+			.from(products)
+			.where(inArray(products.id, [...new Set(productIds)]));
+		return Parcels.largest(rows.map((row) => row.format));
 	}
 }

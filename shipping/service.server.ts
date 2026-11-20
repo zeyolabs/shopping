@@ -3,11 +3,13 @@ import { and, asc, eq, gte, isNotNull } from 'drizzle-orm';
 import type { ShippingRules } from '../config';
 import type { ShopDb } from '../db/index';
 
-import { countries, shippingRates } from '../db/schema';
-import { Postage } from './library';
+import { countries, products, type ShippingFormat, shippingRates } from '../db/schema';
+import { Parcels, Postage } from './library';
 
 export type ShippingQuote = {
 	deliveryTime: string;
+	/** The Royal Mail size the order needs. */
+	format: ShippingFormat;
 	name: string;
 	pricePence: number;
 	royalMailServiceCode: null | string;
@@ -28,12 +30,12 @@ export class ShippingService {
 	}
 
 	/**
-	 * The cheapest postage for a parcel of `weightGrams` to `country`, or null when that country
-	 * isn't enabled, the parcel is heavier than every band, or the order value rules postage out.
+	 * The cheapest postage for a parcel of `format` and `weightGrams` to `country`, or null when
+	 * that country isn't enabled, no rate covers the parcel, or the order value rules postage out.
 	 */
 	async quote(
 		rules: ShippingRules,
-		input: { country: string; subtotalPence: number; weightGrams: number }
+		input: { country: string; format: ShippingFormat; subtotalPence: number; weightGrams: number }
 	): Promise<null | ShippingQuote> {
 		const country = await this.db.query.countries.findFirst({
 			where: and(eq(countries.code, input.country), eq(countries.enabled, true)),
@@ -47,7 +49,7 @@ export class ShippingService {
 				and(eq(shippingRates.zone, country.zone), gte(shippingRates.maxGrams, input.weightGrams))
 			)
 			.orderBy(asc(shippingRates.pricePence));
-		const rate = bands[0];
+		const rate = bands.find((band) => Parcels.covers(band.format, input.format));
 		if (!rate) return null;
 
 		const pricePence = Postage.charge(rules, {
@@ -59,6 +61,7 @@ export class ShippingService {
 
 		return {
 			deliveryTime: rate.deliveryTime,
+			format: input.format,
 			name: rate.name,
 			pricePence,
 			royalMailServiceCode: rate.royalMailServiceCode,
@@ -84,14 +87,26 @@ export class ShippingService {
 		return rows;
 	}
 
-	/** The cheapest UK rate, for pages that quote delivery so they never disagree with the basket. */
+	/**
+	 * The cheapest UK rate that some product can use, for pages that quote delivery so they never
+	 * disagree with the basket.
+	 */
 	async ukRate() {
-		const [rate] = await this.db
-			.select({ deliveryTime: shippingRates.deliveryTime, pricePence: shippingRates.pricePence })
+		const sizes = await this.db
+			.selectDistinct({ format: products.shippingFormat })
+			.from(products)
+			.where(eq(products.active, true));
+		const format = Parcels.smallest(sizes.map((s) => s.format));
+		const rates = await this.db
+			.select({
+				deliveryTime: shippingRates.deliveryTime,
+				format: shippingRates.format,
+				pricePence: shippingRates.pricePence,
+			})
 			.from(shippingRates)
 			.where(eq(shippingRates.zone, 'uk'))
-			.orderBy(asc(shippingRates.pricePence))
-			.limit(1);
-		return rate ?? null;
+			.orderBy(asc(shippingRates.pricePence));
+		const rate = rates.find((r) => Parcels.covers(r.format, format));
+		return rate ? { deliveryTime: rate.deliveryTime, pricePence: rate.pricePence } : null;
 	}
 }

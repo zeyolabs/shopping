@@ -2,6 +2,7 @@ import { SchemaForm } from '@zeyolabs/kit/utils/form';
 import { Schema } from '@zeyolabs/kit/utils/schema';
 import { z } from 'zod';
 
+import { SHIPPING_FORMATS } from '../db/schema';
 import { FormInput } from '../utils/form-input';
 import { ShopSchema } from '../utils/schemas';
 
@@ -26,6 +27,7 @@ export const ProductInputSchema = z.object({
 	name: z.string().trim().min(1, 'enter a name').max(200),
 	packSize: z.number().int().min(1).max(10_000),
 	pricePence: ShopSchema.Pence,
+	shippingFormat: z.enum(SHIPPING_FORMATS),
 	shortDescription: z.string().trim().max(500),
 	sku: z
 		.string()
@@ -85,6 +87,7 @@ export const ProductFormSchema = z
 		name: ShopSchema.FormText,
 		packSize: SchemaForm.Int,
 		price: pounds(false),
+		shippingFormat: z.enum(SHIPPING_FORMATS),
 		shortDescription: ShopSchema.FormText,
 		sku: ShopSchema.FormText,
 		slug: ShopSchema.FormText,
