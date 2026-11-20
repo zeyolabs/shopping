@@ -222,8 +222,12 @@ export class CatalogueAdminService {
 	}
 
 	/** Names of the existing variation groups, for the editor's suggestions. */
-	async variationGroups() {
-		return this.db.select().from(variationGroups).orderBy(asc(variationGroups.name));
+	async variationGroups(): Promise<string[]> {
+		const rows = await this.db
+			.selectDistinct({ name: variationGroups.name })
+			.from(variationGroups)
+			.orderBy(asc(variationGroups.name));
+		return rows.map((row) => row.name);
 	}
 
 	private async variationGroupId(name: null | string): Promise<null | number> {

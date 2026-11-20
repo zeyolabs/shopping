@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 
 	import { saveCategoryForm } from '../admin.remote';
 	import { CategoryFormSchema } from '../schema';
@@ -44,8 +45,8 @@
 	<TextField name="slug" {form} optional placeholder="made from the name">Slug (URL)</TextField>
 	<MessageField name="description" {form} optional>Description</MessageField>
 	<NumberField name="sortOrder" {form} inputmode="numeric">Sort order</NumberField>
-	<div class="flex gap-3">
+	<Cluster gap="sm">
 		<Button {form}>Save</Button>
 		<Button onclick={onDone} variant="secondary">Cancel</Button>
-	</div>
+	</Cluster>
 </Form>

@@ -4,6 +4,9 @@
 	import { page } from '$app/state';
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
@@ -15,22 +18,14 @@
 
 <svelte:head><title>Products · Admin</title></svelte:head>
 
-<div class="flex flex-wrap items-center justify-between gap-3">
+<Cluster gap="sm" justify="between">
 	<Title level={1} size="md">Products</Title>
-	<div class="flex gap-2 text-sm">
-		<a
-			class="rounded-md border border-[var(--bd)] bg-white px-3 py-1.5"
-			href={resolve('/categories')}>Categories</a
-		>
-		<a class="rounded-md border border-[var(--bd)] bg-white px-3 py-1.5" href={resolve('/bundles')}
-			>Bundles</a
-		>
-		<a
-			class="rounded-md bg-[var(--acc)] px-3 py-1.5 text-white no-underline"
-			href={resolve('/products/new')}>New product</a
-		>
-	</div>
-</div>
+	<Cluster gap="xs">
+		<Button href={resolve('/categories')} variant="secondary">Categories</Button>
+		<Button href={resolve('/bundles')} variant="secondary">Bundles</Button>
+		<Button href={resolve('/products/new')}>New product</Button>
+	</Cluster>
+</Cluster>
 
 <form
 	class="mt-4"
@@ -56,30 +51,37 @@
 <Boundary message="Could not load products.">
 	{let rows = $derived(await getAdminProducts(q))}
 	<div class="mt-4 overflow-x-auto rounded-xl border border-[var(--bd)] bg-white">
-		<table class="w-full text-left text-sm">
+		<table class="w-full text-left">
 			<thead class="border-b border-[var(--bd)] text-[var(--txs)]">
 				<tr>
-					<th class="px-4 py-2 font-medium">Product</th>
-					<th class="px-4 py-2 font-medium">SKU</th>
-					<th class="px-4 py-2 text-right font-medium">Price</th>
-					<th class="px-4 py-2 text-right font-medium">Stock</th>
+					<th class="px-4 py-2"><Span bold size="sm">Product</Span></th>
+					<th class="px-4 py-2"><Span bold size="sm">SKU</Span></th>
+					<th class="px-4 py-2 text-right"><Span bold size="sm">Price</Span></th>
+					<th class="px-4 py-2 text-right"><Span bold size="sm">Stock</Span></th>
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-[var(--bd)]">
 				{#each rows as row (row.id)}
 					<tr>
 						<td class="px-4 py-2">
-							<a class="font-medium" href={resolve('/products/[id]', { id: String(row.id) })}
-								>{row.name}{row.variationLabel ? ` · ${row.variationLabel}` : ''}</a
+							<a href={resolve('/products/[id]', { id: String(row.id) })}
+								><Span bold size="sm"
+									>{row.name}{row.variationLabel ? ` · ${row.variationLabel}` : ''}</Span
+								></a
 							>
 							{#if !row.active}<Badge color="neutral">inactive</Badge>{/if}
 						</td>
-						<td class="px-4 py-2 whitespace-nowrap">{row.sku}</td>
-						<td class="px-4 py-2 text-right">{Money.format(row.pricePence)}</td>
-						<td class="px-4 py-2 text-right">{row.stock}</td>
+						<td class="px-4 py-2 whitespace-nowrap"><Span size="sm">{row.sku}</Span></td>
+						<td class="px-4 py-2 text-right"
+							><Span size="sm">{Money.format(row.pricePence)}</Span></td
+						>
+						<td class="px-4 py-2 text-right"><Span size="sm">{row.stock}</Span></td>
 					</tr>
 				{:else}
-					<tr><td class="px-4 py-6 text-[var(--txs)]" colspan="4">No products found.</td></tr>
+					<tr
+						><td class="px-4 py-6" colspan="4"><Text color="secondary">No products found.</Text></td
+						></tr
+					>
 				{/each}
 			</tbody>
 		</table>

@@ -54,20 +54,20 @@
 				class="absolute top-2 left-2 rounded-full bg-white/95 px-2.5 py-1 shadow-sm"
 				bold
 				color="secondary"
-				size="sm">Out of stock</Span
+				size="xs">Out of stock</Span
 			>
 		{:else if badge.kind === 'low'}
 			<Span
 				class="absolute top-2 left-2 rounded-full bg-white/95 px-2.5 py-1 shadow-sm"
 				bold
 				color="secondary"
-				size="sm">Only {badge.count} left</Span
+				size="xs">Only {badge.count} left</Span
 			>
 		{:else if onSale}
 			<Span
 				class="absolute top-2 left-2 rounded-full bg-[var(--primary-strong)] px-2.5 py-1 text-white"
 				bold
-				size="sm">Sale</Span
+				size="xs">Sale</Span
 			>
 		{/if}
 	</div>
@@ -76,7 +76,7 @@
 		<Text class="mt-1" color="secondary">
 			<Span bold>{Money.format(product.pricePence)}</Span>
 			{#if onSale}
-				<s class="ml-1 text-sm">{Money.format(product.comparePricePence!)}</s>
+				<Span class="ml-1" size="sm"><s>{Money.format(product.comparePricePence!)}</s></Span>
 			{/if}
 		</Text>
 	</div>

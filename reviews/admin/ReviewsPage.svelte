@@ -4,11 +4,14 @@
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
 	import { shopContext } from '../../context';
 	import { REVIEW_STATUSES, type ReviewStatus } from '../../db/schema';
+	import Stars from '../../ui/Stars.svelte';
 	import { getReviews, moderateReviewForm } from '../admin.remote';
 	import { ModerateReviewSchema } from '../schema';
 
@@ -32,16 +35,18 @@
 	Customers review items from their order page. A review shows on the product page once approved.
 </Text>
 
-<nav class="mt-4 flex gap-2" aria-label="Review status">
-	{#each REVIEW_STATUSES as s (s)}
-		<a
-			class="rounded-full border px-3 py-1 text-sm no-underline {s === status
-				? 'border-[var(--acc)] bg-[var(--acc)] text-white'
-				: 'border-[var(--bd)] bg-white text-[var(--tx)]'}"
-			aria-current={s === status ? 'page' : undefined}
-			href="{resolve('/reviews')}?status={s}">{LABELS[s]}</a
-		>
-	{/each}
+<nav class="mt-4" aria-label="Review status">
+	<Cluster gap="xs">
+		{#each REVIEW_STATUSES as s (s)}
+			<a
+				class="rounded-full border px-3 py-1 no-underline {s === status
+					? 'border-[var(--acc)] bg-[var(--acc)] text-white'
+					: 'border-[var(--bd)] bg-white text-[var(--tx)]'}"
+				aria-current={s === status ? 'page' : undefined}
+				href="{resolve('/reviews')}?status={s}"><Span size="sm">{LABELS[s]}</Span></a
+			>
+		{/each}
+	</Cluster>
 </nav>
 
 <Boundary message="Could not load reviews.">
@@ -64,30 +69,29 @@
 						>
 						· {review.email} · {date.format(review.createdAt)}
 					</Text>
-					<Text class="mt-2">
-						<!-- eslint-disable-next-line svelte/no-restricted-html-elements -- star glyphs with an aria-label, which Span does not take -->
-						<span class="text-[var(--acc)]" aria-label="{review.rating} out of 5"
-							>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span
-						>
-						{#if review.title}<strong class="ml-2">{review.title}</strong>{/if}
-					</Text>
+					<Cluster class="mt-2" gap="xs">
+						<Stars rating={review.rating} size="sm" />
+						{#if review.title}<Text bold>{review.title}</Text>{/if}
+					</Cluster>
 					<Text class="mt-2 whitespace-pre-line">{review.body}</Text>
 					<Text class="mt-2">by {review.name}</Text>
 					<Form
-						class="mt-3 flex gap-2"
+						class="mt-3"
 						{form}
 						hidden={{ id: review.id }}
 						reset={false}
 						schema={ModerateReviewSchema}
 					>
-						{#if review.status !== 'approved'}
-							<Button {...form.fields.status.as('submit', 'approved')} {form}>Approve</Button>
-						{/if}
-						{#if review.status !== 'rejected'}
-							<Button {...form.fields.status.as('submit', 'rejected')} {form} variant="secondary"
-								>Reject</Button
-							>
-						{/if}
+						<Cluster gap="xs">
+							{#if review.status !== 'approved'}
+								<Button {...form.fields.status.as('submit', 'approved')} {form}>Approve</Button>
+							{/if}
+							{#if review.status !== 'rejected'}
+								<Button {...form.fields.status.as('submit', 'rejected')} {form} variant="secondary"
+									>Reject</Button
+								>
+							{/if}
+						</Cluster>
 					</Form>
 				</li>
 			{/each}

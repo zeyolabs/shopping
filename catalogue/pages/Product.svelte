@@ -6,6 +6,7 @@
 	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import ImageGallery from '@zeyolabs/ui/gallery/ImageGallery.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
@@ -71,21 +72,22 @@
 		<Title level={1} size="lg">{product.name}</Title>
 
 		{#if data.reviews.average !== null}
-			<a
-				class="mt-3 flex w-fit items-center gap-2 text-sm text-[var(--txs)] no-underline hover:text-[var(--tx)]"
-				href="#reviews"
-			>
-				<Stars rating={data.reviews.average} size="text-sm" />
-				{data.reviews.count}
-				{data.reviews.count === 1 ? 'review' : 'reviews'}
+			<a class="mt-3 w-fit no-underline" href="#reviews">
+				<Cluster gap="xs">
+					<Stars rating={data.reviews.average} size="sm" />
+					<Span color="secondary" size="sm">
+						{data.reviews.count}
+						{data.reviews.count === 1 ? 'review' : 'reviews'}
+					</Span>
+				</Cluster>
 			</a>
 		{/if}
 
-		<div class="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-			<!-- eslint-disable-next-line svelte/no-restricted-html-elements -- the price is display-sized, bigger than any Span size -->
+		<Cluster class="mt-5" gap="sm">
+			<!-- eslint-disable-next-line svelte/no-restricted-html-elements, no-restricted-syntax -- the price is display-sized, bigger than any Span size -->
 			<span class="text-3xl font-semibold">{Money.format(product.pricePence)}</span>
 			{#if saving > 0}
-				<s class="text-lg text-[var(--txt)]">{Money.format(product.comparePricePence!)}</s>
+				<Span color="tertiary" size="lg"><s>{Money.format(product.comparePricePence!)}</s></Span>
 				<Span
 					class="rounded-full bg-[var(--primary-soft)] px-2.5 py-0.5 text-[var(--primary-strong)]"
 					bold
@@ -93,7 +95,7 @@
 					Save {saving}%
 				</Span>
 			{/if}
-		</div>
+		</Cluster>
 		{#if product.packSize > 1}
 			<Text class="mt-1" color="secondary">Pack of {product.packSize}</Text>
 		{/if}
@@ -105,36 +107,35 @@
 		{#if data.options.length > 1}
 			<div class="mt-6">
 				<Text bold>{data.variationName}</Text>
-				<ul class="mt-2 flex flex-wrap gap-2">
+				<Cluster class="mt-2" gap="xs">
 					{#each data.options as option (option.slug)}
-						<li>
-							{#if option.slug === product.slug}
-								<div
-									class="inline-flex rounded-full border-2 border-[var(--primary-strong)] bg-[var(--primary-soft)] px-4 py-1.5 text-sm font-medium text-[var(--primary-strong)]"
-									aria-current="true"
-								>
-									{option.label}
-								</div>
-							{:else}
-								<a
-									class="inline-flex rounded-full border-2 border-[var(--bd)] px-4 py-1.5 text-sm text-[var(--tx)] no-underline transition hover:border-[var(--primary-strong)] hover:text-[var(--tx)]"
-									href={resolve('/product/[slug]', { slug: option.slug })}
-								>
-									{option.label}
-								</a>
-							{/if}
-						</li>
+						{#if option.slug === product.slug}
+							<div
+								class="inline-flex rounded-full border-2 border-[var(--primary-strong)] bg-[var(--primary-soft)] px-4 py-1.5 text-[var(--primary-strong)]"
+								aria-current="true"
+							>
+								<Span bold size="sm">{option.label}</Span>
+							</div>
+						{:else}
+							<a
+								class="inline-flex rounded-full border-2 border-[var(--bd)] px-4 py-1.5 text-[var(--tx)] no-underline transition hover:border-[var(--primary-strong)] hover:text-[var(--tx)]"
+								href={resolve('/product/[slug]', { slug: option.slug })}
+							>
+								<Span size="sm">{option.label}</Span>
+							</a>
+						{/if}
 					{/each}
-				</ul>
+				</Cluster>
 			</div>
 		{/if}
 
-		<Text class="mt-6 flex items-center gap-2" bold>
-			<!-- eslint-disable-next-line svelte/no-restricted-html-elements -- a colour dot inside the line of text -->
-			<span class="size-2.5 rounded-full {STOCK_DOT[stockBadge.kind]}" aria-hidden="true"></span>
-			{#if stockBadge.kind === 'out'}Out of stock{:else if stockBadge.kind === 'low'}Only {stockBadge.count}
-				left{:else}In stock{/if}
-		</Text>
+		<Cluster class="mt-6" gap="xs">
+			<div class="size-2.5 rounded-full {STOCK_DOT[stockBadge.kind]}" aria-hidden="true"></div>
+			<Text bold>
+				{#if stockBadge.kind === 'out'}Out of stock{:else if stockBadge.kind === 'low'}Only {stockBadge.count}
+					left{:else}In stock{/if}
+			</Text>
+		</Cluster>
 
 		{#if product.stock > 0}
 			{const form = addToBasketForm.for(product.id)}
@@ -160,8 +161,8 @@
 			>
 				{#each text.specs.slice(0, 4) as spec (spec.label)}
 					<div class="bg-[var(--sf)] px-4 py-3">
-						<dt class="text-xs text-[var(--txs)]">{spec.label}</dt>
-						<dd class="mt-0.5 font-medium text-[var(--tx)]">{spec.value}</dd>
+						<dt><Span color="secondary" size="xs">{spec.label}</Span></dt>
+						<dd class="mt-0.5"><Span bold>{spec.value}</Span></dd>
 					</div>
 				{/each}
 			</dl>
@@ -195,9 +196,9 @@
 				{#if visible < text.paragraphs.length}
 					<details class="group mt-5">
 						<summary
-							class="cursor-pointer list-none font-medium text-[var(--primary-strong)] group-open:hidden"
+							class="cursor-pointer list-none text-[var(--primary-strong)] group-open:hidden"
 						>
-							Read more
+							<Span bold>Read more</Span>
 						</summary>
 						{#each text.paragraphs.slice(visible) as p, i (i)}
 							{@render paragraph(p)}
@@ -209,12 +210,12 @@
 		{#if text.specs.length > 4}
 			<div>
 				<Title level={2} size="md">Specifications</Title>
-				<dl class="mt-5 divide-y divide-[var(--bd)] border-y border-[var(--bd)] text-sm">
+				<dl class="mt-5 divide-y divide-[var(--bd)] border-y border-[var(--bd)]">
 					{#each text.specs as spec (spec.label)}
-						<div class="flex justify-between gap-6 py-2.5">
-							<dt class="text-[var(--txs)]">{spec.label}</dt>
-							<dd class="text-right font-medium text-[var(--tx)]">{spec.value}</dd>
-						</div>
+						<Cluster class="py-2.5" gap="md" justify="between" nowrap>
+							<dt><Span color="secondary" size="sm">{spec.label}</Span></dt>
+							<dd class="text-right"><Span bold size="sm">{spec.value}</Span></dd>
+						</Cluster>
 					{/each}
 				</dl>
 			</div>

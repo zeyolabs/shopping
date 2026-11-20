@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
@@ -39,15 +40,20 @@
 	{let rows = $derived(await getAdminCategories())}
 	<ul class="mt-4 divide-y divide-[var(--bd)] rounded-xl border border-[var(--bd)] bg-white">
 		{#each rows as row (row.id)}
-			<li class="flex items-center justify-between gap-3 px-4 py-2 text-sm">
-				<Span
-					><strong>{row.name}</strong>
-					<Span color="secondary">/category/{row.slug} · {row.products} products</Span></Span
-				>
-				<button class="underline" onclick={() => (editing = row)} type="button">Edit</button>
+			<li class="px-4 py-2">
+				<Cluster gap="sm" justify="between">
+					<Span
+						><Span bold size="sm">{row.name}</Span>
+						<Span color="secondary" size="sm">/category/{row.slug} · {row.products} products</Span
+						></Span
+					>
+					<button class="underline" onclick={() => (editing = row)} type="button"
+						><Span size="sm">Edit</Span></button
+					>
+				</Cluster>
 			</li>
 		{:else}
-			<li class="px-4 py-6 text-[var(--txs)]">No categories yet.</li>
+			<li class="px-4 py-6"><Text color="secondary">No categories yet.</Text></li>
 		{/each}
 	</ul>
 	{#snippet pending()}

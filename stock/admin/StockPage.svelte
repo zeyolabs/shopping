@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
@@ -19,24 +20,26 @@
 <Boundary message="Could not load stock.">
 	{let rows = $derived(await getStock())}
 	<div class="mt-4 overflow-x-auto rounded-xl border border-[var(--bd)] bg-white">
-		<table class="w-full text-left text-sm">
+		<table class="w-full text-left">
 			<thead class="border-b border-[var(--bd)] text-[var(--txs)]">
 				<tr>
-					<th class="px-4 py-2 font-medium">Product</th>
-					<th class="px-4 py-2 font-medium">SKU</th>
-					<th class="px-4 py-2 text-right font-medium">Waiting</th>
-					<th class="px-4 py-2 text-right font-medium">Stock</th>
+					<th class="px-4 py-2"><Span bold size="sm">Product</Span></th>
+					<th class="px-4 py-2"><Span bold size="sm">SKU</Span></th>
+					<th class="px-4 py-2 text-right"><Span bold size="sm">Waiting</Span></th>
+					<th class="px-4 py-2 text-right"><Span bold size="sm">Stock</Span></th>
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-[var(--bd)]">
 				{#each rows as row (row.id)}
 					<tr>
-						<td class="px-4 py-2 font-medium">
-							{row.name}{row.variationLabel ? ` · ${row.variationLabel}` : ''}
+						<td class="px-4 py-2">
+							<Span bold size="sm"
+								>{row.name}{row.variationLabel ? ` · ${row.variationLabel}` : ''}</Span
+							>
 							{#if !row.active}<Badge color="neutral">inactive</Badge>{/if}
 						</td>
-						<td class="px-4 py-2 whitespace-nowrap">{row.sku}</td>
-						<td class="px-4 py-2 text-right">{row.waiting}</td>
+						<td class="px-4 py-2 whitespace-nowrap"><Span size="sm">{row.sku}</Span></td>
+						<td class="px-4 py-2 text-right"><Span size="sm">{row.waiting}</Span></td>
 						<td class="px-4 py-2"
 							><StockRow
 								id={row.id}
