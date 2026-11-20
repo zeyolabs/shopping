@@ -101,7 +101,6 @@ function sessionParams(
 
 		metadata: {
 			country: summary.country,
-			shippingService: summary.shipping.service,
 			weightGrams: String(summary.weightGrams),
 		},
 		mode: 'payment',
@@ -111,16 +110,16 @@ function sessionParams(
 				summary.country as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry,
 			],
 		},
-		shipping_options: [
-			{
-				shipping_rate_data: {
-					display_name:
-						summary.shippingPence === 0 ? `Free ${summary.shipping.name}` : summary.shipping.name,
-					fixed_amount: { amount: summary.shippingPence, currency: 'gbp' },
-					type: 'fixed_amount',
-				},
+		// The customer picks one on Stripe's page; the first is preselected. Each carries its service,
+		// which `OrderManager.fulfil` reads back from the chosen rate.
+		shipping_options: summary.shippingOptions.map((option) => ({
+			shipping_rate_data: {
+				display_name: option.pricePence === 0 ? `Free ${option.name}` : option.name,
+				fixed_amount: { amount: option.pricePence, currency: 'gbp' },
+				metadata: { service: option.service },
+				type: 'fixed_amount',
 			},
-		],
+		})),
 		success_url: `${origin}/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,
 	};
 }

@@ -50,6 +50,8 @@
 
 <Boundary message="Could not load your basket.">
 	{let [summary, countries] = $derived(await Promise.all([getBasket(), getShippableCountries()]))}
+	<!-- Some services cost more: the customer picks one on Stripe's page, so totals start "from". -->
+	{let dearer = $derived(summary.shippingOptions.some((o) => o.pricePence > summary.shippingPence))}
 
 	{#if summary.lines.length === 0 && summary.bundles.length === 0}
 		<Text>Your basket is empty.</Text>
@@ -181,7 +183,7 @@
 		<dl class="mt-4 ml-auto grid max-w-xs grid-cols-2 gap-y-1">
 			<dt>Subtotal</dt>
 			<dd class="text-right">{Money.format(summary.subtotalPence)}</dd>
-			<dt>Delivery</dt>
+			<dt>Delivery{dearer ? ' from' : ''}</dt>
 			<dd class="text-right">
 				{summary.shipping === null
 					? '—'
@@ -189,12 +191,16 @@
 						? 'Free'
 						: Money.format(summary.shippingPence)}
 			</dd>
-			<dt><Span bold>Total</Span></dt>
+			<dt><Span bold>Total{dearer ? ' from' : ''}</Span></dt>
 			<dd class="text-right"><Span bold>{Money.format(summary.totalPence)}</Span></dd>
 		</dl>
 		{#if summary.shipping === null}
 			<Text class="mt-2 text-right" color="error">
 				We cannot ship this order to the selected country.
+			</Text>
+		{:else if summary.shippingOptions.length > 1}
+			<Text class="mt-2 text-right">
+				Choose {summary.shippingOptions.map((option) => option.name).join(', ')} at checkout.
 			</Text>
 		{:else}
 			<Text class="mt-2 text-right">

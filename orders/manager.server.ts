@@ -25,7 +25,7 @@ export const OrderManager = {
 		if (order && (await service.hasItems(order.id))) return;
 
 		const session = await ShopClients.stripe().checkout.sessions.retrieve(sessionId, {
-			expand: ['line_items.data.price.product'],
+			expand: ['line_items.data.price.product', 'shipping_cost.shipping_rate'],
 		});
 		if (session.payment_status !== 'paid') return;
 
@@ -42,7 +42,7 @@ export const OrderManager = {
 				number: Orders.newNumber(config.orderNumberPrefix),
 				paidAt: Date.now(),
 				shippingPence: session.total_details?.amount_shipping ?? 0,
-				shippingService: session.metadata?.shippingService ?? null,
+				shippingService: Orders.chosenService(session),
 				status: 'paid',
 				stripeInvoiceId: typeof session.invoice === 'string' ? session.invoice : null,
 				stripePaymentIntentId:
