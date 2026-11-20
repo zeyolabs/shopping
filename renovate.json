@@ -5,7 +5,7 @@
 	"schedule": ["before 9am on monday"],
 	"rangeStrategy": "pin",
 	"minimumReleaseAge": "1 day",
-	"dependencyDashboard": true,
+	"dependencyDashboard": { "enabled": true },
 	"packageRules": [
 		{
 			"description": "engines.node stays a range; Renovate would pin it to one exact Node release.",
@@ -61,6 +61,11 @@
 			"description": "ui 2026.1106.0 was mis-numbered (semver reads 1106 as newer than 11.31). Never pick it.",
 			"matchPackageNames": ["@zeyolabs/ui"],
 			"allowedVersions": "!/^2026\\.1106\\./"
+		},
+		{
+			"description": "TypeScript 7 waits until svelte-check, typescript-eslint and @sveltejs/kit accept it (all cap at 6).",
+			"matchPackageNames": ["typescript"],
+			"allowedVersions": "<7"
 		}
 	]
 }
