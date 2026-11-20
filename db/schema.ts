@@ -26,6 +26,13 @@ export const variationGroups = sqliteTable('variation_groups', {
 	name: text('name').notNull(),
 });
 
+/**
+ * Royal Mail sizes a shop prices postage by, smallest first. A large letter is up to
+ * 35.3 x 25 x 2.5 cm; a small parcel up to 45 x 35 x 16 cm; a medium parcel up to 61 x 46 x 46 cm.
+ */
+export const SHIPPING_FORMATS = ['largeLetter', 'smallParcel', 'mediumParcel'] as const;
+export type ShippingFormat = (typeof SHIPPING_FORMATS)[number];
+
 export const products = sqliteTable('products', {
 	active: integer('active', { mode: 'boolean' }).notNull().default(true),
 	/** Pre-discount price shown struck through, when higher than `pricePence`. */
@@ -43,6 +50,10 @@ export const products = sqliteTable('products', {
 	pricePence: integer('price_pence').notNull(),
 	/** When the product last went from not sellable to sellable (set by `StockService.setStock`). */
 	restockedAt: integer('restocked_at'),
+	/** The smallest Royal Mail size this product can be posted in; an order goes in its largest item's. */
+	shippingFormat: text('shipping_format', { enum: SHIPPING_FORMATS })
+		.notNull()
+		.default('smallParcel'),
 	shortDescription: text('short_description').notNull().default(''),
 	sku: text('sku').notNull().unique(),
 	slug: text('slug').notNull().unique(),
@@ -160,11 +171,13 @@ export const countries = sqliteTable('countries', {
 /**
  * Postage cost by zone and parcel weight: the price for a parcel up to `maxGrams`. The customer
  * is charged `pricePence`. `royalMailServiceCode` is the Click & Drop code; null lets staff choose.
+ * `format` is the largest Royal Mail size the price covers; null: any size.
  */
 export const shippingRates = sqliteTable(
 	'shipping_rates',
 	{
 		deliveryTime: text('delivery_time').notNull().default(''),
+		format: text('format', { enum: SHIPPING_FORMATS }),
 		id: integer('id').primaryKey({ autoIncrement: true }),
 		maxGrams: integer('max_grams').notNull(),
 		name: text('name').notNull(),
@@ -173,7 +186,14 @@ export const shippingRates = sqliteTable(
 		service: text('service').notNull(),
 		zone: text('zone', { enum: SHIPPING_ZONES }).notNull(),
 	},
-	(t) => [uniqueIndex('shipping_rates_zone_service_weight').on(t.zone, t.service, t.maxGrams)]
+	(t) => [
+		uniqueIndex('shipping_rates_zone_service_format_weight').on(
+			t.zone,
+			t.service,
+			t.format,
+			t.maxGrams
+		),
+	]
 );
 
 export const ORDER_STATUSES = ['pending', 'paid', 'shipped', 'cancelled', 'refunded'] as const;

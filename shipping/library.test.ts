@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Postage } from './library';
+import { Parcels, Postage } from './library';
 
 const rules = {
 	defaultCountry: 'GB',
@@ -28,5 +28,26 @@ describe('Postage.charge', () => {
 
 	it('does not apply the international cap to the UK', () => {
 		expect(charge({ basePence: 450, subtotalPence: 99999, zone: 'uk' })).toBe(0);
+	});
+});
+
+describe('Parcels', () => {
+	it("sends an order in its largest item's size", () => {
+		expect(Parcels.largest(['largeLetter', 'largeLetter'])).toBe('largeLetter');
+		expect(Parcels.largest(['largeLetter', 'smallParcel'])).toBe('smallParcel');
+		expect(Parcels.largest(['mediumParcel', 'largeLetter'])).toBe('mediumParcel');
+		expect(Parcels.largest([])).toBe('largeLetter');
+	});
+
+	it('finds the smallest size, for a "from" price', () => {
+		expect(Parcels.smallest(['smallParcel', 'mediumParcel'])).toBe('smallParcel');
+		expect(Parcels.smallest([])).toBe('largeLetter');
+	});
+
+	it('lets a rate cover its own size and smaller, and a rate with no size cover any', () => {
+		expect(Parcels.covers('smallParcel', 'largeLetter')).toBe(true);
+		expect(Parcels.covers('smallParcel', 'smallParcel')).toBe(true);
+		expect(Parcels.covers('largeLetter', 'smallParcel')).toBe(false);
+		expect(Parcels.covers(null, 'mediumParcel')).toBe(true);
 	});
 });

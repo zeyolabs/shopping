@@ -159,6 +159,7 @@ export class CatalogueAdminService {
 			name: input.name,
 			packSize: input.packSize,
 			pricePence: input.pricePence,
+			shippingFormat: input.shippingFormat,
 			shortDescription: input.shortDescription,
 			sku: input.sku,
 			slug: input.slug,

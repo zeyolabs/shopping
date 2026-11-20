@@ -15,6 +15,7 @@ const MIGRATIONS = [
 		created_at integer NOT NULL, description text NOT NULL DEFAULT '', low_stock_threshold integer,
 		mass_grams integer NOT NULL DEFAULT 0, max_per_order integer NOT NULL DEFAULT 10, name text NOT NULL,
 		pack_size integer NOT NULL DEFAULT 1, price_pence integer NOT NULL, restocked_at integer,
+		shipping_format text NOT NULL DEFAULT 'smallParcel',
 		short_description text NOT NULL DEFAULT '', sku text NOT NULL UNIQUE, slug text NOT NULL UNIQUE,
 		sold integer NOT NULL DEFAULT 0, sort_order integer NOT NULL DEFAULT 0, stock integer NOT NULL DEFAULT 0,
 		variation_group_id integer, variation_label text)`,

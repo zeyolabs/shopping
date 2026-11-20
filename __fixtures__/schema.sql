@@ -343,3 +343,8 @@ ALTER TABLE `bundles` ADD `discount_percent` integer DEFAULT 0 NOT NULL;--> stat
 ALTER TABLE `order_items` ADD `single_units` integer DEFAULT false NOT NULL;
 --> statement-breakpoint
 ALTER TABLE `bundle_step_products` ADD `price_pence` integer;
+--> statement-breakpoint
+DROP INDEX `shipping_rates_zone_service_weight`;--> statement-breakpoint
+ALTER TABLE `shipping_rates` ADD `format` text;--> statement-breakpoint
+CREATE UNIQUE INDEX `shipping_rates_zone_service_format_weight` ON `shipping_rates` (`zone`,`service`,`format`,`max_grams`);--> statement-breakpoint
+ALTER TABLE `products` ADD `shipping_format` text DEFAULT 'smallParcel' NOT NULL;

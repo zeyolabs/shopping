@@ -1,7 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { CheckboxField, Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
+	import {
+		CheckboxField,
+		Form,
+		MessageField,
+		NumberField,
+		SelectField,
+		TextField,
+	} from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
@@ -11,6 +18,8 @@
 	import type { getAdminProduct, getProductOptions } from '../admin.remote';
 
 	import { shopContext } from '../../context';
+	import { SHIPPING_FORMATS } from '../../db/schema';
+	import { Packing } from '../../fulfilment/library';
 	import { FormInput } from '../../utils/form-input';
 	import { Images } from '../../utils/images';
 	import { saveProductForm } from '../admin.remote';
@@ -59,6 +68,7 @@
 		name: p?.name ?? '',
 		packSize: p?.packSize ?? 1,
 		price: FormInput.penceToPounds(p?.pricePence),
+		shippingFormat: p?.shippingFormat ?? 'smallParcel',
 		shortDescription: p?.shortDescription ?? '',
 		sku: p?.sku ?? '',
 		slug: p?.slug ?? '',
@@ -199,6 +209,13 @@
 		</div>
 		<div class="grid gap-4 sm:grid-cols-3">
 			<NumberField name="massGrams" {form} inputmode="numeric">Weight (g)</NumberField>
+			<SelectField
+				name="shippingFormat"
+				{form}
+				getLabel={(f) => Packing.FORMAT_LABELS[f]}
+				items={[...SHIPPING_FORMATS]}
+				placeholder="Posted as"
+			/>
 			<NumberField name="maxPerOrder" {form} inputmode="numeric">Max per order</NumberField>
 			<NumberField name="packSize" {form} inputmode="numeric">Pack size (units)</NumberField>
 			<NumberField name="lowStockThreshold" {form} inputmode="numeric" optional placeholder="never">

@@ -24,6 +24,7 @@ describe('CatalogueAdminService.saveProduct', () => {
 		name: 'Tea',
 		packSize: 1,
 		pricePence: 1250,
+		shippingFormat: 'largeLetter',
 		shortDescription: '',
 		sku: 'TEA1',
 		slug: 'tea',
