@@ -75,7 +75,7 @@
 			<a class="mt-3 w-fit no-underline" href="#reviews">
 				<Cluster gap="xs">
 					<Stars rating={data.reviews.average} size="sm" />
-					<Span color="secondary">
+					<Span color="secondary" size="sm">
 						{data.reviews.count}
 						{data.reviews.count === 1 ? 'review' : 'reviews'}
 					</Span>
@@ -114,14 +114,14 @@
 								class="inline-flex rounded-full border-2 border-[var(--primary-strong)] bg-[var(--primary-soft)] px-4 py-1.5 text-[var(--primary-strong)]"
 								aria-current="true"
 							>
-								<Span bold>{option.label}</Span>
+								<Span bold size="sm">{option.label}</Span>
 							</div>
 						{:else}
 							<a
 								class="inline-flex rounded-full border-2 border-[var(--bd)] px-4 py-1.5 text-[var(--tx)] no-underline transition hover:border-[var(--primary-strong)] hover:text-[var(--tx)]"
 								href={resolve('/product/[slug]', { slug: option.slug })}
 							>
-								<Span>{option.label}</Span>
+								<Span size="sm">{option.label}</Span>
 							</a>
 						{/if}
 					{/each}
@@ -161,7 +161,7 @@
 			>
 				{#each text.specs.slice(0, 4) as spec (spec.label)}
 					<div class="bg-[var(--sf)] px-4 py-3">
-						<dt><Span color="secondary" size="sm">{spec.label}</Span></dt>
+						<dt><Span color="secondary" size="xs">{spec.label}</Span></dt>
 						<dd class="mt-0.5"><Span bold>{spec.value}</Span></dd>
 					</div>
 				{/each}
@@ -213,8 +213,8 @@
 				<dl class="mt-5 divide-y divide-[var(--bd)] border-y border-[var(--bd)]">
 					{#each text.specs as spec (spec.label)}
 						<Cluster class="py-2.5" gap="md" justify="between" nowrap>
-							<dt><Span color="secondary">{spec.label}</Span></dt>
-							<dd class="text-right"><Span bold>{spec.value}</Span></dd>
+							<dt><Span color="secondary" size="sm">{spec.label}</Span></dt>
+							<dd class="text-right"><Span bold size="sm">{spec.value}</Span></dd>
 						</Cluster>
 					{/each}
 				</dl>

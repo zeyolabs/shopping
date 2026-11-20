@@ -119,27 +119,31 @@
 			</ul>
 			<dl class="mt-3 space-y-1">
 				<div class="flex justify-between">
-					<dt>Subtotal</dt>
-					<dd>{Money.format(order.subtotalPence)}</dd>
+					<dt><Span size="sm">Subtotal</Span></dt>
+					<dd><Span size="sm">{Money.format(order.subtotalPence)}</Span></dd>
 				</div>
 				{#if order.discountPence > 0}
 					<div class="flex justify-between">
-						<dt>Discount</dt>
-						<dd>-{Money.format(order.discountPence)}</dd>
+						<dt><Span size="sm">Discount</Span></dt>
+						<dd><Span size="sm">-{Money.format(order.discountPence)}</Span></dd>
 					</div>
 				{/if}
 				<div class="flex justify-between">
-					<dt>Delivery</dt>
-					<dd>{order.shippingPence === 0 ? 'Free' : Money.format(order.shippingPence)}</dd>
+					<dt><Span size="sm">Delivery</Span></dt>
+					<dd>
+						<Span size="sm"
+							>{order.shippingPence === 0 ? 'Free' : Money.format(order.shippingPence)}</Span
+						>
+					</dd>
 				</div>
 				<div class="flex justify-between">
-					<dt><Span bold>Total</Span></dt>
-					<dd><Span bold>{Money.format(order.totalPence)}</Span></dd>
+					<dt><Span bold size="sm">Total</Span></dt>
+					<dd><Span bold size="sm">{Money.format(order.totalPence)}</Span></dd>
 				</div>
 				{#if order.refundedPence > 0}
 					<div class="flex justify-between">
-						<dt>Refunded</dt>
-						<dd>-{Money.format(order.refundedPence)}</dd>
+						<dt><Span size="sm">Refunded</Span></dt>
+						<dd><Span size="sm">-{Money.format(order.refundedPence)}</Span></dd>
 					</div>
 				{/if}
 			</dl>

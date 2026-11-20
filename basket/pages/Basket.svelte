@@ -134,7 +134,7 @@
 							{#if bundle.details.length > 0}
 								<ul class="mt-1">
 									{#each bundle.details as detail, i (i)}<li>
-											<Text color="secondary">{detail}</Text>
+											<Text color="secondary" size="sm">{detail}</Text>
 										</li>{/each}
 								</ul>
 							{/if}
@@ -154,7 +154,7 @@
 						<Text class="w-20 text-right">
 							{Money.format(bundle.pricePence)}
 							{#if bundle.listPricePence > bundle.pricePence}
-								<Span class="block" color="tertiary" size="sm"
+								<Span class="block" color="tertiary" size="xs"
 									><s>{Money.format(bundle.listPricePence)}</s></Span
 								>
 							{/if}

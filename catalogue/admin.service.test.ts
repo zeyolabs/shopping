@@ -88,3 +88,14 @@ describe('CatalogueAdminService.saveProduct', () => {
 		expect((await admin.products('kcx')).map((p) => p.sku)).toEqual(['KCX1']);
 	});
 });
+
+describe('CatalogueAdminService.variationGroups', () => {
+	const { db } = shopTestDb();
+
+	it('lists each group name once, even when several groups share it', async () => {
+		await db()
+			.insert(schema.variationGroups)
+			.values([{ name: 'Colour' }, { name: 'Colour' }, { name: 'Size' }]);
+		expect(await new CatalogueAdminService(db()).variationGroups()).toEqual(['Colour', 'Size']);
+	});
+});

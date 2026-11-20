@@ -43,10 +43,13 @@
 			<li class="px-4 py-2">
 				<Cluster gap="sm" justify="between">
 					<Span
-						><Span bold>{row.name}</Span>
-						<Span color="secondary">/category/{row.slug} · {row.products} products</Span></Span
+						><Span bold size="sm">{row.name}</Span>
+						<Span color="secondary" size="sm">/category/{row.slug} · {row.products} products</Span
+						></Span
 					>
-					<button class="underline" onclick={() => (editing = row)} type="button">Edit</button>
+					<button class="underline" onclick={() => (editing = row)} type="button"
+						><Span size="sm">Edit</Span></button
+					>
 				</Cluster>
 			</li>
 		{:else}

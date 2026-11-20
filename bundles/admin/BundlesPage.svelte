@@ -28,8 +28,10 @@
 	<ul class="mt-4 divide-y divide-[var(--bd)] rounded-xl border border-[var(--bd)] bg-white">
 		{#each rows as row (row.id)}
 			<li class="px-4 py-2">
-				<a href={resolve('/bundles/[id]', { id: String(row.id) })}><Span bold>{row.name}</Span></a>
-				<Span color="secondary">/bundle/{row.slug}</Span>
+				<a href={resolve('/bundles/[id]', { id: String(row.id) })}
+					><Span bold size="sm">{row.name}</Span></a
+				>
+				<Span color="secondary" size="sm">/bundle/{row.slug}</Span>
 				{#if !row.active}<Badge color="neutral">inactive</Badge>{/if}
 			</li>
 		{:else}

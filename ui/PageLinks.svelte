@@ -24,23 +24,25 @@
 		<Cluster gap="xs" justify="center">
 			{#if page > 1}
 				<a class={link} href={href(page - 1)} rel="prev">
-					<ChevronLeft class="size-4" aria-hidden="true" /> Previous
+					<ChevronLeft class="size-4" aria-hidden="true" />
+					<Span size="sm">Previous</Span>
 				</a>
 			{/if}
 			{#each Paging.window(page, pages) as n, i (n ?? `gap-${i}`)}
 				{#if n === null}
-					<div class="{box} text-[var(--txt)]" aria-hidden="true">…</div>
+					<div class="{box} text-[var(--txt)]" aria-hidden="true"><Span size="sm">…</Span></div>
 				{:else if n === page}
 					<div class="{box} bg-[var(--primary-strong)] text-white" aria-current="page">
-						<Span bold>{n}</Span>
+						<Span bold size="sm">{n}</Span>
 					</div>
 				{:else}
-					<a class={link} aria-label="Page {n}" href={href(n)}>{n}</a>
+					<a class={link} aria-label="Page {n}" href={href(n)}><Span size="sm">{n}</Span></a>
 				{/if}
 			{/each}
 			{#if page < pages}
 				<a class={link} href={href(page + 1)} rel="next">
-					Next <ChevronRight class="size-4" aria-hidden="true" />
+					<Span size="sm">Next</Span>
+					<ChevronRight class="size-4" aria-hidden="true" />
 				</a>
 			{/if}
 		</Cluster>

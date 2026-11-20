@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 
 	import type { getShop } from '../client.remote';
@@ -34,7 +35,8 @@
 		{#each shop.categories as category (category.id)}
 			<a
 				class="inline-block rounded-full border border-[var(--bd)] px-3.5 py-1.5 hover:border-[var(--primary-strong)] hover:bg-[var(--primary-soft)]"
-				href={resolve('/category/[slug]', { slug: category.slug })}>{category.name}</a
+				href={resolve('/category/[slug]', { slug: category.slug })}
+				><Span size="sm">{category.name}</Span></a
 			>
 		{/each}
 	</Cluster>

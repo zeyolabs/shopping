@@ -98,8 +98,7 @@
 				aria-current={f === filter ? 'page' : undefined}
 				href={href({ filter: f })}
 			>
-				{FILTER_LABELS[f]}
-				({(await getOrderCounts())[f]})
+				<Span size="sm">{FILTER_LABELS[f]} ({(await getOrderCounts())[f]})</Span>
 			</a>
 			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		{/each}
@@ -153,11 +152,13 @@
 						}}
 						type="checkbox"
 					/>
-					<label for="select-ready">Select {Math.min(rows.length, BULK_DISPATCH_LIMIT)}</label>
+					<label for="select-ready"
+						><Span size="sm">Select {Math.min(rows.length, BULK_DISPATCH_LIMIT)}</Span></label
+					>
 				</Cluster>
 				<Cluster gap="xs" nowrap>
 					<input id="email-customers" type="checkbox" bind:checked={sendEmail} />
-					<label for="email-customers">Email the customers</label>
+					<label for="email-customers"><Span size="sm">Email the customers</Span></label>
 				</Cluster>
 				<Button
 					disabled={chosen.length === 0 || dispatching}
@@ -172,11 +173,11 @@
 				<thead class="border-b border-[var(--bd)] text-[var(--txs)]">
 					<tr>
 						{#if filter === 'ready'}<th class="w-8 px-4 py-2"></th>{/if}
-						<th class="px-4 py-2"><Span bold>Order</Span></th>
-						<th class="px-4 py-2"><Span bold>Placed</Span></th>
-						<th class="px-4 py-2"><Span bold>Customer</Span></th>
-						<th class="px-4 py-2 text-right"><Span bold>Total</Span></th>
-						<th class="px-4 py-2"><Span bold>Status</Span></th>
+						<th class="px-4 py-2"><Span bold size="sm">Order</Span></th>
+						<th class="px-4 py-2"><Span bold size="sm">Placed</Span></th>
+						<th class="px-4 py-2"><Span bold size="sm">Customer</Span></th>
+						<th class="px-4 py-2 text-right"><Span bold size="sm">Total</Span></th>
+						<th class="px-4 py-2"><Span bold size="sm">Status</Span></th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-[var(--bd)]">
@@ -198,15 +199,19 @@
 							{/if}
 							<td class="px-4 py-2">
 								<a href={resolve('/orders/[number]', { number: row.number })}
-									><Span bold>{row.number}</Span></a
+									><Span bold size="sm">{row.number}</Span></a
 								>
 							</td>
-							<td class="px-4 py-2 whitespace-nowrap">{date.format(row.createdAt)}</td>
+							<td class="px-4 py-2 whitespace-nowrap"
+								><Span size="sm">{date.format(row.createdAt)}</Span></td
+							>
 							<td class="px-4 py-2">
-								{row.name}
-								<Span class="block" color="secondary" size="sm">{row.email} · {row.country}</Span>
+								<Span size="sm">{row.name}</Span>
+								<Span class="block" color="secondary" size="xs">{row.email} · {row.country}</Span>
 							</td>
-							<td class="px-4 py-2 text-right whitespace-nowrap">{Money.format(row.totalPence)}</td>
+							<td class="px-4 py-2 text-right whitespace-nowrap"
+								><Span size="sm">{Money.format(row.totalPence)}</Span></td
+							>
 							<td class="px-4 py-2">
 								{#if row.status === 'paid' || row.status === 'shipped'}
 									{let stage = $derived(Packing.stage(row))}

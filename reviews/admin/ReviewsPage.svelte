@@ -5,6 +5,7 @@
 	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
@@ -42,7 +43,7 @@
 					? 'border-[var(--acc)] bg-[var(--acc)] text-white'
 					: 'border-[var(--bd)] bg-white text-[var(--tx)]'}"
 				aria-current={s === status ? 'page' : undefined}
-				href="{resolve('/reviews')}?status={s}">{LABELS[s]}</a
+				href="{resolve('/reviews')}?status={s}"><Span size="sm">{LABELS[s]}</Span></a
 			>
 		{/each}
 	</Cluster>

@@ -25,8 +25,11 @@ export const getAdminProduct = Remote.Query(Schema.Id, async (id) => {
 /** Categories and variation groups, for the product editor's pickers. */
 export const getProductOptions = Remote.Query(async () => {
 	const service = admin();
-	const [categories, groups] = await Promise.all([service.categories(), service.variationGroups()]);
-	return { categories, variationGroups: groups.map((g) => g.name) };
+	const [categories, variationGroups] = await Promise.all([
+		service.categories(),
+		service.variationGroups(),
+	]);
+	return { categories, variationGroups };
 });
 
 /** Saves a product; `data.id` is its id (new products get one here). */

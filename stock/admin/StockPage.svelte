@@ -23,21 +23,23 @@
 		<table class="w-full text-left">
 			<thead class="border-b border-[var(--bd)] text-[var(--txs)]">
 				<tr>
-					<th class="px-4 py-2"><Span bold>Product</Span></th>
-					<th class="px-4 py-2"><Span bold>SKU</Span></th>
-					<th class="px-4 py-2 text-right"><Span bold>Waiting</Span></th>
-					<th class="px-4 py-2 text-right"><Span bold>Stock</Span></th>
+					<th class="px-4 py-2"><Span bold size="sm">Product</Span></th>
+					<th class="px-4 py-2"><Span bold size="sm">SKU</Span></th>
+					<th class="px-4 py-2 text-right"><Span bold size="sm">Waiting</Span></th>
+					<th class="px-4 py-2 text-right"><Span bold size="sm">Stock</Span></th>
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-[var(--bd)]">
 				{#each rows as row (row.id)}
 					<tr>
 						<td class="px-4 py-2">
-							<Span bold>{row.name}{row.variationLabel ? ` · ${row.variationLabel}` : ''}</Span>
+							<Span bold size="sm"
+								>{row.name}{row.variationLabel ? ` · ${row.variationLabel}` : ''}</Span
+							>
 							{#if !row.active}<Badge color="neutral">inactive</Badge>{/if}
 						</td>
-						<td class="px-4 py-2 whitespace-nowrap">{row.sku}</td>
-						<td class="px-4 py-2 text-right">{row.waiting}</td>
+						<td class="px-4 py-2 whitespace-nowrap"><Span size="sm">{row.sku}</Span></td>
+						<td class="px-4 py-2 text-right"><Span size="sm">{row.waiting}</Span></td>
 						<td class="px-4 py-2"
 							><StockRow
 								id={row.id}

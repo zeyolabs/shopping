@@ -4,6 +4,7 @@
 	import { CheckboxField, Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
@@ -156,7 +157,7 @@
 						id="category-{category.id}"
 						{...form.fields.categoryIds.as('checkbox', String(category.id))}
 					/>
-					<label for="category-{category.id}">{category.name}</label>
+					<label for="category-{category.id}"><Span size="sm">{category.name}</Span></label>
 				</Cluster>
 			{:else}
 				<Text color="secondary">No categories yet.</Text>
@@ -173,14 +174,15 @@
 			</Text>
 		</div>
 		<div class="grid gap-4 sm:grid-cols-2">
-			<label class="form-label">
-				Group
+			<div>
+				<label class="form-label" for="variation-group">Group</label>
 				<input
+					id="variation-group"
 					{...form.fields.variationGroup.as('text')}
-					class="{input} mt-1"
+					class={input}
 					list="variation-groups"
 				/>
-			</label>
+			</div>
 			<datalist id="variation-groups">
 				{#each options.variationGroups as group (group)}<option value={group}></option>{/each}
 			</datalist>

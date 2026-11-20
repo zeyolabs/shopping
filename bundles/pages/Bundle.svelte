@@ -227,7 +227,7 @@
 									{/if}
 									<div class="min-w-0 flex-1">
 										<Span class="block" bold>{label}</Span>
-										<Span class="block" color="secondary" size="sm">
+										<Span class="block" color="secondary" size="xs">
 											{sold ? 'Out of stock' : priceLabel(step, product)}
 										</Span>
 									</div>
@@ -278,7 +278,7 @@
 									{/if}
 									<Span class="min-w-0">
 										<Span class="block" bold>{label}</Span>
-										<Span class="block" color="secondary" size="sm">
+										<Span class="block" color="secondary" size="xs">
 											{sold ? 'Out of stock' : priceLabel(step, product)}
 										</Span>
 									</Span>
@@ -298,7 +298,7 @@
 			<Span color="secondary">Total</Span>
 			<Span bold size="xl">{Money.format(totalPence)}</Span>
 			{#if totalPence < listPence}
-				<Span color="tertiary"><s>{Money.format(listPence)}</s></Span>
+				<Span color="tertiary" size="sm"><s>{Money.format(listPence)}</s></Span>
 			{/if}
 		</Cluster>
 		<Cluster gap="sm">
