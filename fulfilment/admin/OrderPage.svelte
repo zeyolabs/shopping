@@ -11,10 +11,12 @@
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 	import { toast } from 'svelte-sonner';
 
+	import { shopContext } from '../../context';
 	import { PACKAGE_FORMATS } from '../../db/schema';
 	import { Orders } from '../../orders/library';
 	import { ErrorMessage } from '../../utils/errors';
 	import { FormInput } from '../../utils/form-input';
+	import { Images } from '../../utils/images';
 	import { Money } from '../../utils/money';
 	import {
 		createOrderLabel,
@@ -35,16 +37,18 @@
 		ShipSchema,
 	} from '../schema';
 
+	const context = shopContext();
 	const number = $derived(page.params.number ?? '');
 
 	let printing = $state(false);
 
-	/** Creates the label in Click & Drop, then opens the PDF to print. */
+	/** Creates the label in Click & Drop, then opens the PDF to print when Royal Mail serves it. */
 	async function printLabel(orderNumber: string) {
 		printing = true;
 		try {
-			await createOrderLabel(orderNumber);
-			window.open(resolve('/orders/[number]/label', { number: orderNumber }), '_blank');
+			const { pdf, royalMailOrderId } = await createOrderLabel(orderNumber);
+			if (pdf) window.open(resolve('/orders/[number]/label', { number: orderNumber }), '_blank');
+			else toast.success(`In Click & Drop as order ${royalMailOrderId}. Print the label there.`);
 		} catch (error) {
 			toast.error(ErrorMessage.from(error, 'Could not create the label.'));
 		} finally {
@@ -110,9 +114,20 @@
 			<ul class="mt-2 divide-y divide-[var(--bd)]">
 				{#each order.items as item (item.id)}
 					<li class="py-2">
-						<Cluster gap="sm" justify="between" nowrap>
-							<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
-							<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
+						<Cluster gap="sm" nowrap>
+							{#if item.cover}
+								<img
+									class="size-14 shrink-0 rounded-md object-cover"
+									alt={item.cover.alt || item.name}
+									src={Images.url(context.imageBaseUrl, item.cover.src)}
+								/>
+							{:else}
+								<div class="size-14 shrink-0 rounded-md bg-[var(--bd)]"></div>
+							{/if}
+							<Cluster class="grow" gap="sm" justify="between" nowrap>
+								<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
+								<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
+							</Cluster>
 						</Cluster>
 					</li>
 				{/each}
@@ -217,16 +232,13 @@
 			<Text class="mt-1" color="secondary">
 				{order.weightGrams === null
 					? `Estimated ${order.estimatedWeightGrams} g from the items. Weigh the parcel and correct it.`
-					: 'Weight and size go on the Royal Mail label.'}
+					: 'Weight and format go on the Royal Mail label.'}
 			</Text>
 			<Form
 				class="mt-3 grid gap-4"
 				defaults={{
 					format: order.packageFormat,
-					heightMm: order.packageHeightMm ?? undefined,
-					lengthMm: order.packageLengthMm ?? undefined,
 					weightGrams: order.weightGrams ?? (order.estimatedWeightGrams || undefined),
-					widthMm: order.packageWidthMm ?? undefined,
 				}}
 				form={parcelForm}
 				hidden={{ number: order.number }}
@@ -243,17 +255,6 @@
 					items={PACKAGE_FORMATS}
 					placeholder="Package format"
 				/>
-				<div class="grid grid-cols-3 gap-3">
-					<NumberField name="lengthMm" form={parcelForm} inputmode="numeric" optional>
-						Length (mm)
-					</NumberField>
-					<NumberField name="widthMm" form={parcelForm} inputmode="numeric" optional>
-						Width (mm)
-					</NumberField>
-					<NumberField name="heightMm" form={parcelForm} inputmode="numeric" optional>
-						Height (mm)
-					</NumberField>
-				</div>
 				<div><Button form={parcelForm}>Save parcel</Button></div>
 			</Form>
 		</section>

@@ -37,24 +37,12 @@ export type OrderStep = (typeof ORDER_STEPS)[number];
 /** One form moves an order through packing: the order, and which button was pressed. */
 export const OrderStepSchema = z.object({ number: OrderNumber, step: z.enum(ORDER_STEPS) });
 
-const Millimetres = z.number().int().min(1).max(1000);
-
-/** Click & Drop takes parcels up to 30 kg. The three measurements go together or not at all. */
-export const ParcelSchema = z
-	.object({
-		format: z.enum(PACKAGE_FORMATS),
-		heightMm: Millimetres.optional(),
-		lengthMm: Millimetres.optional(),
-		number: OrderNumber,
-		weightGrams: z.number().int().min(1, 'enter the weight in grams').max(30_000),
-		widthMm: Millimetres.optional(),
-	})
-	.refine(
-		({ heightMm, lengthMm, widthMm }) =>
-			[heightMm, lengthMm, widthMm].every((v) => v === undefined) ||
-			[heightMm, lengthMm, widthMm].every((v) => v !== undefined),
-		{ message: 'give length, width and height, or leave all three blank', path: ['lengthMm'] }
-	);
+/** Click & Drop takes parcels up to 30 kg. */
+export const ParcelSchema = z.object({
+	format: z.enum(PACKAGE_FORMATS),
+	number: OrderNumber,
+	weightGrams: z.number().int().min(1, 'enter the weight in grams').max(30_000),
+});
 
 const Tracking = z
 	.string()

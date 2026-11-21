@@ -343,3 +343,8 @@ ALTER TABLE `bundles` ADD `discount_percent` integer DEFAULT 0 NOT NULL;--> stat
 ALTER TABLE `order_items` ADD `single_units` integer DEFAULT false NOT NULL;
 --> statement-breakpoint
 ALTER TABLE `bundle_step_products` ADD `price_pence` integer;
+
+--> statement-breakpoint
+ALTER TABLE `orders` DROP COLUMN `package_height_mm`;--> statement-breakpoint
+ALTER TABLE `orders` DROP COLUMN `package_length_mm`;--> statement-breakpoint
+ALTER TABLE `orders` DROP COLUMN `package_width_mm`;
