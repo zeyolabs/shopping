@@ -5,17 +5,12 @@ import type { ShopDb } from '../db/index';
 import type { OrderFilter } from './filters';
 import type { OrderDetails } from './schema';
 
+import { CoverService } from '../catalogue/covers.server';
 import { Search } from '../catalogue/library';
 import { addresses, orderItems, orders, type PackageFormat, products } from '../db/schema';
 import { Batches } from '../utils/batches';
 
-export type Parcel = {
-	format: PackageFormat;
-	heightMm: null | number;
-	lengthMm: null | number;
-	weightGrams: number;
-	widthMm: null | number;
-};
+export type Parcel = { format: PackageFormat; weightGrams: number };
 
 type OrderRow = typeof orders.$inferSelect;
 
@@ -76,7 +71,20 @@ export class FulfilmentService {
 			this.db.query.addresses.findFirst({ where: eq(addresses.id, order.shippingAddressId) }),
 		]);
 		if (!address) return undefined;
-		return { ...order, address, estimatedWeightGrams: await this.estimateWeight(items), items };
+		const productIds = items.flatMap((item) => (item.productId === null ? [] : [item.productId]));
+		const [covers, estimatedWeightGrams] = await Promise.all([
+			new CoverService(this.db).covers(productIds),
+			this.estimateWeight(items),
+		]);
+		return {
+			...order,
+			address,
+			estimatedWeightGrams,
+			items: items.map((item) => ({
+				...item,
+				cover: item.productId === null ? null : (covers.get(item.productId) ?? null),
+			})),
+		};
 	}
 
 	/** Orders for the admin list: oldest first when packing, newest first when browsing. */
@@ -207,9 +215,6 @@ export class FulfilmentService {
 		const order = await this.packable(number);
 		await this.update(order.id, {
 			packageFormat: parcel.format,
-			packageHeightMm: parcel.heightMm,
-			packageLengthMm: parcel.lengthMm,
-			packageWidthMm: parcel.widthMm,
 			weightGrams: parcel.weightGrams,
 		});
 	}

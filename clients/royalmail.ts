@@ -14,8 +14,6 @@ export type ClickAndDropOrder = {
 		state?: null | string;
 	};
 	createdAt: number;
-	/** Parcel size in mm; sent only when all three are known. */
-	dimensions?: null | { heightMm: number; lengthMm: number; widthMm: number };
 	email: string;
 	number: string;
 	/** Click & Drop package format; a plain parcel unless packing says otherwise. */
@@ -68,15 +66,6 @@ async function createOrder(apiKey: string, order: ClickAndDropOrder): Promise<st
 					orderReference: order.number,
 					packages: [
 						{
-							...(order.dimensions
-								? {
-										dimensions: {
-											depthInMms: order.dimensions.lengthMm,
-											heightInMms: order.dimensions.heightMm,
-											widthInMms: order.dimensions.widthMm,
-										},
-									}
-								: {}),
 							packageFormatIdentifier: order.packageFormat ?? 'parcel',
 							weightInGrams: order.weightGrams,
 						},
@@ -130,12 +119,17 @@ async function trackingNumber(apiKey: string, orderId: string): Promise<string |
 	return order?.trackingNumber || undefined;
 }
 
-/** The postage label (with the customs form when the destination needs one) as a PDF. */
-async function label(apiKey: string, orderId: string): Promise<ArrayBuffer> {
+/**
+ * The postage label (with the customs form when the destination needs one) as a PDF, or null when
+ * the account may not download labels: the API serves them to Online Business Account customers
+ * only (403), so everyone else prints from Click & Drop itself.
+ */
+async function label(apiKey: string, orderId: string): Promise<ArrayBuffer | null> {
 	const response = await fetch(
 		`${ORDERS_URL}/${encodeURIComponent(orderId)}/label?documentType=postageLabel&includeReturnsLabel=false&includeCN=true`,
 		{ headers: headers(apiKey, { Accept: 'application/pdf' }) }
 	);
+	if (response.status === 403) return null;
 	if (!response.ok)
 		throw new Error(`Click & Drop label for order ${orderId} failed (${response.status})`);
 	return response.arrayBuffer();
@@ -155,8 +149,8 @@ export class RoyalMailClient {
 		return deleteOrder(this.apiKey, orderId);
 	}
 
-	/** The postage label (and customs form when needed) as a PDF. */
-	label(orderId: string): Promise<ArrayBuffer> {
+	/** The postage label (and customs form when needed) as a PDF; null if the account may not. */
+	label(orderId: string): Promise<ArrayBuffer | null> {
 		return label(this.apiKey, orderId);
 	}
 

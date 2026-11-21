@@ -54,20 +54,18 @@ export const FulfilmentManager = {
 		if (order.status !== 'paid') {
 			throw Error400(`This order is ${order.status}, so it cannot have a label.`);
 		}
-		if (order.labelCreatedAt && order.royalMailOrderId) return;
+		const client = ShopClients.royalMail();
+		if (order.labelCreatedAt && order.royalMailOrderId) {
+			const pdf = await client.label(order.royalMailOrderId);
+			return { pdf: pdf !== null, royalMailOrderId: order.royalMailOrderId };
+		}
 
 		const weightGrams = order.weightGrams ?? estimatedWeightGrams;
 		if (weightGrams < 1) throw Error400('Set the parcel weight before printing the label.');
-		const { packageHeightMm, packageLengthMm, packageWidthMm } = order;
-		const dimensions =
-			packageHeightMm && packageLengthMm && packageWidthMm
-				? { heightMm: packageHeightMm, lengthMm: packageLengthMm, widthMm: packageWidthMm }
-				: null;
 
 		const db = shopping().db();
 		const fulfilment = new FulfilmentService(db);
 		const shipping = new ShippingService(db);
-		const client = ShopClients.royalMail();
 		if (order.royalMailOrderId) await client.deleteOrder(order.royalMailOrderId);
 		const royalMailOrderId = await client.createOrder({
 			address: {
@@ -80,7 +78,6 @@ export const FulfilmentManager = {
 				state: null,
 			},
 			createdAt: order.createdAt,
-			dimensions,
 			email: order.email,
 			number: order.number,
 			packageFormat: order.packageFormat,
@@ -93,7 +90,7 @@ export const FulfilmentManager = {
 		});
 		// Keep the new id before fetching the label, so a failed fetch can be retried without a duplicate.
 		await fulfilment.update(order.id, { royalMailOrderId });
-		await client.label(royalMailOrderId);
+		const pdf = await client.label(royalMailOrderId);
 
 		const now = Date.now();
 		await fulfilment.update(order.id, {
@@ -103,6 +100,7 @@ export const FulfilmentManager = {
 			packingStartedAt: order.packingStartedAt ?? now,
 			weightGrams,
 		});
+		return { pdf: pdf !== null, royalMailOrderId };
 	},
 
 	/**
@@ -201,7 +199,9 @@ export const FulfilmentManager = {
 		const order = await findOrThrow(number);
 		if (!order.royalMailOrderId || !order.labelCreatedAt)
 			throw Error404('No label for this order yet.');
-		return ShopClients.royalMail().label(order.royalMailOrderId);
+		const pdf = await ShopClients.royalMail().label(order.royalMailOrderId);
+		if (!pdf) throw Error404('Royal Mail only offers this label in Click & Drop. Print it there.');
+		return pdf;
 	},
 
 	list(filter: Parameters<FulfilmentService['list']>[0], query: string) {

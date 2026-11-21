@@ -17,7 +17,6 @@ export const Packing = {
 	FORMAT_LABELS: {
 		largeLetter: 'Large letter',
 		letter: 'Letter',
-		mediumParcel: 'Medium parcel',
 		parcel: 'Parcel',
 		smallParcel: 'Small parcel',
 	} satisfies Record<PackageFormat, string>,

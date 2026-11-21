@@ -180,13 +180,7 @@ export const ORDER_STATUSES = ['pending', 'paid', 'shipped', 'cancelled', 'refun
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 /** Click & Drop package formats a parcel can be sent as. */
-export const PACKAGE_FORMATS = [
-	'smallParcel',
-	'mediumParcel',
-	'parcel',
-	'largeLetter',
-	'letter',
-] as const;
+export const PACKAGE_FORMATS = ['letter', 'largeLetter', 'smallParcel', 'parcel'] as const;
 export type PackageFormat = (typeof PACKAGE_FORMATS)[number];
 
 /** Guest checkout: an order belongs to an email address, not an account. */
@@ -213,9 +207,6 @@ export const orders = sqliteTable(
 		number: text('number').notNull().unique(),
 		/** Parcel size in mm, as measured when packing. All three or none. */
 		packageFormat: text('package_format', { enum: PACKAGE_FORMATS }).notNull().default('parcel'),
-		packageHeightMm: integer('package_height_mm'),
-		packageLengthMm: integer('package_length_mm'),
-		packageWidthMm: integer('package_width_mm'),
 		/** When the parcel was packed. Dispatching fills it in if the step was skipped. */
 		packedAt: integer('packed_at'),
 		/** When someone started packing it, so two people don't pack the same order. */

@@ -53,20 +53,11 @@ export const updateOrderForm = Remote.Form(OrderStepSchema, async ({ number, ste
 	return FormResult.ok(STEP_MESSAGES[step]);
 });
 
-export const parcelForm = Remote.Form(
-	ParcelSchema,
-	async ({ format, number, weightGrams, ...size }) => {
-		await FulfilmentManager.saveParcel(number, {
-			format,
-			heightMm: size.heightMm ?? null,
-			lengthMm: size.lengthMm ?? null,
-			weightGrams,
-			widthMm: size.widthMm ?? null,
-		});
-		await getOrder(number).refresh();
-		return FormResult.ok('Parcel details saved.');
-	}
-);
+export const parcelForm = Remote.Form(ParcelSchema, async ({ format, number, weightGrams }) => {
+	await FulfilmentManager.saveParcel(number, { format, weightGrams });
+	await getOrder(number).refresh();
+	return FormResult.ok('Parcel details saved.');
+});
 
 export const getShippingServices = Remote.Query(() => FulfilmentManager.shippingServices());
 
@@ -80,10 +71,14 @@ export const detailsForm = Remote.Form(OrderDetailsSchema, async ({ number, ...d
 	);
 });
 
-/** Creates the label in Click & Drop. The page then opens it from `/orders/<number>/label`. */
+/**
+ * Creates the label in Click & Drop. With `pdf` the page opens it from `/orders/<number>/label`;
+ * without, the account prints from Click & Drop itself.
+ */
 export const createOrderLabel = Remote.Cmd(OrderNumber, async (number) => {
-	await FulfilmentManager.createLabel(number);
+	const label = await FulfilmentManager.createLabel(number);
 	await getOrder(number).refresh();
+	return label;
 });
 
 export const refundForm = Remote.Form(RefundSchema, async ({ amount, number }) => {
