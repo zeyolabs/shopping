@@ -5,6 +5,11 @@ import { PACKAGE_FORMATS } from '../db/schema';
 import { FormInput } from '../utils/form-input';
 import { BULK_DISPATCH_LIMIT, ORDER_FILTERS } from './filters';
 
+/** The shop's own numbers (`KC-7F3K9Q`), or a number kept from an imported legacy shop. */
+export const OrderNumber = z
+	.string()
+	.regex(/^(?:[A-Z]{2,5}-[A-Z0-9]{6}|[A-Z0-9]{8,20})$/, 'invalid order number');
+
 export const OrderListSchema = z.object({
 	filter: z.enum(ORDER_FILTERS).default('to-ship'),
 	q: z.string().max(100).default(''),
@@ -12,7 +17,7 @@ export const OrderListSchema = z.object({
 
 /** Royal Mail tracking numbers are letters and digits (e.g. AB123456789GB); blank means untracked. */
 export const ShipSchema = z.object({
-	number: z.string().regex(/^[A-Z]{2,5}-[A-Z0-9]{6}$/, 'invalid order number'),
+	number: OrderNumber,
 	/** Tick to dispatch without emailing the customer (e.g. the email already went another way). */
 	skipEmail: SchemaForm.Boolean,
 	trackingNumber: z
@@ -25,8 +30,6 @@ export const ShipSchema = z.object({
 			])
 		),
 });
-
-export const OrderNumber = z.string().regex(/^[A-Z]{2,5}-[A-Z0-9]{6}$/, 'invalid order number');
 
 export const ORDER_STEPS = ['start', 'pack', 'hold', 'release'] as const;
 export type OrderStep = (typeof ORDER_STEPS)[number];
