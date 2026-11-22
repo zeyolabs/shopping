@@ -111,7 +111,8 @@ export const FulfilmentManager = {
 	async saveDetails(number: string, details: OrderDetails) {
 		const db = shopping().db();
 		if (details.shippingService) {
-			const known = await new ShippingService(db).services();
+			const shipping = new ShippingService(db);
+			const known = await shipping.services();
 			if (!known.some((s) => s.service === details.shippingService))
 				throw Error400('Choose one of the shop’s postage services.');
 		}
@@ -132,7 +133,8 @@ export const FulfilmentManager = {
 
 	/** Postage services the admin can pick when correcting an order. */
 	shippingServices() {
-		return new ShippingService(shopping().db()).services();
+		const shipping = new ShippingService(shopping().db());
+		return shipping.services();
 	},
 
 	/**

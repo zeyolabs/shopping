@@ -33,6 +33,9 @@
 	<meta content={description} property="og:description" />
 	<meta content={canonical} property="og:url" />
 	<meta content="website" property="og:type" />
+	{#if context.shareImage}
+		<meta content={context.shareImage} property="og:image" />
+	{/if}
 </svelte:head>
 
 {#if heading}

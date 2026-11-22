@@ -72,8 +72,9 @@ export class FulfilmentService {
 		]);
 		if (!address) return undefined;
 		const productIds = items.flatMap((item) => (item.productId === null ? [] : [item.productId]));
+		const coverService = new CoverService(this.db);
 		const [covers, estimatedWeightGrams] = await Promise.all([
-			new CoverService(this.db).covers(productIds),
+			coverService.covers(productIds),
 			this.estimateWeight(items),
 		]);
 		return {
