@@ -26,35 +26,39 @@ export const variationGroups = sqliteTable('variation_groups', {
 	name: text('name').notNull(),
 });
 
-export const products = sqliteTable('products', {
-	active: integer('active', { mode: 'boolean' }).notNull().default(true),
-	/** Pre-discount price shown struck through, when higher than `pricePence`. */
-	comparePricePence: integer('compare_price_pence'),
-	createdAt: integer('created_at').notNull(),
-	description: text('description').notNull().default(''),
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	/** Show "only N left" when the sellable count is at or below this. Null: never. */
-	lowStockThreshold: integer('low_stock_threshold'),
-	massGrams: integer('mass_grams').notNull().default(0),
-	maxPerOrder: integer('max_per_order').notNull().default(10),
-	name: text('name').notNull(),
-	/** Single units sold together as one purchase; `stock` is held in single units. */
-	packSize: integer('pack_size').notNull().default(1),
-	pricePence: integer('price_pence').notNull(),
-	/** When the product last went from not sellable to sellable (set by `StockService.setStock`). */
-	restockedAt: integer('restocked_at'),
-	shortDescription: text('short_description').notNull().default(''),
-	sku: text('sku').notNull().unique(),
-	slug: text('slug').notNull().unique(),
-	/** Purchases counted when an order is paid. */
-	sold: integer('sold').notNull().default(0),
-	sortOrder: integer('sort_order').notNull().default(0),
-	/** Units in stock, in single units (a product sold in packs of 10 with 30 in stock sells 3). */
-	stock: integer('stock').notNull().default(0),
-	variationGroupId: integer('variation_group_id').references(() => variationGroups.id),
-	/** This product's option within its variation group, e.g. "Black". */
-	variationLabel: text('variation_label'),
-});
+export const products = sqliteTable(
+	'products',
+	{
+		active: integer('active', { mode: 'boolean' }).notNull().default(true),
+		/** Pre-discount price shown struck through, when higher than `pricePence`. */
+		comparePricePence: integer('compare_price_pence'),
+		createdAt: integer('created_at').notNull(),
+		description: text('description').notNull().default(''),
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		/** Show "only N left" when the sellable count is at or below this. Null: never. */
+		lowStockThreshold: integer('low_stock_threshold'),
+		massGrams: integer('mass_grams').notNull().default(0),
+		maxPerOrder: integer('max_per_order').notNull().default(10),
+		name: text('name').notNull(),
+		/** Single units sold together as one purchase; `stock` is held in single units. */
+		packSize: integer('pack_size').notNull().default(1),
+		pricePence: integer('price_pence').notNull(),
+		/** When the product last went from not sellable to sellable (set by `StockService.setStock`). */
+		restockedAt: integer('restocked_at'),
+		shortDescription: text('short_description').notNull().default(''),
+		sku: text('sku').notNull().unique(),
+		slug: text('slug').notNull().unique(),
+		/** Purchases counted when an order is paid. */
+		sold: integer('sold').notNull().default(0),
+		sortOrder: integer('sort_order').notNull().default(0),
+		/** Units in stock, in single units (a product sold in packs of 10 with 30 in stock sells 3). */
+		stock: integer('stock').notNull().default(0),
+		variationGroupId: integer('variation_group_id').references(() => variationGroups.id),
+		/** This product's option within its variation group, e.g. "Black". */
+		variationLabel: text('variation_label'),
+	},
+	(t) => [index('products_variation_group_idx').on(t.variationGroupId)]
+);
 
 /**
  * A combined product is made of other products: it has no stock of its own, and what can be sold is
@@ -108,7 +112,11 @@ export const productCategories = sqliteTable(
 			.notNull()
 			.references(() => products.id),
 	},
-	(t) => [primaryKey({ columns: [t.productId, t.categoryId] })]
+	(t) => [
+		primaryKey({ columns: [t.productId, t.categoryId] }),
+		// A category page looks up its products by category.
+		index('product_categories_category_idx').on(t.categoryId, t.productId),
+	]
 );
 
 /** File names in the R2 bucket (products/<file>). The lowest position is the cover. */
