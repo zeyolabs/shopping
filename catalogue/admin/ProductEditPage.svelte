@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
@@ -11,7 +12,7 @@
 	let { id }: { id?: number } = $props();
 </script>
 
-<svelte:head><title>{id ? 'Edit product' : 'New product'} · Admin</title></svelte:head>
+<Head title={id ? 'Edit product' : 'New product'} />
 
 <Text><a href={resolve('/products')}>← Products</a></Text>
 <Title class="mt-2 mb-6" level={1} size="md">{id ? 'Edit product' : 'New product'}</Title>

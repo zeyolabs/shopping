@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -22,7 +23,7 @@
 	let editing = $state<Category | null | undefined>(undefined);
 </script>
 
-<svelte:head><title>Categories · Admin</title></svelte:head>
+<Head title="Categories" />
 
 <Text><a href={resolve('/products')}>← Products</a></Text>
 <div class="mt-2 flex items-center justify-between">

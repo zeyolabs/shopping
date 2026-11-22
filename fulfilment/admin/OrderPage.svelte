@@ -5,6 +5,7 @@
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import { CheckboxField, Form, NumberField, SelectField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -63,7 +64,7 @@
 	});
 </script>
 
-<svelte:head><title>{number} · Admin</title></svelte:head>
+<Head title={number} />
 
 <Text><a href={resolve('/orders')}>← Orders</a></Text>
 

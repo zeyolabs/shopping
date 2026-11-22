@@ -4,6 +4,7 @@
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -28,7 +29,7 @@
 	const date = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeZone: 'Europe/London' });
 </script>
 
-<svelte:head><title>Reviews · Admin</title></svelte:head>
+<Head title="Reviews" />
 
 <Title level={1} size="md">Reviews</Title>
 <Text class="mt-1" color="secondary">

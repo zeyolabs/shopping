@@ -3,6 +3,7 @@
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -11,7 +12,7 @@
 	import { getAdminBundles } from '../admin.remote';
 </script>
 
-<svelte:head><title>Bundles · Admin</title></svelte:head>
+<Head title="Bundles" />
 
 <Text><a href={resolve('/products')}>← Products</a></Text>
 <Cluster class="mt-2" gap="sm" justify="between">

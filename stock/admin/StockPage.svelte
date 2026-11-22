@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
@@ -9,7 +10,7 @@
 	import StockRow from './StockRow.svelte';
 </script>
 
-<svelte:head><title>Stock</title></svelte:head>
+<Head title="Stock" />
 
 <Title level={1} size="md">Stock</Title>
 <Text class="mt-1" color="secondary">
