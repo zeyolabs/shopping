@@ -68,7 +68,7 @@
 		"@eslint/js": "10.0.1",
 		"@sveltejs/kit": "3.2.0",
 		"@zeyolabs/kit": "2026.11.42",
-		"@zeyolabs/ui": "2026.11.40",
+		"@zeyolabs/ui": "2026.11.41",
 		"drizzle-orm": "0.45.4",
 		"eslint": "10.15.0",
 		"eslint-config-prettier": "10.1.8",
