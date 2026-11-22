@@ -4,6 +4,7 @@
 	import { CheckboxField, Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Grid from '@zeyolabs/ui/layout/Grid.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
 	import type { getAdminBundle } from '../admin.remote';
@@ -69,18 +70,18 @@
 >
 	<section class={section}>
 		<TextField name="name" {form}>Name</TextField>
-		<div class="grid gap-4 sm:grid-cols-2">
+		<Grid columns={2} gap="md" stack>
 			<TextField name="slug" {form} optional placeholder="made from the name">Slug (URL)</TextField>
 			<TextField name="image" {form} optional>Image file name</TextField>
-		</div>
+		</Grid>
 		<MessageField name="description" {form} optional>Description</MessageField>
-		<div class="grid gap-4 sm:grid-cols-3">
+		<Grid columns={3} gap="md" stack>
 			<NumberField name="sortOrder" {form} inputmode="numeric">Sort order</NumberField>
 			<NumberField name="discountPercent" {form} inputmode="numeric">
 				Bundle discount % (not for kits)
 			</NumberField>
 			<CheckboxField name="active" {form}>On sale in the shop</CheckboxField>
-		</div>
+		</Grid>
 	</section>
 
 	{#each stepRows as _, i (i)}
@@ -103,7 +104,7 @@
 				<label class="form-label" for="step-{i}-description">Help text (optional)</label>
 				<input id="step-{i}-description" {...steps[i].description.as('text')} class={input} />
 			</div>
-			<div class="grid gap-4 sm:grid-cols-2">
+			<Grid columns={2} gap="md" stack>
 				<div>
 					<label class="form-label" for="step-{i}-role">Kind of step</label>
 					<select id="step-{i}-role" {...steps[i].role.as('select')} class={input}>
@@ -123,8 +124,8 @@
 						inputmode="numeric"
 					/>
 				</div>
-			</div>
-			<div class="grid gap-4 sm:grid-cols-2">
+			</Grid>
+			<Grid columns={2} gap="md" stack>
 				<div>
 					<label class="form-label" for="step-{i}-min-choices">Fewest picks (0 = optional)</label>
 					<input
@@ -143,7 +144,7 @@
 						min="1"
 					/>
 				</div>
-			</div>
+			</Grid>
 			<div>
 				<label class="form-label" for="step-{i}-skus"
 					>Products offered, one SKU per line (a kit base as SKU=slots, e.g. BASE44=16)</label

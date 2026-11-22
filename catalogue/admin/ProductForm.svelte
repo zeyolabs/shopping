@@ -4,6 +4,7 @@
 	import { CheckboxField, Form, MessageField, NumberField, TextField } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Grid from '@zeyolabs/ui/layout/Grid.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
@@ -77,12 +78,12 @@
 	<section class={section}>
 		<Title level={2} size="sm">Basics</Title>
 		<TextField name="name" {form}>Name</TextField>
-		<div class="grid gap-4 sm:grid-cols-2">
+		<Grid columns={2} gap="md" stack>
 			<TextField name="slug" {form} optional placeholder="made from the name">Slug (URL)</TextField>
 			<TextField name="sku" {form}>SKU</TextField>
 			<TextField name="price" {form} inputmode="decimal">Price (£)</TextField>
 			<TextField name="comparePrice" {form} inputmode="decimal" optional>Was price (£)</TextField>
-		</div>
+		</Grid>
 		<CheckboxField name="active" {form}>On sale in the shop</CheckboxField>
 		{#if p && slug && p.slug !== slug}
 			<Text color="secondary">
@@ -150,7 +151,7 @@
 
 	<section class={section}>
 		<Title level={2} size="sm">Categories</Title>
-		<div class="grid gap-2 sm:grid-cols-2">
+		<Grid columns={2} gap="sm" stack>
 			{#each options.categories as category (category.id)}
 				<Cluster gap="xs" nowrap>
 					<input
@@ -162,7 +163,7 @@
 			{:else}
 				<Text color="secondary">No categories yet.</Text>
 			{/each}
-		</div>
+		</Grid>
 	</section>
 
 	<section class={section}>
@@ -173,7 +174,7 @@
 				"Black".
 			</Text>
 		</div>
-		<div class="grid gap-4 sm:grid-cols-2">
+		<Grid columns={2} gap="md" stack>
 			<div>
 				<label class="form-label" for="variation-group">Group</label>
 				<input
@@ -187,7 +188,7 @@
 				{#each options.variationGroups as group (group)}<option value={group}></option>{/each}
 			</datalist>
 			<TextField name="variationLabel" {form} optional>This option</TextField>
-		</div>
+		</Grid>
 	</section>
 
 	<section class={section}>
@@ -197,7 +198,7 @@
 				Stock itself is set on the Stock page{p ? ` (now ${p.stock} units)` : ''}.
 			</Text>
 		</div>
-		<div class="grid gap-4 sm:grid-cols-3">
+		<Grid columns={3} gap="md" stack>
 			<NumberField name="massGrams" {form} inputmode="numeric">Weight (g)</NumberField>
 			<NumberField name="maxPerOrder" {form} inputmode="numeric">Max per order</NumberField>
 			<NumberField name="packSize" {form} inputmode="numeric">Pack size (units)</NumberField>
@@ -205,7 +206,7 @@
 				"Only N left" from
 			</NumberField>
 			<NumberField name="sortOrder" {form} inputmode="numeric">Sort order</NumberField>
-		</div>
+		</Grid>
 	</section>
 
 	<section class={section}>

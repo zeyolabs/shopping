@@ -7,6 +7,7 @@
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Grid from '@zeyolabs/ui/layout/Grid.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
@@ -88,7 +89,7 @@
 			: ''}
 	</Text>
 
-	<div class="mt-6 grid gap-6 md:grid-cols-2">
+	<Grid class="mt-6" columns={2} gap="md" stack>
 		<section class="rounded-xl border border-[var(--bd)] bg-white p-5">
 			<Title level={2} size="sm">Ship to</Title>
 			<address class="mt-2 not-italic select-all">
@@ -164,7 +165,7 @@
 				{/if}
 			</dl>
 		</section>
-	</div>
+	</Grid>
 
 	{#if order.status === 'paid'}
 		{let stage = $derived(Packing.stage(order))}
