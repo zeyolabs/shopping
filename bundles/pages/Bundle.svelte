@@ -4,6 +4,7 @@
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -12,7 +13,6 @@
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 	import { shopContext } from '../../context';
-	import PageTitle from '../../ui/PageTitle.svelte';
 	import { ErrorMessage } from '../../utils/errors';
 	import { Images } from '../../utils/images';
 	import { Money } from '../../utils/money';
@@ -172,7 +172,8 @@
 	}
 </script>
 
-<PageTitle description={bundle.description.slice(0, 160)} title={bundle.name} />
+<Head description={bundle.description.slice(0, 160)} title={bundle.name} />
+<Title class="mb-10 text-[var(--primary-strong)]" level={1}>{bundle.name}</Title>
 
 {#if bundle.description}
 	<Text class="-mt-4 mb-4 max-w-prose whitespace-pre-line" color="secondary"

@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
 
 	import type { getShop } from '../client.remote';
 
 	import PageLinks from '../../ui/PageLinks.svelte';
-	import PageTitle from '../../ui/PageTitle.svelte';
 	import ProductCard from '../components/ProductCard.svelte';
 
 	let {
@@ -22,9 +24,16 @@
 		/** From the route's server `load` (`shopLoad`). */
 		shop: Awaited<ReturnType<typeof getShop>>;
 	} = $props();
+
+	// Each listing page is its own page, so `?page=N` stays in the canonical; other parameters don't.
+	const listingPage = $derived(Number(page.url.searchParams.get('page')) || 1);
+	const canonical = $derived(
+		listingPage > 1 ? `${page.url.pathname}?page=${listingPage}` : page.url.pathname
+	);
 </script>
 
-<PageTitle {description} title="Shop" />
+<Head {canonical} {description} title="Shop" />
+<Title class="mb-10 text-[var(--primary-strong)]" level={1}>Shop</Title>
 
 {#if intro}
 	<Text class="-mt-6 mb-6 max-w-prose" color="secondary">{intro}</Text>

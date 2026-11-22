@@ -2,16 +2,18 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import SkeletonText from '@zeyolabs/ui/skeleton/SkeletonText.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
 
 	import { getCheckoutOrder } from '../../orders/client.remote';
-	import PageTitle from '../../ui/PageTitle.svelte';
 
 	const sessionId = page.url.searchParams.get('session_id') ?? '';
 </script>
 
-<PageTitle description="Thank you for your order." title="Thank you" />
+<Head description="Thank you for your order." title="Thank you" />
+<Title class="mb-10 text-[var(--primary-strong)]" level={1}>Thank you</Title>
 
 <Boundary message="Could not load your order number. It will be in your confirmation email.">
 	<!-- `/checkout/complete` has already fulfilled the order and emptied the basket on the server. -->

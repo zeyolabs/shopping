@@ -36,7 +36,7 @@ service to a `const`. Services never read `shopping()` or secrets; managers and 
 | `bundles/`                | `BundleService`, bundle builder page, admin editor                                                                                                                                       |
 | `clients/`                | `StripeClient`, `RoyalMailClient`, `ShopClients` (both built with the shop's secrets, for managers)                                                                                      |
 | `mail/`                   | `defaultShopMail`: renders the emails and hands them to the app's `send`                                                                                                                 |
-| `utils/`, `ui/`, `db/`    | `Money`, `Images`, `FormInput`; `PageTitle`, `Stars`; the Drizzle schema                                                                                                                 |
+| `utils/`, `ui/`, `db/`    | `Money`, `Images`, `FormInput`; `Stars`; the Drizzle schema                                                                                                                              |
 | `config.ts`, `context.ts` | server config (`configureShopping`), browser context (`setShopContext`)                                                                                                                  |
 
 Apps import by path: `@zeyolabs/shopping/<folder>/<file>` (`.ts` implied, `.svelte` explicit).
@@ -67,7 +67,8 @@ Signup form and checkout stay in the app (Turnstile / rate limiter): the product
 
 Pages run in the browser too, so they cannot read the server config: the app's root layout calls
 `setShopContext({ imageBaseUrl, siteName, siteUrl, supportEmail })`; anything else arrives as
-data from a remote function or a `load`.
+data from a remote function or a `load`. Each page's `<head>` tags are `@zeyolabs/ui`'s `Head`
+(the layout calls `setHeadContext` too); the visible heading is a plain `Title`.
 
 Tests sit next to the code. Service tests run on a real in-memory D1 (`__fixtures__/db.ts`, built
 from `__fixtures__/schema.sql`, an app's generated migrations; regenerate it when the schema changes).
