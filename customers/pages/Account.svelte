@@ -2,13 +2,13 @@
 	import type { Snippet } from 'svelte';
 
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
 
-	import PageTitle from '../../ui/PageTitle.svelte';
 	import { Money } from '../../utils/money';
 	import { getMyOrders } from '../client.remote';
 
@@ -29,7 +29,8 @@
 	};
 </script>
 
-<PageTitle description="Your orders." title="Your account" />
+<Head description="Your orders." title="Your account" />
+<Title class="mb-10 text-[var(--primary-strong)]" level={1}>Your account</Title>
 
 <svelte:head>
 	<meta name="robots" content="noindex, nofollow" />

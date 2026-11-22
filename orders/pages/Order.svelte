@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
@@ -10,7 +11,6 @@
 	import { shopContext } from '../../context';
 	import { getOrderReviews } from '../../reviews/client.remote';
 	import ReviewForm from '../../reviews/components/ReviewForm.svelte';
-	import PageTitle from '../../ui/PageTitle.svelte';
 	import { Money } from '../../utils/money';
 	import { getOrderPage } from '../client.remote';
 	import { Orders } from '../library';
@@ -19,7 +19,8 @@
 	const date = new Intl.DateTimeFormat('en-GB', { dateStyle: 'long', timeZone: 'Europe/London' });
 </script>
 
-<PageTitle description="Check the status of your order." title="Your order" />
+<Head description="Check the status of your order." title="Your order" />
+<Title class="mb-10 text-[var(--primary-strong)]" level={1}>Your order</Title>
 
 <svelte:head>
 	<meta name="robots" content="noindex, nofollow, noarchive" />

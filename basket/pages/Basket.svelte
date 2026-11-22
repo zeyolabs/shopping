@@ -7,15 +7,16 @@
 	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import { Select } from '@zeyolabs/ui/form/primitives';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Stack from '@zeyolabs/ui/layout/Stack.svelte';
 	import SkeletonCard from '@zeyolabs/ui/skeleton/SkeletonCard.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
 	import { toast } from 'svelte-sonner';
 
 	import { shopContext } from '../../context';
-	import PageTitle from '../../ui/PageTitle.svelte';
 	import { ErrorMessage } from '../../utils/errors';
 	import { Images } from '../../utils/images';
 	import { Money } from '../../utils/money';
@@ -46,7 +47,8 @@
 	}
 </script>
 
-<PageTitle description="Your basket." title="Basket" />
+<Head description="Your basket." title="Basket" />
+<Title class="mb-10 text-[var(--primary-strong)]" level={1}>Basket</Title>
 
 <Boundary message="Could not load your basket.">
 	{let [summary, countries] = $derived(await Promise.all([getBasket(), getShippableCountries()]))}

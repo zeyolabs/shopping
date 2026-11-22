@@ -1,11 +1,12 @@
 <script lang="ts">
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
+	import Title from '@zeyolabs/ui/text/Title.svelte';
 
 	import type { searchShop } from '../client.remote';
 
-	import PageTitle from '../../ui/PageTitle.svelte';
 	import ProductCard from '../components/ProductCard.svelte';
 
 	let {
@@ -16,7 +17,8 @@
 	} = $props();
 </script>
 
-<PageTitle description="Search the shop." title="Search" />
+<Head description="Search the shop." title="Search" />
+<Title class="mb-10 text-[var(--primary-strong)]" level={1}>Search</Title>
 
 <svelte:head>
 	<meta name="robots" content="noindex, follow" />

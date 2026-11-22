@@ -6,6 +6,7 @@
 	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import ImageGallery from '@zeyolabs/ui/gallery/ImageGallery.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -18,7 +19,6 @@
 	import { shopContext } from '../../context';
 	import Reviews from '../../reviews/components/Reviews.svelte';
 	import { Stock } from '../../stock/library';
-	import PageTitle from '../../ui/PageTitle.svelte';
 	import Stars from '../../ui/Stars.svelte';
 	import { Images } from '../../utils/images';
 	import { Money } from '../../utils/money';
@@ -49,9 +49,8 @@
 		: 0
 )}
 
-<PageTitle
+<Head
 	description={(product.shortDescription || product.description).slice(0, 160)}
-	heading={false}
 	title={product.name}
 />
 
