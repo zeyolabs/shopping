@@ -348,3 +348,6 @@ ALTER TABLE `bundle_step_products` ADD `price_pence` integer;
 ALTER TABLE `orders` DROP COLUMN `package_height_mm`;--> statement-breakpoint
 ALTER TABLE `orders` DROP COLUMN `package_length_mm`;--> statement-breakpoint
 ALTER TABLE `orders` DROP COLUMN `package_width_mm`;
+--> statement-breakpoint
+CREATE INDEX `product_categories_category_idx` ON `product_categories` (`category_id`,`product_id`);--> statement-breakpoint
+CREATE INDEX `products_variation_group_idx` ON `products` (`variation_group_id`);
