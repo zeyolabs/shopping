@@ -6,8 +6,6 @@ import { getContext, setContext } from 'svelte';
  */
 export type ShopContext = {
 	imageBaseUrl: string;
-	/** Absolute URL of the picture link previews show for every page, if the site has one. */
-	shareImage?: string;
 	siteName: string;
 	siteUrl: string;
 	supportEmail: string;
