@@ -23,7 +23,7 @@ One folder per feature (library, client, service, manager, remote functions, pag
    order prefix, `db`, secret names, `mail`), imported by `hooks.server.ts`, and pass its secret
    names to `runWithContext`.
 2. In the root layout, `setShopContext({ imageBaseUrl, siteName, siteUrl, supportEmail })`, and
-   `setHeadContext({ siteName, siteUrl })` from `@zeyolabs/ui/head/context`: the shop pages' `<head>`
+   `setHeadContext({ siteName, siteUrl })` from `@zeyolabs/ui/head/context.ts`: the shop pages' `<head>`
    tags come from `@zeyolabs/ui`'s `Head`.
 3. Thin routes: render the pages (`<Basket startCheckout={...} />`, `<Shop description intro shop={data.shop} />`)
    and re-export handlers and loads from `@zeyolabs/shopping/<feature>/*.server`.

@@ -5,6 +5,7 @@
 	import Badge from '@zeyolabs/ui/badge/Badge.svelte';
 	import Boundary from '@zeyolabs/ui/boundary/Boundary.svelte';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
+	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -16,7 +17,7 @@
 	const q = $derived(page.url.searchParams.get('q') ?? '');
 </script>
 
-<svelte:head><title>Products · Admin</title></svelte:head>
+<Head title="Products" />
 
 <Cluster gap="sm" justify="between">
 	<Title level={1} size="md">Products</Title>
