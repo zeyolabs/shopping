@@ -8,6 +8,7 @@
 	import ImageGallery from '@zeyolabs/ui/gallery/ImageGallery.svelte';
 	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
+	import Grid from '@zeyolabs/ui/layout/Grid.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 	import Title from '@zeyolabs/ui/text/Title.svelte';
@@ -54,7 +55,7 @@
 	title={product.name}
 />
 
-<div class="grid gap-8 md:grid-cols-2 lg:gap-14">
+<Grid columns={2} gap="lg" stack>
 	<div class="md:sticky md:top-6 md:self-start">
 		{#key product.id}
 			<ImageGallery
@@ -167,7 +168,7 @@
 			</dl>
 		{/if}
 	</div>
-</div>
+</Grid>
 
 {#if text.paragraphs.length > 0 || text.specs.length > 4}
 	<section
