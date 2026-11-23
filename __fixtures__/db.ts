@@ -30,6 +30,7 @@ export function shopTestDb() {
 				slug: `product-${n}`,
 				stock: 10,
 				...values,
+				sellable: (values.stock ?? 10) >= (values.packSize ?? 1),
 			})
 			.returning();
 		return row;

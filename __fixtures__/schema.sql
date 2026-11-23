@@ -350,4 +350,6 @@ ALTER TABLE `orders` DROP COLUMN `package_length_mm`;--> statement-breakpoint
 ALTER TABLE `orders` DROP COLUMN `package_width_mm`;
 --> statement-breakpoint
 CREATE INDEX `product_categories_category_idx` ON `product_categories` (`category_id`,`product_id`);--> statement-breakpoint
-CREATE INDEX `products_variation_group_idx` ON `products` (`variation_group_id`);
+CREATE INDEX `products_variation_group_idx` ON `products` (`variation_group_id`);--> statement-breakpoint
+ALTER TABLE `products` ADD `sellable` integer DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE INDEX `products_listing_idx` ON `products` (`active`,`sellable` desc,`sort_order`,`name`);
