@@ -1,5 +1,5 @@
 import { Error400, Error404 } from '@zeyolabs/kit/utils/errors';
-import { asc, count, eq, inArray, type SQL, sql } from 'drizzle-orm';
+import { asc, count, eq, inArray, or, type SQL, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 
@@ -115,6 +115,7 @@ export class StockService {
 					.insert(productComponents)
 					.values({ componentId: c.componentId, productId, quantity: c.quantity })
 			),
+			this.refreshSellable(productId),
 		];
 	}
 
@@ -152,9 +153,11 @@ export class StockService {
 		]);
 		const packSize = new Map(rows.map((r) => [r.id, r.packSize]));
 		const statements = [];
+		const takenFrom = new Set<number>();
 		for (const line of lines) {
 			if (line.singleUnits) {
 				statements.push(this.decrement(line.productId, line.quantity));
+				takenFrom.add(line.productId);
 				continue;
 			}
 			const parts = components.get(line.productId);
@@ -163,11 +166,13 @@ export class StockService {
 					statements.push(
 						this.decrement(part.componentId, line.quantity * part.quantity * part.packSize)
 					);
+					takenFrom.add(part.componentId);
 				}
 			} else {
 				statements.push(
 					this.decrement(line.productId, line.quantity * (packSize.get(line.productId) ?? 1))
 				);
+				takenFrom.add(line.productId);
 			}
 			statements.push(
 				this.db
@@ -176,7 +181,28 @@ export class StockService {
 					.where(eq(products.id, line.productId))
 			);
 		}
+		for (const id of takenFrom) statements.push(this.refreshSellable(id));
 		return statements;
+	}
+
+	/** Recomputes `sellable` for every product, for a migration or a repair. Reads the whole table. */
+	async refreshAllSellable(): Promise<void> {
+		await this.db.update(products).set({ sellable: sql`${sellableSql}` });
+	}
+
+	/**
+	 * The statement that recomputes `sellable` for a product and for the combined products it is a
+	 * component of. Every write that can change what is sellable ends its batch with it.
+	 */
+	refreshSellable(productId: number | SQL) {
+		const partOf = this.db
+			.select({ id: productComponents.productId })
+			.from(productComponents)
+			.where(eq(productComponents.componentId, productId));
+		return this.db
+			.update(products)
+			.set({ sellable: sql`${sellableSql}` })
+			.where(or(eq(products.id, productId), inArray(products.id, partOf)));
 	}
 
 	/** Replaces a combined product's components (checked). An empty list makes it a plain product. */
@@ -195,14 +221,17 @@ export class StockService {
 	 * goes from not sellable to sellable, so it cannot drift.
 	 */
 	async setStock(productId: number, units: number, now = Date.now()): Promise<void> {
-		const updated = await this.db
-			.update(products)
-			.set({
-				restockedAt: sql`case when ${products.stock} < ${products.packSize} and ${units} >= ${products.packSize} then ${now} else ${products.restockedAt} end`,
-				stock: units,
-			})
-			.where(eq(products.id, productId))
-			.returning({ id: products.id });
+		const [updated] = await this.db.batch([
+			this.db
+				.update(products)
+				.set({
+					restockedAt: sql`case when ${products.stock} < ${products.packSize} and ${units} >= ${products.packSize} then ${now} else ${products.restockedAt} end`,
+					stock: units,
+				})
+				.where(eq(products.id, productId))
+				.returning({ id: products.id }),
+			this.refreshSellable(productId),
+		]);
 		if (updated.length === 0) throw Error404('Product not found.');
 	}
 

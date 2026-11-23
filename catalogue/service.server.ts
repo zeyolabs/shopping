@@ -10,7 +10,7 @@ import {
 	products,
 	productSlugAliases,
 } from '../db/schema';
-import { sellableSql, StockService } from '../stock/service.server';
+import { StockService } from '../stock/service.server';
 import { CoverService } from './covers.server';
 import { Paging, Search } from './library';
 
@@ -89,7 +89,7 @@ export class CatalogueService {
 				.select()
 				.from(products)
 				.where(where)
-				.orderBy(desc(sellableSql), asc(products.sortOrder), asc(products.name))
+				.orderBy(desc(products.sellable), asc(products.sortOrder), asc(products.name))
 				.limit(Paging.PER_PAGE)
 				.offset((page - 1) * Paging.PER_PAGE),
 		]);

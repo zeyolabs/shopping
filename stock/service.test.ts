@@ -16,7 +16,8 @@ const MIGRATIONS = [
 		mass_grams integer NOT NULL DEFAULT 0, max_per_order integer NOT NULL DEFAULT 10, name text NOT NULL,
 		pack_size integer NOT NULL DEFAULT 1, price_pence integer NOT NULL, restocked_at integer,
 		short_description text NOT NULL DEFAULT '', sku text NOT NULL UNIQUE, slug text NOT NULL UNIQUE,
-		sold integer NOT NULL DEFAULT 0, sort_order integer NOT NULL DEFAULT 0, stock integer NOT NULL DEFAULT 0,
+		sellable integer NOT NULL DEFAULT 0, sold integer NOT NULL DEFAULT 0, sort_order integer NOT NULL DEFAULT 0,
+		stock integer NOT NULL DEFAULT 0,
 		variation_group_id integer, variation_label text)`,
 	`CREATE TABLE order_items (
 		id integer PRIMARY KEY AUTOINCREMENT, name text NOT NULL, order_id integer NOT NULL,
@@ -222,5 +223,64 @@ describe('StockService', () => {
 			.from(schema.products)
 			.where(eq(schema.products.id, set.id));
 		expect(Boolean(after[0].sellable)).toBe(true);
+	});
+	describe('the stored sellable flag', () => {
+		async function flagsMatch(ids: number[]) {
+			const rows = await db()
+				.select({
+					derived: sql<number>`${sellableSql}`,
+					id: schema.products.id,
+					stored: schema.products.sellable,
+				})
+				.from(schema.products)
+				.where(sql`${schema.products.id} in (${sql.join(ids, sql`, `)})`);
+			return rows.map((r) => [r.id, r.stored, Boolean(r.derived)]);
+		}
+
+		it('follows setStock, for the product and for sets it is a component of', async () => {
+			const part = await product({ stock: 0 });
+			const plain = await product({ stock: 0 });
+			const set = await product();
+			await service().setComponents(set.id, [{ componentId: part.id, quantity: 2 }]);
+			await service().setStock(plain.id, 3);
+			await service().setStock(part.id, 5);
+			const rows = await flagsMatch([part.id, plain.id, set.id]);
+			expect(rows).toEqual(rows.map(([id, , derived]) => [id, derived, derived]));
+			const byId = new Map(rows.map(([id, stored]) => [id, stored]));
+			expect([byId.get(plain.id), byId.get(set.id)]).toEqual([true, true]);
+			await service().setStock(part.id, 1);
+			expect((await flagsMatch([set.id]))[0]).toEqual([set.id, false, false]);
+		});
+
+		it('follows a paid order, for the line and for sets that share its component', async () => {
+			const part = await product({ stock: 4 });
+			const set = await product();
+			await service().setComponents(set.id, [{ componentId: part.id, quantity: 1 }]);
+			expect((await flagsMatch([set.id]))[0][1]).toBe(true);
+			await db().batch(
+				(await service().paidStatements([
+					{ productId: part.id, quantity: 4 },
+				])) as unknown as Parameters<ShopDb['batch']>[0]
+			);
+			expect(await flagsMatch([part.id, set.id])).toEqual([
+				[part.id, false, false],
+				[set.id, false, false],
+			]);
+		});
+
+		it('follows setComponents, including turning a set back into a plain product', async () => {
+			const part = await product({ stock: 0 });
+			const set = await product({ stock: 9 });
+			await service().setComponents(set.id, [{ componentId: part.id, quantity: 1 }]);
+			expect((await flagsMatch([set.id]))[0]).toEqual([set.id, false, false]);
+			await service().setComponents(set.id, []);
+			expect((await flagsMatch([set.id]))[0]).toEqual([set.id, true, true]);
+		});
+
+		it('refreshAllSellable repairs every product', async () => {
+			const a = await product({ stock: 5 });
+			await service().refreshAllSellable();
+			expect((await flagsMatch([a.id]))[0]).toEqual([a.id, true, true]);
+		});
 	});
 });

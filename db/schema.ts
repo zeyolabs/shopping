@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
 	index,
 	integer,
@@ -45,6 +45,8 @@ export const products = sqliteTable(
 		pricePence: integer('price_pence').notNull(),
 		/** When the product last went from not sellable to sellable (set by `StockService.setStock`). */
 		restockedAt: integer('restocked_at'),
+		/** Whether the product can be bought now; kept by `StockService` so listings can sort on it. */
+		sellable: integer('sellable', { mode: 'boolean' }).notNull().default(false),
 		shortDescription: text('short_description').notNull().default(''),
 		sku: text('sku').notNull().unique(),
 		slug: text('slug').notNull().unique(),
@@ -57,7 +59,10 @@ export const products = sqliteTable(
 		/** This product's option within its variation group, e.g. "Black". */
 		variationLabel: text('variation_label'),
 	},
-	(t) => [index('products_variation_group_idx').on(t.variationGroupId)]
+	(t) => [
+		index('products_listing_idx').on(t.active, sql`${t.sellable} desc`, t.sortOrder, t.name),
+		index('products_variation_group_idx').on(t.variationGroupId),
+	]
 );
 
 /**
