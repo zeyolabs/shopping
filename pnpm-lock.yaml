@@ -35,11 +35,11 @@ importers:
         specifier: 3.2.0
         version: 3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6))
       '@zeyolabs/kit':
-        specifier: 2026.11.44
-        version: 2026.11.44(49776c698d8d76cdb30463227d8051e9)
+        specifier: 2026.11.48
+        version: 2026.11.48(aff574f151662d2dc976e455ac8c6a88)
       '@zeyolabs/ui':
         specifier: 2026.11.44
-        version: 2026.11.44(@cloudflare/workers-types@5.20261115.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.44(49776c698d8d76cdb30463227d8051e9))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))
+        version: 2026.11.44(@cloudflare/workers-types@5.20261115.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.48(aff574f151662d2dc976e455ac8c6a88))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(@cloudflare/workers-types@5.20261115.1)(@opentelemetry/api@1.10.0)(mysql2@3.24.6(@types/node@26.6.6))(pg@8.23.1)
@@ -934,14 +934,17 @@ packages:
   '@vitest/spy@5.1.1':
     resolution: {integrity: sha512-6K8C6alQG1/Yc8/ZI22iJS7JEsxPdVzqtqDq+/xM4Z0mGVykemMVjLhqMy/q6/IHYG3kKD8hKSwRen/ZdyI9vQ==}
 
-  '@zeyolabs/kit@2026.11.44':
-    resolution: {integrity: sha512-DRj2ZhFBHJwjHVnYBkqwd+JJCj4CJf89rD5JuZxEjDpXC/ZWqsdvqK5PH9UFC2icTlz/E7uZqBgAJZFAUUaDOA==}
+  '@zeyolabs/kit@2026.11.48':
+    resolution: {integrity: sha512-Nd4FYifE8dsAXp51y+ryXPzQ3hJoT8mBPS0+4qnTiC5I/+qwk/cFtqS0TNVq50oC1DhXGCJffgIBGk2djthpXg==}
     engines: {node: '>=24.0.0', pnpm: ^11.0.0}
     peerDependencies:
       '@cloudflare/workers-types': '*'
       '@electric-sql/pglite': ^0.5.8
       '@sentry/sveltekit': ^11.4.0
+      '@sveltejs/adapter-cloudflare': ^9.0.0
       '@sveltejs/kit': ^3.1.1
+      '@sveltejs/vite-plugin-svelte': ^7.0.0
+      '@tailwindcss/vite': ^4.0.0
       drizzle-orm: ^0.45.3
       eslint: ^9.39.4 || ^10.0.0
       miniflare: ^4.20260730.0
@@ -952,6 +955,12 @@ packages:
       '@cloudflare/workers-types':
         optional: true
       '@electric-sql/pglite':
+        optional: true
+      '@sveltejs/adapter-cloudflare':
+        optional: true
+      '@sveltejs/vite-plugin-svelte':
+        optional: true
+      '@tailwindcss/vite':
         optional: true
       eslint:
         optional: true
@@ -2854,7 +2863,7 @@ snapshots:
 
   '@vitest/spy@5.1.1': {}
 
-  '@zeyolabs/kit@2026.11.44(49776c698d8d76cdb30463227d8051e9)':
+  '@zeyolabs/kit@2026.11.48(aff574f151662d2dc976e455ac8c6a88)':
     dependencies:
       '@bufbuild/protobuf': 2.17.0
       '@clickhouse/client-web': 1.25.0
@@ -2886,6 +2895,7 @@ snapshots:
       zod: 4.6.7
     optionalDependencies:
       '@cloudflare/workers-types': 5.20261115.1
+      '@sveltejs/vite-plugin-svelte': 7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))
       eslint: 10.15.0(supports-color@10.2.2)
       miniflare: 4.20260730.0(@types/node@26.6.6)
       vite: 8.3.5(@types/node@26.6.6)
@@ -2899,14 +2909,14 @@ snapshots:
       - typescript
       - wrangler
 
-  '@zeyolabs/ui@2026.11.44(@cloudflare/workers-types@5.20261115.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.44(49776c698d8d76cdb30463227d8051e9))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))':
+  '@zeyolabs/ui@2026.11.44(@cloudflare/workers-types@5.20261115.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.48(aff574f151662d2dc976e455ac8c6a88))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))':
     dependencies:
       '@internationalized/date': 3.12.4
       '@lucide/svelte': 1.73.0(svelte@5.57.3(@typescript-eslint/types@8.72.2))
       '@sentry/sveltekit': 11.12.0(@cloudflare/workers-types@5.20261115.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))
       '@standard-schema/spec': 1.1.0
       '@sveltejs/kit': 3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6))
-      '@zeyolabs/kit': 2026.11.44(49776c698d8d76cdb30463227d8051e9)
+      '@zeyolabs/kit': 2026.11.48(aff574f151662d2dc976e455ac8c6a88)
       bits-ui: 2.21.0(@internationalized/date@3.12.4)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))
       flickity: 3.0.0
       flickity-fullscreen: 2.0.0(flickity@3.0.0)
