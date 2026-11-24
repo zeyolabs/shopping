@@ -35,11 +35,11 @@ importers:
         specifier: 3.2.0
         version: 3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6))
       '@zeyolabs/kit':
-        specifier: 2026.11.52
-        version: 2026.11.52(1c3823a04743d4c1eab12857801d16b4)
+        specifier: 2026.11.55
+        version: 2026.11.55(1c3823a04743d4c1eab12857801d16b4)
       '@zeyolabs/ui':
-        specifier: 2026.11.48
-        version: 2026.11.48(@cloudflare/workers-types@5.20261123.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.52(1c3823a04743d4c1eab12857801d16b4))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))
+        specifier: 2026.11.51
+        version: 2026.11.51(@cloudflare/workers-types@5.20261123.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.55(1c3823a04743d4c1eab12857801d16b4))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(@cloudflare/workers-types@5.20261123.1)(@opentelemetry/api@1.10.0)(mysql2@3.24.6(@types/node@26.6.6))(pg@8.23.1)
@@ -433,6 +433,11 @@ packages:
 
   '@lucide/svelte@1.73.0':
     resolution: {integrity: sha512-Rz1uA9aTJ7HA/j2Hf9Dm2OVM8NtkzHnNeIQvVWoUkpf1ZD/7dR9cB4ftjbOiWAeJrKkEAVvTDrcVtITFdx6KAA==}
+    peerDependencies:
+      svelte: ^5
+
+  '@lucide/svelte@1.78.0':
+    resolution: {integrity: sha512-j/UQMuE3o/JU4oq3DAUlQpmTCG5JsLi4LxEpNS7mIGqVxfmV8wozq3MeOSNHcsk07dHC0RZtUfpBrxyEMelOHA==}
     peerDependencies:
       svelte: ^5
 
@@ -997,12 +1002,12 @@ packages:
   '@vitest/spy@5.1.1':
     resolution: {integrity: sha512-6K8C6alQG1/Yc8/ZI22iJS7JEsxPdVzqtqDq+/xM4Z0mGVykemMVjLhqMy/q6/IHYG3kKD8hKSwRen/ZdyI9vQ==}
 
-  '@zeyolabs/kit@2026.11.52':
-    resolution: {integrity: sha512-kcsniWQwTF8lHOUZoEo/zodTB5voBlhSxzWWlQVTffzwM1In9e9cCmD9syHI8C4IryFDAMUxg0yrJY1blNWiOg==}
+  '@zeyolabs/kit@2026.11.55':
+    resolution: {integrity: sha512-RPsDkSji8Zrwc/ykGYoFIerwvUPDS7vkLmV3ntoWJR+WgMT4kiyH8+pX0fiESo6IuFDMu/qpetBDMBvZi/rRZQ==}
     engines: {node: '>=24.0.0', pnpm: ^11.0.0}
     peerDependencies:
       '@cloudflare/workers-types': '*'
-      '@electric-sql/pglite': ^0.5.8
+      '@electric-sql/pglite': ^0.5.8 || ^0.6.0
       '@sentry/sveltekit': ^11.4.0
       '@sveltejs/adapter-cloudflare': ^9.0.0
       '@sveltejs/kit': ^3.1.1
@@ -1034,8 +1039,8 @@ packages:
       vitest:
         optional: true
 
-  '@zeyolabs/ui@2026.11.48':
-    resolution: {integrity: sha512-3reySw/S7RaWv12SV1W+nH/tsLQjaDp/HanWlq16YQizgv+ADFcxrFL7x8awiey2tgNG/MDGh/5Tb64GxJcknQ==}
+  '@zeyolabs/ui@2026.11.51':
+    resolution: {integrity: sha512-vfY+LsGjvp8NUsax0nZX2eg29JPgpsnc3jpFXUHIqqZlGNxWf8ZFxGyZy/RyslX5TpbikDj0ZpC/wfzMXvlxiA==}
     engines: {node: '>=24.0.0', pnpm: ^11.0.0}
     peerDependencies:
       '@sveltejs/kit': ^3.1.1
@@ -2028,11 +2033,11 @@ packages:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
 
-  tldts-core@7.5.4:
-    resolution: {integrity: sha512-9+4zWtKEDZ3V3FoZ1B97rv+5z5oqp7yeXGVze3CxgQ+CJro9do9DCPD00wxstYZDXDMXsurkBerFfiB6GYtPbA==}
+  tldts-core@7.5.5:
+    resolution: {integrity: sha512-rEJz/8cJFY/bdF354gl14yxavbrIbvM+FcbkYVQ6CSCMQTJdUFUIm39TTWSiGPvcpQh7/F6qHrD3SkwwdgtDCw==}
 
-  tldts@7.5.4:
-    resolution: {integrity: sha512-Rn2ABgjHZrA+jzqom5zhxA0hLohzYrIgfCPyhpTUxqsUrcsBYuab49LseR9waB9Jr8/MxdodvMHA91oRiGLO3Q==}
+  tldts@7.5.5:
+    resolution: {integrity: sha512-Hy6IImaWALzJOgCIss4gIFi4G0M9lqk95pFKCUVxQPZw+biZ1Pv6f28JpYgahpJB+BufA0HYsIU/aP/WIx3KRg==}
     hasBin: true
 
   totalist@3.0.1:
@@ -2504,6 +2509,10 @@ snapshots:
   '@keyv/serialize@1.1.1': {}
 
   '@lucide/svelte@1.73.0(svelte@5.57.3(@typescript-eslint/types@8.72.2))':
+    dependencies:
+      svelte: 5.57.3(@typescript-eslint/types@8.72.2)
+
+  '@lucide/svelte@1.78.0(svelte@5.57.3(@typescript-eslint/types@8.72.2))':
     dependencies:
       svelte: 5.57.3(@typescript-eslint/types@8.72.2)
 
@@ -3037,7 +3046,7 @@ snapshots:
 
   '@vitest/spy@5.1.1': {}
 
-  '@zeyolabs/kit@2026.11.52(1c3823a04743d4c1eab12857801d16b4)':
+  '@zeyolabs/kit@2026.11.55(1c3823a04743d4c1eab12857801d16b4)':
     dependencies:
       '@bufbuild/protobuf': 2.17.0
       '@clickhouse/client-web': 1.25.0
@@ -3063,7 +3072,7 @@ snapshots:
       pg: 8.23.1
       snappyjs: 0.7.0
       svelte-eslint-parser: 1.10.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))
-      tldts: 7.5.4
+      tldts: 7.5.5
       typescript-eslint: 8.72.2(eslint@10.15.0(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
       worker-mailer: 1.3.1
       zod: 4.6.7
@@ -3083,14 +3092,14 @@ snapshots:
       - typescript
       - wrangler
 
-  '@zeyolabs/ui@2026.11.48(@cloudflare/workers-types@5.20261123.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.52(1c3823a04743d4c1eab12857801d16b4))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))':
+  '@zeyolabs/ui@2026.11.51(@cloudflare/workers-types@5.20261123.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(@zeyolabs/kit@2026.11.55(1c3823a04743d4c1eab12857801d16b4))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))':
     dependencies:
       '@internationalized/date': 3.12.4
-      '@lucide/svelte': 1.73.0(svelte@5.57.3(@typescript-eslint/types@8.72.2))
+      '@lucide/svelte': 1.78.0(svelte@5.57.3(@typescript-eslint/types@8.72.2))
       '@sentry/sveltekit': 11.12.0(@cloudflare/workers-types@5.20261123.1)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6))
       '@standard-schema/spec': 1.1.0
       '@sveltejs/kit': 3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6))
-      '@zeyolabs/kit': 2026.11.52(1c3823a04743d4c1eab12857801d16b4)
+      '@zeyolabs/kit': 2026.11.55(1c3823a04743d4c1eab12857801d16b4)
       bits-ui: 2.21.0(@internationalized/date@3.12.4)(@sveltejs/kit@3.2.0(@opentelemetry/api@1.10.0)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.2))(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)))(svelte@5.57.3(@typescript-eslint/types@8.72.2))
       flickity: 3.0.0
       flickity-fullscreen: 2.0.0(flickity@3.0.0)
@@ -3985,11 +3994,11 @@ snapshots:
       fdir: 6.5.0(picomatch@4.0.7)
       picomatch: 4.0.7
 
-  tldts-core@7.5.4: {}
+  tldts-core@7.5.5: {}
 
-  tldts@7.5.4:
+  tldts@7.5.5:
     dependencies:
-      tldts-core: 7.5.4
+      tldts-core: 7.5.5
 
   totalist@3.0.1: {}
 
