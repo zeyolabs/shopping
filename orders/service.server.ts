@@ -7,6 +7,9 @@ import { addresses, orderItems, orders, products } from '../db/schema';
 import { StockService } from '../stock/service.server';
 import { Batches } from '../utils/batches';
 
+/** An item row binds 7 values and D1 allows 100 per statement, so a long order is written in slices. */
+const ITEMS_PER_INSERT = 10;
+
 export type NewOrderItem = Omit<typeof orderItems.$inferInsert, 'id' | 'orderId'>;
 type NewAddress = Omit<typeof addresses.$inferInsert, 'createdAt' | 'id'>;
 type NewOrder = Omit<
@@ -108,10 +111,13 @@ export class OrderService {
 			)
 		);
 		try {
-			await this.db.batch([
-				this.db.insert(orderItems).values(items.map((item) => ({ ...item, orderId }))),
+			const [first, ...rest] = [
+				...Batches.chunks(items, ITEMS_PER_INSERT).map((slice) =>
+					this.db.insert(orderItems).values(slice.map((item) => ({ ...item, orderId })))
+				),
 				...stockStatements,
-			]);
+			];
+			await this.db.batch([first, ...rest]);
 			return true;
 		} catch (error) {
 			if (await this.hasItems(orderId)) return false;
