@@ -32,7 +32,7 @@ export const Packing = {
 
 	STAGE_LABELS: {
 		held: 'On hold',
-		label: 'Label printed',
+		label: 'In Click & Drop',
 		new: 'To pack',
 		packed: 'Packed',
 		packing: 'Packing',

@@ -66,7 +66,7 @@ export const detailsForm = Remote.Form(OrderDetailsSchema, async ({ number, ...d
 	await getOrder(number).refresh();
 	return FormResult.ok(
 		labelStale
-			? 'Details saved. The label no longer matches: print it again to replace it.'
+			? 'Details saved. The Click & Drop order no longer matches: send it again to replace it.'
 			: 'Details saved.'
 	);
 });
