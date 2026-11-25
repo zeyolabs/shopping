@@ -2,6 +2,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 import { error, redirect } from '@sveltejs/kit';
 
+import { Orders } from '../orders/library';
 import { FulfilmentManager } from './manager.server';
 import { OrderNumber } from './schema';
 
@@ -10,5 +11,5 @@ export const GET: RequestHandler<{ number: string }> = async ({ params }) => {
 	const number = OrderNumber.safeParse(params.number);
 	const url = number.success ? await FulfilmentManager.invoiceUrl(number.data) : undefined;
 	if (!url) error(404, 'Invoice not found');
-	redirect(303, url);
+	redirect(303, url, { external: Orders.INVOICE_ORIGINS });
 };

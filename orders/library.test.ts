@@ -1,3 +1,4 @@
+import { redirect } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
 
 import { Orders } from './library';
@@ -89,5 +90,22 @@ describe('Orders.tidy', () => {
 			],
 		});
 		expect(items.map((i) => i.name)).toEqual(['Apple', 'banana']);
+	});
+});
+
+describe('Orders.INVOICE_ORIGINS', () => {
+	const go = (url: string) => () => redirect(303, url, { external: Orders.INVOICE_ORIGINS });
+
+	it('lets SvelteKit redirect to the invoice PDF and the hosted invoice page', () => {
+		for (const url of [
+			'https://pay.stripe.com/invoice/acct_1/live_x/pdf?s=db',
+			'https://invoice.stripe.com/i/acct_1/live_x?s=db',
+		]) {
+			expect(go(url)).toThrow(expect.objectContaining({ location: url, status: 303 }));
+		}
+	});
+
+	it('refuses any other external address', () => {
+		expect(go('https://evil.example/invoice')).toThrow(/allowlist/);
 	});
 });
