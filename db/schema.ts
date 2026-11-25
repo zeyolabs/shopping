@@ -253,7 +253,7 @@ export const orders = sqliteTable(
 	]
 );
 
-/** Name, sku and price are copied at purchase time so later catalogue edits never rewrite history. */
+/** An order's plain product lines. Name and price are copied at purchase time so later catalogue edits never rewrite history. */
 export const orderItems = sqliteTable(
 	'order_items',
 	{
@@ -264,17 +264,57 @@ export const orderItems = sqliteTable(
 			.references(() => orders.id, { onDelete: 'cascade' }),
 		productId: integer('product_id').references(() => products.id, { onDelete: 'set null' }),
 		quantity: integer('quantity').notNull(),
+		unitPricePence: integer('unit_price_pence').notNull(),
+	},
+	(t) => [
+		index('order_items_order_idx').on(t.orderId),
+		uniqueIndex('order_items_order_product_unique').on(t.orderId, t.productId),
+	]
+);
+
+/**
+ * The bundles an order bought, one row per bundle, at the price paid (two builds of the same bundle
+ * are merged into one row). The parts that make it up are in `orderBundleItems`.
+ */
+export const orderBundles = sqliteTable(
+	'order_bundles',
+	{
+		bundleId: integer('bundle_id').references(() => bundles.id, { onDelete: 'set null' }),
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		name: text('name').notNull(),
+		orderId: integer('order_id')
+			.notNull()
+			.references(() => orders.id, { onDelete: 'cascade' }),
+		quantity: integer('quantity').notNull(),
+		unitPricePence: integer('unit_price_pence').notNull(),
+	},
+	(t) => [uniqueIndex('order_bundles_order_bundle_unique').on(t.orderId, t.bundleId)]
+);
+
+/** The parts of a bought bundle, at no charge: paying takes their stock. */
+export const orderBundleItems = sqliteTable(
+	'order_bundle_items',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		name: text('name').notNull(),
+		orderBundleId: integer('order_bundle_id')
+			.notNull()
+			.references(() => orderBundles.id, { onDelete: 'cascade' }),
+		productId: integer('product_id').references(() => products.id, { onDelete: 'set null' }),
+		quantity: integer('quantity').notNull(),
 		/**
 		 * True for a kit's parts: `quantity` is single units (16 switches), not purchases (packs), so
 		 * paying takes exactly that many from stock.
 		 */
 		singleUnits: integer('single_units', { mode: 'boolean' }).notNull().default(false),
-		sku: text('sku').notNull(),
-		unitPricePence: integer('unit_price_pence').notNull(),
 	},
 	(t) => [
-		index('order_items_order_idx').on(t.orderId),
-		uniqueIndex('order_items_order_sku_unique').on(t.orderId, t.sku),
+		index('order_bundle_items_order_bundle_idx').on(t.orderBundleId),
+		uniqueIndex('order_bundle_items_order_bundle_product_unique').on(
+			t.orderBundleId,
+			t.productId,
+			t.singleUnits
+		),
 	]
 );
 

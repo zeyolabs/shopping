@@ -123,7 +123,7 @@
 		<section class="rounded-xl border border-[var(--bd)] bg-white p-5">
 			<Title level={2} size="sm">Items</Title>
 			<ul class="mt-2 divide-y divide-[var(--bd)]">
-				{#each order.items as item (item.id)}
+				{#each order.items as item (`${item.kind}-${item.id}`)}
 					<li class="py-2">
 						<Cluster gap="sm" nowrap>
 							{#if item.cover}
@@ -140,6 +140,13 @@
 								<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
 							</Cluster>
 						</Cluster>
+						{#if item.parts.length > 0}
+							<ul class="mt-1 ml-[4.5rem] list-disc pl-4">
+								{#each item.parts as part (part.id)}
+									<li><Span color="secondary" size="sm">{part.name} × {part.quantity}</Span></li>
+								{/each}
+							</ul>
+						{/if}
 					</li>
 				{/each}
 			</ul>

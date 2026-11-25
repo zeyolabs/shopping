@@ -43,6 +43,7 @@ export const getOrderPage = Remote.Query(
 			},
 			items: items.map((item) => ({
 				name: item.name,
+				parts: item.parts.map((part) => ({ name: part.name, quantity: part.quantity })),
 				quantity: item.quantity,
 				unitPricePence: item.unitPricePence,
 			})),

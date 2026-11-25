@@ -21,9 +21,8 @@ const MIGRATIONS = [
 		variation_group_id integer, variation_label text)`,
 	`CREATE TABLE order_items (
 		id integer PRIMARY KEY AUTOINCREMENT, name text NOT NULL, order_id integer NOT NULL,
-		product_id integer, quantity integer NOT NULL, single_units integer NOT NULL DEFAULT 0, sku text NOT NULL,
-		unit_price_pence integer NOT NULL)`,
-	'CREATE UNIQUE INDEX order_items_order_sku_unique ON order_items (order_id, sku)',
+		product_id integer, quantity integer NOT NULL, unit_price_pence integer NOT NULL)`,
+	'CREATE UNIQUE INDEX order_items_order_product_unique ON order_items (order_id, product_id)',
 	`CREATE TABLE product_components (
 		component_id integer NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
 		product_id integer NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -181,7 +180,7 @@ describe('StockService', () => {
 	it('a repeated order batch fails on the items and leaves stock and sold untouched', async () => {
 		const p = await product({ stock: 10 });
 		const items = [
-			{ name: 'Item', orderId: 77, productId: p.id, quantity: 2, sku: 'DUP', unitPricePence: 100 },
+			{ name: 'Item', orderId: 77, productId: p.id, quantity: 2, unitPricePence: 100 },
 		];
 		const write = async () => {
 			const statements = await service().paidStatements([{ productId: p.id, quantity: 2 }]);

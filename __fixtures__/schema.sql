@@ -19,19 +19,44 @@ CREATE TABLE `categories` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `categories_slug_unique` ON `categories` (`slug`);--> statement-breakpoint
+CREATE TABLE `order_bundle_items` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL,
+	`order_bundle_id` integer NOT NULL,
+	`product_id` integer,
+	`quantity` integer NOT NULL,
+	`single_units` integer DEFAULT false NOT NULL,
+	FOREIGN KEY (`order_bundle_id`) REFERENCES `order_bundles`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE INDEX `order_bundle_items_order_bundle_idx` ON `order_bundle_items` (`order_bundle_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `order_bundle_items_order_bundle_product_unique` ON `order_bundle_items` (`order_bundle_id`,`product_id`,`single_units`);--> statement-breakpoint
+CREATE TABLE `order_bundles` (
+	`bundle_id` integer,
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL,
+	`order_id` integer NOT NULL,
+	`quantity` integer NOT NULL,
+	`unit_price_pence` integer NOT NULL,
+	FOREIGN KEY (`bundle_id`) REFERENCES `bundles`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `order_bundles_order_bundle_unique` ON `order_bundles` (`order_id`,`bundle_id`);--> statement-breakpoint
 CREATE TABLE `order_items` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
 	`order_id` integer NOT NULL,
 	`product_id` integer,
 	`quantity` integer NOT NULL,
-	`sku` text NOT NULL,
 	`unit_price_pence` integer NOT NULL,
 	FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE INDEX `order_items_order_idx` ON `order_items` (`order_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `order_items_order_product_unique` ON `order_items` (`order_id`,`product_id`);--> statement-breakpoint
 CREATE TABLE `orders` (
 	`created_at` integer NOT NULL,
 	`discount_pence` integer DEFAULT 0 NOT NULL,
@@ -99,8 +124,6 @@ CREATE TABLE `variation_groups` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL
 );
---> statement-breakpoint
-CREATE UNIQUE INDEX `order_items_order_sku_unique` ON `order_items` (`order_id`,`sku`);
 --> statement-breakpoint
 CREATE TABLE `countries` (
 	`code` text PRIMARY KEY NOT NULL,
@@ -340,8 +363,6 @@ ALTER TABLE `bundle_step_products` ADD `slots` integer;--> statement-breakpoint
 ALTER TABLE `bundle_steps` ADD `max_per_choice` integer;--> statement-breakpoint
 ALTER TABLE `bundle_steps` ADD `role` text DEFAULT 'pick' NOT NULL;--> statement-breakpoint
 ALTER TABLE `bundles` ADD `discount_percent` integer DEFAULT 0 NOT NULL;--> statement-breakpoint
-ALTER TABLE `order_items` ADD `single_units` integer DEFAULT false NOT NULL;
---> statement-breakpoint
 ALTER TABLE `bundle_step_products` ADD `price_pence` integer;
 
 --> statement-breakpoint
