@@ -56,7 +56,7 @@
 			const { pdf } = await createOrderLabel(orderNumber);
 			const url = pdf
 				? resolve('/orders/[number]/label', { number: orderNumber })
-				: 'https://parcel.royalmail.com/';
+				: 'https://business.parcel.royalmail.com/';
 			if (tab) tab.location.href = url;
 			else window.open(url, '_blank');
 		} catch (error) {
