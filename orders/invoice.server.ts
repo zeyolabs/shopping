@@ -3,6 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
 
 import { shopping } from '../config';
+import { Orders } from './library';
 import { OrderManager } from './manager.server';
 import { OrderService } from './service.server';
 
@@ -15,5 +16,5 @@ export const GET: RequestHandler<{ number: string; token: string }> = async ({ p
 	const found = await service.forCustomer(params.number, params.token);
 	const url = await OrderManager.invoiceUrl(found?.order.stripeInvoiceId ?? null);
 	if (!url) error(404, 'Invoice not found');
-	redirect(303, url);
+	redirect(303, url, { external: Orders.INVOICE_ORIGINS });
 };

@@ -63,6 +63,9 @@ function mergeBy<T extends { quantity: number; unitPricePence: number }>(
 
 /** Order numbers and links, and how a paid session's lines are tidied. Pure (apart from the random number). */
 export const Orders = {
+	/** Where Stripe serves an invoice: the PDF and the hosted page. SvelteKit refuses any other external redirect. */
+	INVOICE_ORIGINS: ['https://pay.stripe.com', 'https://invoice.stripe.com'],
+
 	/** Alphabetical, ignoring case; the caller breaks a tie (by id). */
 	byName(a: { name: string }, b: { name: string }): number {
 		return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
