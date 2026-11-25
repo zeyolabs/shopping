@@ -5,11 +5,12 @@ import { Error400, Error404, Error500 } from '@zeyolabs/kit/utils/errors';
 import type { OrderDetails, OrderStep } from './schema';
 
 import { ShopClients } from '../clients/shop.server';
-import { shopping } from '../config';
+import { royalMailMode, shopping } from '../config';
 import { Orders } from '../orders/library';
 import { OrderManager } from '../orders/manager.server';
 import { ShippingService } from '../shipping/service.server';
 import { Money } from '../utils/money';
+import { ClickAndDropCsv } from './click-and-drop-csv';
 import { BULK_DISPATCH_LIMIT } from './filters';
 import { OrderRefunds } from './refund.server';
 import { FulfilmentService, type Parcel } from './service.server';
@@ -43,12 +44,44 @@ export const FulfilmentManager = {
 		return fulfilment.readyByService();
 	},
 
+	/** The Click & Drop import CSV for these paid orders (manual mode: no Royal Mail API call). */
+	async clickAndDropCsv(numbers: string[]) {
+		if (numbers.length > BULK_DISPATCH_LIMIT) {
+			throw Error400(`Export at most ${BULK_DISPATCH_LIMIT} orders at once.`);
+		}
+		const fulfilment = service();
+		const shipping = new ShippingService(shopping().db());
+		const rows = [];
+		for (const number of new Set(numbers)) {
+			const order = await fulfilment.find(number);
+			if (order?.status !== 'paid') continue;
+			rows.push({
+				address: order.address,
+				createdAt: order.createdAt,
+				email: order.email,
+				number: order.number,
+				packageFormat: order.packageFormat,
+				serviceCode: await shipping.serviceCode(order.shippingService),
+				shippingPence: order.shippingPence,
+				subtotalPence: order.subtotalPence,
+				totalPence: order.totalPence,
+				weightGrams: order.weightGrams ?? order.estimatedWeightGrams,
+			});
+		}
+		if (rows.length === 0)
+			throw Error400('None of these orders is paid, so there is nothing to export.');
+		return ClickAndDropCsv.build(rows);
+	},
+
 	/**
 	 * Makes sure Click & Drop holds this order with the parcel as packed, so its label is right.
 	 * Click & Drop cannot edit an order, so until a label exists the old one is removed and
 	 * re-created. Creating the label counts as packing, so it fills in any earlier packing step.
 	 */
 	async createLabel(number: string) {
+		if (royalMailMode() === 'manual') {
+			throw Error400('Labels are made in Click & Drop. Download the CSV and import it there.');
+		}
 		const order = await findOrThrow(number);
 		const { address, estimatedWeightGrams } = order;
 		if (order.status !== 'paid') {
@@ -198,6 +231,7 @@ export const FulfilmentManager = {
 
 	/** The label PDF for an order that already has one. */
 	async label(number: string) {
+		if (royalMailMode() === 'manual') throw Error400('Labels are printed in Click & Drop.');
 		const order = await findOrThrow(number);
 		if (!order.royalMailOrderId || !order.labelCreatedAt)
 			throw Error404('No label for this order yet.');
@@ -229,7 +263,7 @@ export const FulfilmentManager = {
 
 		// No tracking number typed in: take the one Click & Drop assigned (tracked services only).
 		let tracking = trackingNumber;
-		if (!tracking && order.royalMailOrderId) {
+		if (!tracking && order.royalMailOrderId && royalMailMode() === 'api') {
 			try {
 				tracking = (await ShopClients.royalMail().trackingNumber(order.royalMailOrderId)) ?? null;
 			} catch (error) {

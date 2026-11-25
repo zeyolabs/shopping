@@ -15,7 +15,14 @@
 
 	import { ErrorMessage } from '../../utils/errors';
 	import { Money } from '../../utils/money';
-	import { dispatchOrders, getOrderCounts, getOrders, getReadyByService } from '../admin.remote';
+	import {
+		dispatchOrders,
+		getClickAndDropCsv,
+		getFulfilmentMode,
+		getOrderCounts,
+		getOrders,
+		getReadyByService,
+	} from '../admin.remote';
 	import { BULK_DISPATCH_LIMIT, FILTER_LABELS, ORDER_FILTERS, type OrderFilter } from '../filters';
 	import { Packing } from '../library';
 
@@ -29,6 +36,20 @@
 	const selected = new SvelteSet<string>();
 	let sendEmail = $state(true);
 	let dispatching = $state(false);
+
+	async function downloadCsv(numbers: string[]) {
+		try {
+			const csv = await getClickAndDropCsv({ numbers });
+			const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `click-and-drop-${new Date().toISOString().slice(0, 10)}.csv`;
+			link.click();
+			URL.revokeObjectURL(url);
+		} catch (error) {
+			toast.error(ErrorMessage.from(error, 'Could not create the CSV.'));
+		}
+	}
 
 	async function dispatchSelected(numbers: string[]) {
 		if (
@@ -167,6 +188,15 @@
 				>
 					Dispatch {chosen.length} order{chosen.length === 1 ? '' : 's'}
 				</Button>
+				{#if (await getFulfilmentMode()) === 'manual'}
+					<Button
+						disabled={chosen.length === 0}
+						onclick={() => downloadCsv(chosen)}
+						variant="secondary"
+					>
+						Download CSV for Click &amp; Drop
+					</Button>
+				{/if}
 			</Cluster>
 		{/if}
 		<div class="mt-4 overflow-x-auto rounded-xl border border-[var(--bd)] bg-white">

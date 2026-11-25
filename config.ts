@@ -64,6 +64,8 @@ export type CheckoutOptions = {
 	promotionCodes?: boolean;
 };
 
+export type RoyalMailMode = 'api' | 'manual';
+
 /** Who the shop is and where it lives: what the emails need to name and link to it. */
 export type ShopSite = Pick<ShoppingConfig, 'brand' | 'siteUrl'>;
 
@@ -77,6 +79,12 @@ export type ShoppingConfig = {
 	mail: ShopMail;
 	/** Letters before the random part of an order number, e.g. `PL` for `PL-ABC123`. */
 	orderNumberPrefix: string;
+	/**
+	 * `api` (default) pushes orders to Click & Drop's API; `manual` makes no Royal Mail calls: the
+	 * admin downloads a CSV, imports it in Click & Drop and types the tracking number. Give it as a
+	 * getter that reads the app's env var.
+	 */
+	royalMailMode?: RoyalMailMode;
 	secrets: ShoppingSecrets;
 	shipping: ShippingRules;
 	siteUrl: string;
@@ -98,4 +106,8 @@ export function shopping(): ShoppingConfig {
 /** A secret by its role (`stripeSecretKey`); the config says what it is called in this app. */
 export function secret(key: keyof ShoppingSecrets): string {
 	return envStore().secret(shopping().secrets[key]);
+}
+
+export function royalMailMode(): RoyalMailMode {
+	return shopping().royalMailMode ?? 'api';
 }

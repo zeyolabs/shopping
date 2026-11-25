@@ -1,6 +1,7 @@
 import { Remote } from '@zeyolabs/kit/server/remote-functions';
 import { FormResult } from '@zeyolabs/kit/utils/form';
 
+import { royalMailMode } from '../config';
 import { FulfilmentManager } from './manager.server';
 import {
 	BulkDispatchSchema,
@@ -19,6 +20,9 @@ export const getOrders = Remote.Query(OrderListSchema, ({ filter, q }) =>
 
 export const getOrderCounts = Remote.Query(() => FulfilmentManager.counts());
 export const getReadyByService = Remote.Query(() => FulfilmentManager.readyByService());
+
+/** Which Royal Mail mode the shop runs in; the pages are in the browser and cannot read config. */
+export const getFulfilmentMode = Remote.Query(async () => royalMailMode());
 
 export const getOrder = Remote.Query(OrderNumber, (number) => FulfilmentManager.find(number));
 
@@ -80,6 +84,12 @@ export const createOrderLabel = Remote.Cmd(OrderNumber, async (number) => {
 	await getOrder(number).refresh();
 	return label;
 });
+
+/** The Click & Drop import CSV for the given orders. The page saves it as a file. */
+export const getClickAndDropCsv = Remote.Query(
+	BulkDispatchSchema.pick({ numbers: true }),
+	({ numbers }) => FulfilmentManager.clickAndDropCsv(numbers)
+);
 
 export const refundForm = Remote.Form(RefundSchema, async ({ amount, number }) => {
 	const { fullyRefunded } = await FulfilmentManager.refund(number, amount);

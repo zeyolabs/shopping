@@ -53,6 +53,7 @@ path (it sets `restockedAt`); `paidStatements` is the paid decrement, in the sam
 order items. Back-in-stock keys off `sellableSql`. Schema changes are additive; each app generates
 its migration and applies it to prod D1 before deploying a version that uses it.
 Refunds (`fulfilment/refund.server.ts`) read what is already refunded from the Stripe charge and record Stripe's total in `orders.refunded_pence`; an app must generate and apply that migration to prod D1 before deploying the version that has it.
+Royal Mail has two modes (`royalMailMode`, `'api'` default; the app reads its own env var in a getter). `manual` makes no Royal Mail calls: `createLabel` refuses, the admin downloads a Click & Drop import CSV (`ClickAndDropCsv`, `FulfilmentManager.clickAndDropCsv`) and types the tracking number under Dispatch.
 Bundles: a plain bundle adds its products to the basket as ordinary lines. A discounted bundle
 (`discountPercent`) or a kit (a `base` step: one product whose `slots` sets the size and whose price,
 or the step's `pricePence`, is the kit's price; `fill` fills every slot with single units; `cover`

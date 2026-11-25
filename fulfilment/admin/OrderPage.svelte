@@ -23,6 +23,8 @@
 	import {
 		createOrderLabel,
 		detailsForm,
+		getClickAndDropCsv,
+		getFulfilmentMode,
 		getOrder,
 		getShippingServices,
 		parcelForm,
@@ -58,6 +60,26 @@
 		}
 	}
 
+	let exporting = $state(false);
+
+	/** Saves the Click & Drop import CSV for this order as a file. */
+	async function downloadCsv(orderNumber: string) {
+		exporting = true;
+		try {
+			const csv = await getClickAndDropCsv({ numbers: [orderNumber] });
+			const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `click-and-drop-${new Date().toISOString().slice(0, 10)}.csv`;
+			link.click();
+			URL.revokeObjectURL(url);
+		} catch (error) {
+			toast.error(ErrorMessage.from(error, 'Could not create the CSV.'));
+		} finally {
+			exporting = false;
+		}
+	}
+
 	const date = new Intl.DateTimeFormat('en-GB', {
 		dateStyle: 'medium',
 		timeStyle: 'short',
@@ -71,6 +93,7 @@
 
 <Boundary message="Could not load this order." statusMessages={{ 404: 'Order not found.' }}>
 	{let order = $derived(await getOrder(number))}
+	{let manual = $derived((await getFulfilmentMode()) === 'manual')}
 	<Cluster class="mt-4" gap="sm">
 		<Title level={1} size="md">{order.number}</Title>
 		<Badge
@@ -199,6 +222,14 @@
 						>
 							Mark packed
 						</Button>
+					{:else if (stage === 'packed' || stage === 'label') && manual}
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external Click & Drop URL -->
+						<Button href="https://parcel.royalmail.com/" rel="noopener" target="_blank">
+							Open Click &amp; Drop
+						</Button>
+						<Button disabled={exporting} onclick={() => downloadCsv(order.number)}>
+							Download CSV for Click &amp; Drop
+						</Button>
 					{:else if stage === 'packed' || stage === 'label'}
 						<Button disabled={printing} onclick={() => printLabel(order.number)}>
 							{order.labelCreatedAt ? 'Reprint label' : 'Print label'}
@@ -225,16 +256,23 @@
 			</Form>
 
 			<Text class="mt-3" color="secondary">
-				Printing the label sends the saved parcel details to Royal Mail and marks the order packed.
-				{#if order.labelCreatedAt}A label is already made, so later parcel changes will not change
-					it.{/if}
+				{#if manual}
+					Print the label in Click & Drop, then enter the tracking number under Dispatch.
+				{:else}
+					Printing the label sends the saved parcel details to Royal Mail and marks the order
+					packed.
+					{#if order.labelCreatedAt}A label is already made, so later parcel changes will not change
+						it.{/if}
+				{/if}
 			</Text>
 
 			<Title class="mt-6" level={3} size="sm">Parcel</Title>
 			<Text class="mt-1" color="secondary">
 				{order.weightGrams === null
 					? `Estimated ${order.estimatedWeightGrams} g from the items. Weigh the parcel and correct it.`
-					: 'Weight and format go on the Royal Mail label.'}
+					: manual
+						? 'Weight and format go in the Click & Drop CSV.'
+						: 'Weight and format go on the Royal Mail label.'}
 			</Text>
 			<Form
 				class="mt-3 grid gap-4"
