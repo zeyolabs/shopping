@@ -106,7 +106,7 @@ export const FulfilmentManager = {
 	/**
 	 * Saves corrected contact, address, postage service and tracking. Click & Drop cannot edit an
 	 * order, so when something it holds changed on an order that has a label, the label is marked
-	 * stale: printing it again deletes the old Click & Drop order and creates a fresh one.
+	 * stale: sending it again deletes the old Click & Drop order and creates a fresh one.
 	 */
 	async saveDetails(number: string, details: OrderDetails) {
 		const db = shopping().db();

@@ -44,15 +44,24 @@
 
 	let printing = $state(false);
 
-	/** Creates the label in Click & Drop, then opens the PDF to print when Royal Mail serves it. */
-	async function printLabel(orderNumber: string) {
+	/**
+	 * Saves the order in Click & Drop, then opens it in a new tab: the label PDF when Royal Mail serves
+	 * it, otherwise Click & Drop itself to buy and print the label. The tab opens before the request
+	 * so the browser treats it as a click and does not block it.
+	 */
+	async function sendToClickAndDrop(orderNumber: string) {
 		printing = true;
+		const tab = window.open('about:blank', '_blank');
 		try {
-			const { pdf, royalMailOrderId } = await createOrderLabel(orderNumber);
-			if (pdf) window.open(resolve('/orders/[number]/label', { number: orderNumber }), '_blank');
-			else toast.success(`In Click & Drop as order ${royalMailOrderId}. Print the label there.`);
+			const { pdf } = await createOrderLabel(orderNumber);
+			const url = pdf
+				? resolve('/orders/[number]/label', { number: orderNumber })
+				: 'https://parcel.royalmail.com/';
+			if (tab) tab.location.href = url;
+			else window.open(url, '_blank');
 		} catch (error) {
-			toast.error(ErrorMessage.from(error, 'Could not create the label.'));
+			tab?.close();
+			toast.error(ErrorMessage.from(error, 'Could not send the order to Click & Drop.'));
 		} finally {
 			printing = false;
 		}
@@ -200,8 +209,8 @@
 							Mark packed
 						</Button>
 					{:else if stage === 'packed' || stage === 'label'}
-						<Button disabled={printing} onclick={() => printLabel(order.number)}>
-							{order.labelCreatedAt ? 'Reprint label' : 'Print label'}
+						<Button disabled={printing} onclick={() => sendToClickAndDrop(order.number)}>
+							{order.labelCreatedAt ? 'Open in Click & Drop' : 'Send to Click & Drop'}
 						</Button>
 					{/if}
 					{#if stage === 'held'}
@@ -225,9 +234,10 @@
 			</Form>
 
 			<Text class="mt-3" color="secondary">
-				Printing the label sends the saved parcel details to Royal Mail and marks the order packed.
-				{#if order.labelCreatedAt}A label is already made, so later parcel changes will not change
-					it.{/if}
+				Sending to Click & Drop saves the parcel details there, marks the order packed and opens
+				Click & Drop in a new tab to buy and print the label.
+				{#if order.labelCreatedAt}It is already in Click & Drop, so later parcel changes will not
+					change it.{/if}
 			</Text>
 
 			<Title class="mt-6" level={3} size="sm">Parcel</Title>
@@ -271,7 +281,7 @@
 				<Text class="mt-2" color="secondary">
 					For fixing a typo or a customer's request. If you change the country, check the postage
 					service still fits. {#if order.status === 'paid' && order.labelCreatedAt}The label is
-						already made, so after a change you need to print it again.{/if}
+						already in Click & Drop, so after a change you need to send it again.{/if}
 				</Text>
 				<Form
 					class="mt-4 grid gap-4"

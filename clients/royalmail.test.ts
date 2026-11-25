@@ -66,6 +66,13 @@ describe('Click & Drop client', () => {
 		await expect(new RoyalMailClient(env).label('42')).resolves.toBeNull();
 	});
 
+	it('trims the padding Royal Mail puts after a tracking number', async () => {
+		vi.stubGlobal('fetch', async () =>
+			Response.json([{ trackingNumber: '110820D5681          ' }])
+		);
+		await expect(new RoyalMailClient(env).trackingNumber('42')).resolves.toBe('110820D5681');
+	});
+
 	it('returns the tracking number, or undefined when untracked', async () => {
 		vi.stubGlobal('fetch', async () => Response.json([{ trackingNumber: 'AB123456789GB' }]));
 		await expect(new RoyalMailClient(env).trackingNumber('42')).resolves.toBe('AB123456789GB');

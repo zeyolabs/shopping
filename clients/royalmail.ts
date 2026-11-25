@@ -116,7 +116,7 @@ async function trackingNumber(apiKey: string, orderId: string): Promise<string |
 	if (!response.ok)
 		throw new Error(`Click & Drop order ${orderId} lookup failed (${response.status})`);
 	const [order] = (await response.json()) as { trackingNumber?: null | string }[];
-	return order?.trackingNumber || undefined;
+	return order?.trackingNumber?.trim() || undefined;
 }
 
 /**
