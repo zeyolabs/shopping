@@ -64,7 +64,6 @@ export function shopTestDb() {
 					orderId: row.id,
 					productId,
 					quantity: 1,
-					sku: `S${productId}-${n}`,
 					unitPricePence: 1000,
 				});
 		}

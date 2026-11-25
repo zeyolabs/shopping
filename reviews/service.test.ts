@@ -63,3 +63,29 @@ describe('ReviewService', () => {
 		expect(ok).toBe(false);
 	});
 });
+
+describe('ReviewService with a bundle', () => {
+	const { db, order, product } = shopTestDb();
+
+	it('counts the parts of a bundle as products the buyer can review', async () => {
+		const part = await product();
+		const other = await product();
+		const o = await order('paid', []);
+		const [bundle] = await db()
+			.insert(schema.orderBundles)
+			.values({ name: 'Bundle', orderId: o.id, quantity: 1, unitPricePence: 1950 })
+			.returning();
+		await db().insert(schema.orderBundleItems).values({
+			name: 'A part',
+			orderBundleId: bundle.id,
+			productId: part.id,
+			quantity: 1,
+		});
+		const reviews = new ReviewService(db());
+
+		expect((await reviews.forOrder(o.id)).map((i) => i.productId)).toEqual([part.id]);
+		const input = { body: 'Great', name: 'Ann', productId: part.id, rating: 5, title: '' };
+		expect(await reviews.submit(o.id, input)).toBe(true);
+		expect(await reviews.submit(o.id, { ...input, productId: other.id })).toBe(false);
+	});
+});

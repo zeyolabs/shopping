@@ -1,8 +1,17 @@
-import { and, asc, avg, count, desc, eq } from 'drizzle-orm';
+import { and, avg, count, desc, eq } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 
-import { orderItems, orders, products, reviews, type ReviewStatus } from '../db/schema';
+import {
+	orderBundleItems,
+	orderBundles,
+	orderItems,
+	orders,
+	products,
+	reviews,
+	type ReviewStatus,
+} from '../db/schema';
+import { Orders } from '../orders/library';
 
 /** Orders in these states can be reviewed: the customer has paid (and maybe received it). */
 const REVIEWABLE = ['paid', 'shipped'] as const;
@@ -22,12 +31,20 @@ export class ReviewService {
 
 	/** The order's products, each with the review already written for it, if any. */
 	async forOrder(orderId: number) {
-		const items = await this.db
+		const lines = await this.db
 			.selectDistinct({ name: orderItems.name, productId: orderItems.productId })
 			.from(orderItems)
 			.innerJoin(products, eq(products.id, orderItems.productId))
-			.where(eq(orderItems.orderId, orderId))
-			.orderBy(asc(orderItems.name));
+			.where(eq(orderItems.orderId, orderId));
+		const parts = await this.db
+			.selectDistinct({ name: orderBundleItems.name, productId: orderBundleItems.productId })
+			.from(orderBundleItems)
+			.innerJoin(orderBundles, eq(orderBundles.id, orderBundleItems.orderBundleId))
+			.innerJoin(products, eq(products.id, orderBundleItems.productId))
+			.where(eq(orderBundles.orderId, orderId));
+		const items = [
+			...new Map([...lines, ...parts].map((item) => [item.productId, item])).values(),
+		].sort((a, b) => Orders.byName(a, b) || (a.productId ?? 0) - (b.productId ?? 0));
 		const written = await this.db
 			.select({ productId: reviews.productId, rating: reviews.rating, status: reviews.status })
 			.from(reviews)
@@ -106,12 +123,22 @@ export class ReviewService {
 			.where(eq(orders.id, orderId))
 			.limit(1);
 		if (!order || !(REVIEWABLE as readonly string[]).includes(order.status)) return false;
-		const [item] = await this.db
+		const [line] = await this.db
 			.select({ id: orderItems.id })
 			.from(orderItems)
 			.where(and(eq(orderItems.orderId, orderId), eq(orderItems.productId, input.productId)))
 			.limit(1);
-		if (!item) return false;
+		const [part] = line
+			? []
+			: await this.db
+					.select({ id: orderBundleItems.id })
+					.from(orderBundleItems)
+					.innerJoin(orderBundles, eq(orderBundles.id, orderBundleItems.orderBundleId))
+					.where(
+						and(eq(orderBundles.orderId, orderId), eq(orderBundleItems.productId, input.productId))
+					)
+					.limit(1);
+		if (!line && !part) return false;
 		const inserted = await this.db
 			.insert(reviews)
 			.values({ ...input, createdAt: now, orderId, status: 'pending' })

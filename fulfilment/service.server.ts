@@ -7,7 +7,8 @@ import type { OrderDetails } from './schema';
 
 import { CoverService } from '../catalogue/covers.server';
 import { Search } from '../catalogue/library';
-import { addresses, orderItems, orders, type PackageFormat, products } from '../db/schema';
+import { addresses, orders, type PackageFormat, products } from '../db/schema';
+import { OrderService } from '../orders/service.server';
 import { Batches } from '../utils/batches';
 
 export type Parcel = { format: PackageFormat; weightGrams: number };
@@ -67,7 +68,7 @@ export class FulfilmentService {
 		const order = await this.db.query.orders.findFirst({ where: eq(orders.number, number) });
 		if (!order) return undefined;
 		const [items, address] = await Promise.all([
-			this.db.query.orderItems.findMany({ where: eq(orderItems.orderId, order.id) }),
+			new OrderService(this.db).linesOf(order.id),
 			this.db.query.addresses.findFirst({ where: eq(addresses.id, order.shippingAddressId) }),
 		]);
 		if (!address) return undefined;
@@ -75,7 +76,7 @@ export class FulfilmentService {
 		const coverService = new CoverService(this.db);
 		const [covers, estimatedWeightGrams] = await Promise.all([
 			coverService.covers(productIds),
-			this.estimateWeight(items),
+			this.estimateWeight([...items, ...items.flatMap((item) => item.parts)]),
 		]);
 		return {
 			...order,

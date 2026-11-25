@@ -58,9 +58,12 @@ Bundles: a plain bundle adds its products to the basket as ordinary lines. A dis
 or the step's `pricePence`, is the kit's price; `fill` fills every slot with single units; `cover`
 takes one product for every slot) stays one basket line, kept in the `basket_bundles` cookie and
 re-checked on every read. At checkout it is one Stripe line with its parts in metadata
-(`BundleParts`); the order records it plus each part at £0, and a kit's parts take stock in single
-units (`order_items.single_units`). The bundle columns and `single_units` are a schema change: each
-app generates and applies its migration before deploying.
+(`BundleParts`); the order records it in `order_bundles` (one row per bundle, a repeat merged) with
+its parts in `order_bundle_items`, and a kit's parts take stock in single units
+(`order_bundle_items.single_units`); plain products are `order_items`. Order lines carry no SKU copy
+and no position: a unique key on (order, product) and (order, bundle) is the guard against a
+repeated write. The bundle columns and these tables are a schema change: each app generates and
+applies its migration before deploying.
 
 Signup form and checkout stay in the app (Turnstile / rate limiter): the product page takes an
 `outOfStock` snippet, the basket page takes the app's `startCheckout` remote function.

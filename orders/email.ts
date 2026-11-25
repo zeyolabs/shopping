@@ -16,7 +16,12 @@ export type OrderEmailData = {
 	/** Taken off by a promotion code at Checkout. */
 	discountPence?: number;
 	email: string;
-	items: { name: string; quantity: number; unitPricePence: number }[];
+	items: {
+		name: string;
+		parts?: { name: string; quantity: number }[];
+		quantity: number;
+		unitPricePence: number;
+	}[];
 	number: string;
 	/** Link to the customer's order page, which shows dispatch and tracking as they happen. */
 	orderUrl?: string;
@@ -40,11 +45,18 @@ function addressLines(address: OrderEmailData['address']): string[] {
 }
 
 function itemRows(order: OrderEmailData): EmailRow[] {
-	return order.items.map((item) => ({
-		label: item.name,
-		sub: `${item.quantity} × ${Money.format(item.unitPricePence)}`,
-		value: Money.format(item.quantity * item.unitPricePence),
-	}));
+	return order.items.flatMap((item) => [
+		{
+			label: item.name,
+			sub: `${item.quantity} × ${Money.format(item.unitPricePence)}`,
+			value: Money.format(item.quantity * item.unitPricePence),
+		},
+		...(item.parts ?? []).map((part) => ({
+			label: part.name,
+			sub: 'Included',
+			value: `× ${part.quantity}`,
+		})),
+	]);
 }
 
 function totalRows(order: OrderEmailData): EmailRow[] {

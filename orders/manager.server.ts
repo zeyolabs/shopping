@@ -6,15 +6,15 @@ import { BundleParts } from '../bundles/library';
 import { ShopClients } from '../clients/shop.server';
 import { shopping } from '../config';
 import { ShippingService } from '../shipping/service.server';
-import { Orders } from './library';
-import { type NewOrderItem, OrderService } from './service.server';
+import { type BundleLine, Orders, type PlainLine } from './library';
+import { OrderService } from './service.server';
 
 /** Orders at the edge: turning a paid Stripe session into an order, and invoice links. */
 export const OrderManager = {
 	/**
 	 * Turns a paid Checkout Session into an order. Idempotent and resumable: Stripe retries webhooks
 	 * and the success page may race them. The unique `stripe_session_id` decides who creates the
-	 * order, and the unique (order, sku) index plus the atomic item/stock batch decide who writes the
+	 * order, and the unique (order, position) index plus the atomic item/stock batch decide who writes the
 	 * items; only that delivery sends the emails and pushes to Royal Mail.
 	 */
 	async fulfil(sessionId: string): Promise<void> {
@@ -63,8 +63,8 @@ export const OrderManager = {
 			}
 		);
 
-		const items = await orderItems(service, session.line_items?.data ?? []);
-		if (!(await service.writeItems(order.id, items))) return;
+		const lines = Orders.tidy(await orderLines(service, session.line_items?.data ?? []));
+		if (!(await service.writeItems(order.id, lines))) return;
 
 		// The customer is already charged and the order recorded: neither follow-up may fail the webhook.
 		const address = { ...shipping.address, name: shipping.name ?? '' };
@@ -73,7 +73,7 @@ export const OrderManager = {
 				address,
 				discountPence: order.discountPence,
 				email,
-				items,
+				items: [...lines.items, ...lines.bundles],
 				number: order.number,
 				orderUrl: order.accessToken
 					? Orders.url(config.siteUrl, order.number, order.accessToken)
@@ -123,44 +123,43 @@ export const OrderManager = {
 };
 
 /**
- * The paid session's lines as order items. A grouped bundle is its own line at the price paid, then
- * each part at no charge (sku `BUNDLE-<id>-<n>:<part sku>`), so its stock is taken when the items
- * are written; a kit's parts are single units.
+ * The paid session's lines: plain products, and bundles with the parts that make them up (a kit's
+ * parts are single units), so the parts' stock is taken when the lines are written.
  */
-async function orderItems(
+async function orderLines(
 	service: OrderService,
 	lines: Stripe.LineItem[]
-): Promise<NewOrderItem[]> {
-	const items: NewOrderItem[] = [];
+): Promise<{ bundles: BundleLine[]; items: PlainLine[] }> {
 	const bundled = lines.map((line) =>
 		BundleParts.decode((line.price?.product as Stripe.Product).metadata.bundleParts)
 	);
 	const names = await service.productNames([...new Set(bundled.flat().map((p) => p.productId))]);
+	const items: PlainLine[] = [];
+	const bundles: BundleLine[] = [];
 	for (const [n, line] of lines.entries()) {
 		const product = line.price?.product as Stripe.Product;
-		const productId = Number(product.metadata.productId);
 		const parts = bundled[n];
-		const sku = parts.length
-			? `${product.metadata.sku ?? 'BUNDLE'}-${n + 1}`
-			: (product.metadata.sku ?? '');
-		items.push({
+		const common = {
 			name: line.description ?? product.name,
-			productId: !parts.length && Number.isInteger(productId) ? productId : null,
 			quantity: line.quantity ?? 1,
-			sku,
 			unitPricePence: line.price?.unit_amount ?? 0,
-		});
-		for (const part of parts) {
-			const known = names.get(part.productId);
-			items.push({
-				name: known?.name ?? `Product ${part.productId}`,
+		};
+		if (parts.length === 0) {
+			const productId = Number(product.metadata.productId);
+			items.push({ ...common, productId: Number.isInteger(productId) ? productId : null });
+			continue;
+		}
+		const bundleId = Number(product.metadata.bundleId);
+		bundles.push({
+			...common,
+			bundleId: Number.isInteger(bundleId) ? bundleId : null,
+			parts: parts.map((part) => ({
+				name: names.get(part.productId) ?? `Product ${part.productId}`,
 				productId: part.productId,
 				quantity: part.quantity,
 				singleUnits: part.singleUnits,
-				sku: `${sku}:${known?.sku ?? part.productId}`,
-				unitPricePence: 0,
-			});
-		}
+			})),
+		});
 	}
-	return items;
+	return { bundles, items };
 }

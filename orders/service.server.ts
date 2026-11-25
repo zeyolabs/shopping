@@ -1,16 +1,25 @@
 import { Crypto } from '@zeyolabs/kit/utils/crypto';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 
 import type { ShopDb } from '../db/index';
 
-import { addresses, orderItems, orders, products } from '../db/schema';
+import {
+	addresses,
+	orderBundleItems,
+	orderBundles,
+	orderItems,
+	orders,
+	products,
+} from '../db/schema';
 import { StockService } from '../stock/service.server';
 import { Batches } from '../utils/batches';
+import { type BundleLine, Orders, type PlainLine } from './library';
 
-/** An item row binds 7 values and D1 allows 100 per statement, so a long order is written in slices. */
-const ITEMS_PER_INSERT = 10;
+/** A row binds at most 6 values and D1 allows 100 per statement, so a long order is written in slices. */
+const ROWS_PER_INSERT = 10;
 
-export type NewOrderItem = Omit<typeof orderItems.$inferInsert, 'id' | 'orderId'>;
+/** What a paid order's lines are written as: see `Orders.tidy`, which makes them one row per product and bundle. */
+export type NewOrderLines = { bundles: BundleLine[]; items: PlainLine[] };
 type NewAddress = Omit<typeof addresses.$inferInsert, 'createdAt' | 'id'>;
 type NewOrder = Omit<
 	typeof orders.$inferInsert,
@@ -60,21 +69,53 @@ export class OrderService {
 		const order = await this.db.query.orders.findFirst({ where: eq(orders.number, number) });
 		if (!order?.accessToken || !Crypto.timingSafeEquals(order.accessToken, token)) return undefined;
 		const [items, address] = await Promise.all([
-			this.db.query.orderItems.findMany({ where: eq(orderItems.orderId, order.id) }),
+			this.linesOf(order.id),
 			this.db.query.addresses.findFirst({ where: eq(addresses.id, order.shippingAddressId) }),
 		]);
 		return { address, items, order };
 	}
 
+	/** Whether the order has any line: a bundle-only order has no plain ones. */
 	async hasItems(orderId: number): Promise<boolean> {
-		const row = await this.db.query.orderItems.findFirst({
-			where: eq(orderItems.orderId, orderId),
-		});
-		return row !== undefined;
+		const [item, bundle] = await Promise.all([
+			this.db.query.orderItems.findFirst({ where: eq(orderItems.orderId, orderId) }),
+			this.db.query.orderBundles.findFirst({ where: eq(orderBundles.orderId, orderId) }),
+		]);
+		return item !== undefined || bundle !== undefined;
 	}
 
-	/** Names and SKUs by id, for a bundle's parts on a new order. */
-	async productNames(ids: number[]): Promise<Map<number, { name: string; sku: string }>> {
+	/**
+	 * What the order bought: its plain lines, then its bundles, each with the parts that make it up
+	 * (empty for a plain line). Each group is by name (ignoring case), then id.
+	 */
+	async linesOf(orderId: number) {
+		const [items, bundles] = await Promise.all([
+			this.db.select().from(orderItems).where(eq(orderItems.orderId, orderId)),
+			this.db.select().from(orderBundles).where(eq(orderBundles.orderId, orderId)),
+		]);
+		const parts = await Batches.rows(
+			bundles.map((bundle) => bundle.id),
+			(slice) =>
+				this.db
+					.select()
+					.from(orderBundleItems)
+					.where(inArray(orderBundleItems.orderBundleId, slice))
+		);
+		const byName = <T extends { id: number; name: string }>(a: T, b: T) =>
+			Orders.byName(a, b) || a.id - b.id;
+		return [
+			...items.sort(byName).map((item) => ({ ...item, kind: 'item' as const, parts: [] })),
+			...bundles.sort(byName).map((bundle) => ({
+				...bundle,
+				kind: 'bundle' as const,
+				parts: parts.filter((part) => part.orderBundleId === bundle.id).sort(byName),
+				productId: null,
+			})),
+		];
+	}
+
+	/** Names by id, for a bundle's parts on a new order. */
+	async productNames(ids: number[]): Promise<Map<number, string>> {
 		if (ids.length === 0) return new Map();
 		const rows = await Batches.rows(ids, (slice) =>
 			this.db
@@ -82,14 +123,11 @@ export class OrderService {
 					id: products.id,
 					label: products.variationLabel,
 					name: products.name,
-					sku: products.sku,
 				})
 				.from(products)
 				.where(inArray(products.id, slice))
 		);
-		return new Map(
-			rows.map((r) => [r.id, { name: r.label ? `${r.name} (${r.label})` : r.name, sku: r.sku }])
-		);
+		return new Map(rows.map((r) => [r.id, r.label ? `${r.name} (${r.label})` : r.name]));
 	}
 
 	async setRoyalMailOrderId(orderId: number, royalMailOrderId: string) {
@@ -100,20 +138,47 @@ export class OrderService {
 	 * Writes the items and takes their stock in one atomic batch. False when another delivery of the
 	 * same session already wrote them (the batch failed and the items exist), so nothing is doubled.
 	 */
-	async writeItems(orderId: number, items: NewOrderItem[]): Promise<boolean> {
+	async writeItems(orderId: number, lines: NewOrderLines): Promise<boolean> {
+		const { bundles, items } = Orders.tidy(lines);
 		// Read before the batch: the stock statements depend on pack sizes and components.
 		const stock = new StockService(this.db);
-		const stockStatements = await stock.paidStatements(
-			items.flatMap((item) =>
-				item.productId == null
-					? []
-					: [{ productId: item.productId, quantity: item.quantity, singleUnits: item.singleUnits }]
-			)
+		const stockStatements = await stock.paidStatements([
+			...items.flatMap((item) =>
+				item.productId === null ? [] : [{ productId: item.productId, quantity: item.quantity }]
+			),
+			...bundles.flatMap((bundle) =>
+				bundle.parts.flatMap((part) =>
+					part.productId === null
+						? []
+						: [
+								{
+									productId: part.productId,
+									quantity: part.quantity,
+									singleUnits: part.singleUnits,
+								},
+							]
+				)
+			),
+		]);
+		const itemRows = items.map((item) => ({ ...item, orderId }));
+		const bundleRows = bundles.map(({ parts: _parts, ...bundle }) => ({ ...bundle, orderId }));
+		// A part points at its bundle row by (order, bundle): the bundles are inserted earlier in the same batch.
+		const partRows = bundles.flatMap((bundle) =>
+			bundle.parts.map((part) => ({
+				...part,
+				orderBundleId: sql<number>`(select ${orderBundles.id} from ${orderBundles} where ${orderBundles.orderId} = ${orderId} and ${orderBundles.bundleId} is ${bundle.bundleId})`,
+			}))
 		);
 		try {
 			const [first, ...rest] = [
-				...Batches.chunks(items, ITEMS_PER_INSERT).map((slice) =>
-					this.db.insert(orderItems).values(slice.map((item) => ({ ...item, orderId })))
+				...Batches.chunks(itemRows, ROWS_PER_INSERT).map((slice) =>
+					this.db.insert(orderItems).values(slice)
+				),
+				...Batches.chunks(bundleRows, ROWS_PER_INSERT).map((slice) =>
+					this.db.insert(orderBundles).values(slice)
+				),
+				...Batches.chunks(partRows, ROWS_PER_INSERT).map((slice) =>
+					this.db.insert(orderBundleItems).values(slice)
 				),
 				...stockStatements,
 			];

@@ -86,12 +86,19 @@
 
 	<Title class="mt-8" level={2} size="sm">Items</Title>
 	<ul class="mt-2 divide-y divide-[var(--bd)] border-y border-[var(--bd)]">
-		{#each data.items as item (item.name)}
+		{#each data.items as item, index (index)}
 			<li class="py-3">
 				<Cluster gap="sm" justify="between" nowrap>
 					<Span>{item.name} <Span color="secondary">× {item.quantity}</Span></Span>
 					<Span>{Money.format(item.quantity * item.unitPricePence)}</Span>
 				</Cluster>
+				{#if item.parts.length > 0}
+					<ul class="mt-1 ml-4 list-disc pl-4">
+						{#each item.parts as part, partIndex (partIndex)}
+							<li><Span color="secondary" size="sm">{part.name} × {part.quantity}</Span></li>
+						{/each}
+					</ul>
+				{/if}
 			</li>
 		{/each}
 	</ul>
