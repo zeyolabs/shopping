@@ -47,7 +47,7 @@ export function defaultShopMail({
 			const { brand } = site;
 			const email = OrderEmails.shop(order, site);
 			await send({
-				from: { email: brand.supportEmail, name: `${brand.name} website` },
+				from: { email: brand.supportEmail, name: `${brand.name} Admin` },
 				html: renderEmail(email),
 				reply: { email: order.email },
 				subject: `New order ${order.number} (${Money.format(order.totalPence)})`,
