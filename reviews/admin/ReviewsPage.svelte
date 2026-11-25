@@ -64,11 +64,16 @@
 						<a href="{context.siteUrl}/product/{review.productSlug}" rel="noopener" target="_blank"
 							>{review.productName}</a
 						>
-						· order
-						<a href={resolve('/orders/[number]', { number: review.orderNumber })}
-							>{review.orderNumber}</a
-						>
-						· {review.email} · {date.format(review.createdAt)}
+						{#if review.orderNumber}
+							· order
+							<a href={resolve('/orders/[number]', { number: review.orderNumber })}
+								>{review.orderNumber}</a
+							>
+							· {review.email}
+						{:else}
+							· imported
+						{/if}
+						· {date.format(review.createdAt)}
 					</Text>
 					<Cluster class="mt-2" gap="xs">
 						<Stars rating={review.rating} size="sm" />

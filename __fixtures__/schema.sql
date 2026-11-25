@@ -323,7 +323,7 @@ CREATE TABLE `reviews` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`moderated_at` integer,
 	`name` text NOT NULL,
-	`order_id` integer NOT NULL,
+	`order_id` integer,
 	`product_id` integer NOT NULL,
 	`rating` integer NOT NULL,
 	`status` text DEFAULT 'pending' NOT NULL,

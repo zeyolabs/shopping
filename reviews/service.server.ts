@@ -67,7 +67,7 @@ export class ReviewService {
 		};
 	}
 
-	/** Reviews in one state for the admin, newest first, with the product and order they belong to. */
+	/** Reviews in one state for the admin, newest first, with the product and order they belong to (none for an imported one). */
 	async list(status: ReviewStatus, limit = 100) {
 		return this.db
 			.select({
@@ -85,7 +85,7 @@ export class ReviewService {
 			})
 			.from(reviews)
 			.innerJoin(products, eq(products.id, reviews.productId))
-			.innerJoin(orders, eq(orders.id, reviews.orderId))
+			.leftJoin(orders, eq(orders.id, reviews.orderId))
 			.where(eq(reviews.status, status))
 			.orderBy(desc(reviews.createdAt))
 			.limit(limit);
