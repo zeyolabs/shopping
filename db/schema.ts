@@ -305,9 +305,8 @@ export const reviews = sqliteTable(
 		moderatedAt: integer('moderated_at'),
 		/** The name shown with the review, as the customer typed it. */
 		name: text('name').notNull(),
-		orderId: integer('order_id')
-			.notNull()
-			.references(() => orders.id, { onDelete: 'cascade' }),
+		/** The order it was written from; null for a review imported from another site. */
+		orderId: integer('order_id').references(() => orders.id, { onDelete: 'cascade' }),
 		productId: integer('product_id')
 			.notNull()
 			.references(() => products.id, { onDelete: 'cascade' }),

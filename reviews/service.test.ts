@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { shopTestDb } from '../__fixtures__/db';
+import * as schema from '../db/schema';
 import { ReviewService } from './service.server';
 
 describe('ReviewService', () => {
@@ -28,6 +29,24 @@ describe('ReviewService', () => {
 		await reviews.moderate(pending.id, 'approved');
 		expect(await reviews.forProduct(p.id)).toMatchObject({ average: 4, count: 1 });
 		expect(await reviews.list('pending')).toEqual([]);
+	});
+
+	it('lists, moderates and averages a review that has no order, such as an imported one', async () => {
+		const p = await product();
+		const reviews = new ReviewService(db());
+		await db().insert(schema.reviews).values({
+			body: 'Great stabilisers',
+			createdAt: 1,
+			name: 'Sam',
+			orderId: null,
+			productId: p.id,
+			rating: 5,
+			status: 'pending',
+		});
+		const [pending] = await reviews.list('pending');
+		expect(pending).toMatchObject({ email: null, name: 'Sam', orderNumber: null });
+		await reviews.moderate(pending.id, 'approved');
+		expect(await reviews.forProduct(p.id)).toMatchObject({ average: 5, count: 1 });
 	});
 
 	it('refuses cancelled orders', async () => {
