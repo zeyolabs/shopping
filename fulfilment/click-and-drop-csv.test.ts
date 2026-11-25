@@ -32,15 +32,26 @@ describe('ClickAndDropCsv.build', () => {
 		);
 	});
 
-	it('writes one row per order with grams, pounds and a DD/MM/YYYY date', () => {
+	it('writes one row per order with kilograms, pounds and a DD/MM/YY date', () => {
 		const csv = ClickAndDropCsv.build([row, { ...row, number: 'PL-2', serviceCode: null }]);
 		const out = lines(csv);
 		expect(out).toHaveLength(4);
 		expect(out[1]).toBe(
-			'PL-ABC123,Ann Lee,1 High St,,London,,N1 1AA,GB,a@b.test,0123,420,Small parcel,TPN24,05/11/2026,GBP,3.50,19.99,23.49'
+			'PL-ABC123,Ann Lee,1 High St,,London,,N1 1AA,GB,a@b.test,0123,0.420,Small parcel,TPN24,05/11/26,GBP,3.50,19.99,23.49'
 		);
-		expect(out[2]).toContain(',Small parcel,,05/11/2026,');
+		expect(out[2]).toContain(',Small parcel,,05/11/26,');
 		expect(csv.endsWith('\r\n')).toBe(true);
+	});
+
+	it('writes weight in kg with three decimals', () => {
+		const out = lines(
+			ClickAndDropCsv.build([
+				{ ...row, weightGrams: 100 },
+				{ ...row, weightGrams: 1250 },
+			])
+		);
+		expect(out[1]).toContain(',0.100,');
+		expect(out[2]).toContain(',1.250,');
 	});
 
 	it('quotes commas, quotes and newlines', () => {

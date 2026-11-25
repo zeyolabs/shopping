@@ -14,19 +14,24 @@ export type Parcel = { format: PackageFormat; weightGrams: number };
 
 type OrderRow = typeof orders.$inferSelect;
 
+/** Ready to dispatch: paid, not held, and labelled (or, without labels, packed). */
+function readyCondition(requireLabel: boolean) {
+	return and(
+		eq(orders.status, 'paid'),
+		isNull(orders.heldAt),
+		requireLabel ? isNotNull(orders.labelCreatedAt) : isNotNull(orders.packedAt)
+	);
+}
+
 /** The SQL condition behind each list filter: paid orders are split by hold and label. */
-function filterCondition(filter: OrderFilter) {
+function filterCondition(filter: OrderFilter, requireLabel: boolean) {
 	switch (filter) {
 		case 'all':
 			return undefined;
 		case 'on-hold':
 			return and(eq(orders.status, 'paid'), isNotNull(orders.heldAt));
 		case 'ready':
-			return and(
-				eq(orders.status, 'paid'),
-				isNull(orders.heldAt),
-				isNotNull(orders.labelCreatedAt)
-			);
+			return readyCondition(requireLabel);
 		case 'shipped':
 			return eq(orders.status, 'shipped');
 		case 'to-ship':
@@ -41,12 +46,12 @@ export class FulfilmentService {
 	constructor(private readonly db: ShopDb) {}
 
 	/** Order counts per list filter, for the filter tabs. */
-	async counts(): Promise<Record<OrderFilter, number>> {
+	async counts(requireLabel = true): Promise<Record<OrderFilter, number>> {
 		const [row] = await this.db
 			.select({
 				all: count(),
 				onHold: sql<number>`coalesce(sum(${orders.status} = 'paid' and ${orders.heldAt} is not null), 0)`,
-				ready: sql<number>`coalesce(sum(${orders.status} = 'paid' and ${orders.heldAt} is null and ${orders.labelCreatedAt} is not null), 0)`,
+				ready: sql<number>`coalesce(sum(${orders.status} = 'paid' and ${orders.heldAt} is null and ${requireLabel ? orders.labelCreatedAt : orders.packedAt} is not null), 0)`,
 				shipped: sql<number>`coalesce(sum(${orders.status} = 'shipped'), 0)`,
 				toShip: sql<number>`coalesce(sum(${orders.status} = 'paid'), 0)`,
 				unpaid: sql<number>`coalesce(sum(${orders.status} = 'pending'), 0)`,
@@ -89,7 +94,7 @@ export class FulfilmentService {
 	}
 
 	/** Orders for the admin list: oldest first when packing, newest first when browsing. */
-	async list(filter: OrderFilter, query: string) {
+	async list(filter: OrderFilter, query: string, requireLabel = true) {
 		const search = query.trim();
 		const match = search ? Search.pattern(search) : undefined;
 		return this.db
@@ -111,7 +116,7 @@ export class FulfilmentService {
 			.innerJoin(addresses, eq(orders.shippingAddressId, addresses.id))
 			.where(
 				and(
-					filterCondition(filter),
+					filterCondition(filter, requireLabel),
 					match
 						? or(
 								sql`${orders.number} like ${match} escape '\\'`,
@@ -148,12 +153,12 @@ export class FulfilmentService {
 		return order;
 	}
 
-	/** Orders ready to dispatch (paid, not held, labelled), counted per postage service. */
-	async readyByService(): Promise<Record<string, number>> {
+	/** Orders ready to dispatch (see `readyCondition`), counted per postage service. */
+	async readyByService(requireLabel = true): Promise<Record<string, number>> {
 		const rows = await this.db
 			.select({ n: count(), service: orders.shippingService })
 			.from(orders)
-			.where(filterCondition('ready'))
+			.where(filterCondition('ready', requireLabel))
 			.groupBy(orders.shippingService);
 		return Object.fromEntries(rows.map((r) => [r.service ?? 'No service', r.n]));
 	}

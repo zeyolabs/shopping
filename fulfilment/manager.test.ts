@@ -144,12 +144,45 @@ describe('FulfilmentManager.clickAndDropCsv', () => {
 
 		expect(csv).toContain(paid.number);
 		expect(csv).not.toContain(shipped.number);
-		expect(csv).toContain(',90,Letter,');
+		expect(csv).toContain(',0.090,Letter,');
 		expect(royalMailClient).not.toHaveBeenCalled();
 	});
 
 	it('throws when no order is paid', async () => {
 		const shipped = await order('shipped', []);
 		await expect(FulfilmentManager.clickAndDropCsv([shipped.number])).rejects.toThrow();
+	});
+});
+
+describe('manual mode dispatch readiness', () => {
+	const { db, order } = shopTestDb();
+
+	beforeEach(() => {
+		state.db = db();
+		state.orderDispatched = vi.fn().mockResolvedValue(undefined);
+	});
+
+	it('api mode needs a label, manual mode needs packed', async () => {
+		const fulfilment = new FulfilmentService(db());
+		const packed = await order('paid', []);
+		const held = await order('paid', []);
+		await fulfilment.update(packed.id, { packedAt: 5 });
+		await fulfilment.update(held.id, { heldAt: 6, packedAt: 5 });
+		const names = async () => (await FulfilmentManager.list('ready', '')).map((o) => o.number);
+
+		state.mode = 'api';
+		expect(await names()).toEqual([]);
+		expect((await FulfilmentManager.counts()).ready).toBe(0);
+		const [apiResult] = await FulfilmentManager.markShippedMany([packed.number], { email: false });
+		expect(apiResult.ok).toBe(false);
+
+		state.mode = 'manual';
+		expect(await names()).toEqual([packed.number]);
+		expect((await FulfilmentManager.counts()).ready).toBe(1);
+		const results = await FulfilmentManager.markShippedMany([packed.number, held.number], {
+			email: false,
+		});
+		expect(results.map((r) => r.ok)).toEqual([true, false]);
+		expect((await fulfilment.find(packed.number))?.status).toBe('shipped');
 	});
 });

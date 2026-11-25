@@ -15,6 +15,8 @@ import { BULK_DISPATCH_LIMIT } from './filters';
 import { OrderRefunds } from './refund.server';
 import { FulfilmentService, type Parcel } from './service.server';
 
+const requireLabel = () => royalMailMode() === 'api';
+
 const service = () => new FulfilmentService(shopping().db());
 
 async function findOrThrow(number: string) {
@@ -36,12 +38,12 @@ export const FulfilmentManager = {
 
 	counts() {
 		const fulfilment = service();
-		return fulfilment.counts();
+		return fulfilment.counts(requireLabel());
 	},
 
 	readyByService() {
 		const fulfilment = service();
-		return fulfilment.readyByService();
+		return fulfilment.readyByService(requireLabel());
 	},
 
 	/** The Click & Drop import CSV for these paid orders (manual mode: no Royal Mail API call). */
@@ -242,7 +244,7 @@ export const FulfilmentManager = {
 
 	list(filter: Parameters<FulfilmentService['list']>[0], query: string) {
 		const fulfilment = service();
-		return fulfilment.list(filter, query);
+		return fulfilment.list(filter, query, requireLabel());
 	},
 
 	/**
@@ -318,8 +320,13 @@ export const FulfilmentManager = {
 			try {
 				// "Ready to dispatch" is only a list filter, so check each order is really ready.
 				const order = await findOrThrow(number);
-				if (order.status !== 'paid' || order.heldAt || !order.labelCreatedAt) {
-					throw Error400('Not ready to dispatch: it needs a label and must not be on hold.');
+				const prepared = requireLabel() ? order.labelCreatedAt : order.packedAt;
+				if (order.status !== 'paid' || order.heldAt || !prepared) {
+					throw Error400(
+						requireLabel()
+							? 'Not ready to dispatch: it needs a label and must not be on hold.'
+							: 'Not ready to dispatch: it must be packed and not on hold.'
+					);
 				}
 				const { emailed } = await FulfilmentManager.markShipped(number, null, options);
 				results.push({ emailed, number, ok: true });

@@ -48,7 +48,7 @@ const day = new Intl.DateTimeFormat('en-GB', {
 	day: '2-digit',
 	month: '2-digit',
 	timeZone: 'Europe/London',
-	year: 'numeric',
+	year: '2-digit',
 });
 
 const pounds = (pence: number) => (pence / 100).toFixed(2);
@@ -76,7 +76,7 @@ export const ClickAndDropCsv = {
 			o.address.country,
 			o.email,
 			o.address.phone,
-			String(Math.round(o.weightGrams)),
+			(o.weightGrams / 1000).toFixed(3),
 			Packing.FORMAT_LABELS[o.packageFormat],
 			o.serviceCode,
 			day.format(o.createdAt),
