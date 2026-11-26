@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -9,7 +8,11 @@
 
 	import type { getShop } from '../client.remote';
 
+	import { shopContext } from '../../context';
+	import { Seo } from '../../seo/library';
+	import SeoHead from '../../seo/SeoHead.svelte';
 	import PageLinks from '../../ui/PageLinks.svelte';
+	import { Images } from '../../utils/images';
 	import ProductCard from '../components/ProductCard.svelte';
 
 	let {
@@ -25,14 +28,31 @@
 		shop: Awaited<ReturnType<typeof getShop>>;
 	} = $props();
 
+	const context = shopContext();
+
 	// Each listing page is its own page, so `?page=N` stays in the canonical; other parameters don't.
 	const listingPage = $derived(Number(page.url.searchParams.get('page')) || 1);
 	const canonical = $derived(
 		listingPage > 1 ? `${page.url.pathname}?page=${listingPage}` : page.url.pathname
 	);
+	const cover = $derived(shop.products.find((p) => p.cover)?.cover);
+	const jsonLd = $derived(
+		Seo.graph([
+			Seo.breadcrumbs(context.siteUrl, [
+				{ name: context.siteName, path: '/' },
+				{ name: 'Shop', path: '/shop' },
+			]),
+		])
+	);
 </script>
 
-<Head {canonical} {description} title="Shop" />
+<SeoHead
+	{canonical}
+	{description}
+	image={cover && Seo.absolute(context.siteUrl, Images.url(context.imageBaseUrl, cover.src))}
+	{jsonLd}
+	title="Shop"
+/>
 <Title class="mb-10 text-[var(--primary-strong)]" level={1}>Shop</Title>
 
 {#if intro}
@@ -56,8 +76,8 @@
 	<Text>No products available right now. Please check back soon.</Text>
 {:else}
 	<ul class="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
-		{#each shop.products as product (product.id)}
-			<li><ProductCard {product} /></li>
+		{#each shop.products as product, index (product.id)}
+			<li><ProductCard priority={index === 0} {product} /></li>
 		{/each}
 	</ul>
 	<PageLinks page={shop.page} pages={shop.pages} />

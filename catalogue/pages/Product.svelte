@@ -2,11 +2,11 @@
 	import type { Snippet } from 'svelte';
 
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import ShoppingBasket from '@lucide/svelte/icons/shopping-basket';
 	import { Form } from '@zeyolabs/ui/form';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
 	import ImageGallery from '@zeyolabs/ui/gallery/ImageGallery.svelte';
-	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Grid from '@zeyolabs/ui/layout/Grid.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
@@ -19,6 +19,8 @@
 	import { AddToBasketSchema } from '../../basket/schema';
 	import { shopContext } from '../../context';
 	import Reviews from '../../reviews/components/Reviews.svelte';
+	import { Seo } from '../../seo/library';
+	import SeoHead from '../../seo/SeoHead.svelte';
 	import { Stock } from '../../stock/library';
 	import Stars from '../../ui/Stars.svelte';
 	import { Images } from '../../utils/images';
@@ -44,16 +46,49 @@
 {let stockBadge = $derived(Stock.badge(product.stock, product.lowStockThreshold))}
 {let text = $derived(ProductText.parse(product.description))}
 {let visible = $derived(ProductText.visibleCount(text.paragraphs))}
+{let imageUrls = $derived(
+	product.images.map((image) =>
+		Seo.absolute(context.siteUrl, Images.url(context.imageBaseUrl, image.src))
+	)
+)}
+{let category = $derived(data.categories[0])}
+{let url = $derived(Seo.absolute(context.siteUrl, page.url.pathname))}
+{let description = $derived(
+	Seo.productDescription({
+		category: category?.name,
+		description: text.paragraphs[0]?.text ?? '',
+		name: product.name,
+		shortDescription: product.shortDescription,
+		siteName: context.siteName,
+	})
+)}
+{let jsonLd = $derived(
+	Seo.graph([
+		Seo.product({
+			brand: context.siteName,
+			description,
+			images: imageUrls,
+			name: product.name,
+			pricePence: product.pricePence,
+			reviews: data.reviews,
+			sku: product.sku,
+			stock: product.stock,
+			url,
+		}),
+		Seo.breadcrumbs(context.siteUrl, [
+			{ name: context.siteName, path: '/' },
+			...(category ? [{ name: category.name, path: `/category/${category.slug}` }] : []),
+			{ name: product.name, path: url },
+		]),
+	])
+)}
 {let saving = $derived(
 	product.comparePricePence && product.comparePricePence > product.pricePence
 		? Math.round((1 - product.pricePence / product.comparePricePence) * 100)
 		: 0
 )}
 
-<Head
-	description={(product.shortDescription || product.description).slice(0, 160)}
-	title={product.name}
-/>
+<SeoHead {description} image={imageUrls[0]} {jsonLd} title={product.name} />
 
 <Grid columns={2} gap="lg" stack>
 	<div class="md:sticky md:top-6 md:self-start">
@@ -61,7 +96,7 @@
 			<ImageGallery
 				name={product.name}
 				images={product.images.map((image) => ({
-					alt: image.alt,
+					alt: Seo.imageAlt({ alt: image.alt, label: product.variationLabel, name: product.name }),
 					src: Images.url(context.imageBaseUrl, image.src),
 				}))}
 			/>

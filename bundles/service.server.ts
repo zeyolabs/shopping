@@ -66,13 +66,17 @@ const Parts = {
 export class BundleService {
 	constructor(private readonly db: ShopDb) {}
 
-	/** Slugs of active bundles, for the sitemap. */
-	async activeSlugs(): Promise<string[]> {
-		const rows = await this.db
-			.select({ slug: bundles.slug })
+	/** Slugs and creation times of active bundles, for the sitemap. */
+	async active() {
+		return this.db
+			.select({ createdAt: bundles.createdAt, slug: bundles.slug })
 			.from(bundles)
 			.where(eq(bundles.active, true));
-		return rows.map((r) => r.slug);
+	}
+
+	/** Slugs of active bundles, for the sitemap. */
+	async activeSlugs(): Promise<string[]> {
+		return (await this.active()).map((r) => r.slug);
 	}
 
 	/**

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Button from '@zeyolabs/ui/form/Button.svelte';
-	import Head from '@zeyolabs/ui/head/Head.svelte';
 	import Cluster from '@zeyolabs/ui/layout/Cluster.svelte';
 	import Span from '@zeyolabs/ui/text/Span.svelte';
 	import Text from '@zeyolabs/ui/text/Text.svelte';
@@ -13,6 +13,8 @@
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 	import { shopContext } from '../../context';
+	import { Seo } from '../../seo/library';
+	import SeoHead from '../../seo/SeoHead.svelte';
 	import { ErrorMessage } from '../../utils/errors';
 	import { Images } from '../../utils/images';
 	import { Money } from '../../utils/money';
@@ -172,7 +174,19 @@
 	}
 </script>
 
-<Head description={bundle.description.slice(0, 160)} title={bundle.name} />
+<SeoHead
+	description={Seo.truncate(bundle.description) || `Build ${bundle.name} at ${context.siteName}.`}
+	image={bundle.image
+		? Seo.absolute(context.siteUrl, Images.url(context.imageBaseUrl, bundle.image))
+		: undefined}
+	jsonLd={Seo.graph([
+		Seo.breadcrumbs(context.siteUrl, [
+			{ name: context.siteName, path: '/' },
+			{ name: bundle.name, path: page.url.pathname },
+		]),
+	])}
+	title={bundle.name}
+/>
 <Title class="mb-10 text-[var(--primary-strong)]" level={1}>{bundle.name}</Title>
 
 {#if bundle.description}

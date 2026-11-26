@@ -10,6 +10,7 @@ import {
 	products,
 	productSlugAliases,
 } from '../db/schema';
+import { Seo } from '../seo/library';
 import { StockService } from '../stock/service.server';
 import { CoverService } from './covers.server';
 import { Paging, Search } from './library';
@@ -63,7 +64,14 @@ export class CatalogueService {
 					.orderBy(asc(products.sortOrder), asc(products.name))
 			: [];
 
-		return { options, product, variationName: product.variationGroup?.name };
+		const cats = await this.db
+			.select({ name: categories.name, slug: categories.slug })
+			.from(productCategories)
+			.innerJoin(categories, eq(categories.id, productCategories.categoryId))
+			.where(eq(productCategories.productId, product.id))
+			.orderBy(asc(categories.sortOrder), asc(categories.name));
+
+		return { categories: cats, options, product, variationName: product.variationGroup?.name };
 	}
 
 	/**
@@ -140,17 +148,34 @@ export class CatalogueService {
 		return this.withCovers(list);
 	}
 
-	/** Slugs for the sitemap: categories, active products and active bundles. */
+	/**
+	 * Slugs for the sitemap: categories, active products and active bundles. `lastmod` maps a slug to
+	 * its `YYYY-MM-DD` date (a product's creation or last restock, a bundle's creation); categories
+	 * have no date column, so they have none.
+	 */
 	async sitemapEntries() {
 		const bundles = new BundleService(this.db);
-		const [cats, prods, bundleSlugs] = await Promise.all([
+		const [cats, prods, bundleRows] = await Promise.all([
 			this.db.select({ slug: categories.slug }).from(categories),
-			this.db.select({ slug: products.slug }).from(products).where(eq(products.active, true)),
-			bundles.activeSlugs(),
+			this.db
+				.select({
+					createdAt: products.createdAt,
+					restockedAt: products.restockedAt,
+					slug: products.slug,
+				})
+				.from(products)
+				.where(eq(products.active, true)),
+			bundles.active(),
 		]);
 		return {
-			bundles: bundleSlugs,
+			bundles: bundleRows.map((b) => b.slug),
 			categories: cats.map((c) => c.slug),
+			lastmod: {
+				bundles: Object.fromEntries(bundleRows.map((b) => [b.slug, Seo.lastmod(b.createdAt)])),
+				products: Object.fromEntries(
+					prods.map((p) => [p.slug, Seo.lastmod(Math.max(p.createdAt, p.restockedAt ?? 0))])
+				),
+			},
 			products: prods.map((p) => p.slug),
 		};
 	}
