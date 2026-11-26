@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { shopTestDb } from '../__fixtures__/db';
+import { categories, productCategories } from '../db/schema';
 import { Search } from './library';
 import { CatalogueService } from './service.server';
 
@@ -76,5 +77,40 @@ describe('CatalogueService.productPage', () => {
 		expect(first.products[15].stock).toBe(0);
 		const second = await catalogue.productPage(2);
 		expect(second.products.map((p) => p.name)).toEqual(['P18', 'P20', 'P22', 'P24', 'P26', 'P28']);
+	});
+});
+
+describe('CatalogueService.sitemapEntries', () => {
+	const { db, product } = shopTestDb();
+
+	it('dates a product by its creation or last restock, whichever is later', async () => {
+		const created = await product({ createdAt: Date.UTC(2026, 0, 2), slug: 'created' });
+		const restocked = await product({
+			createdAt: Date.UTC(2026, 0, 2),
+			restockedAt: Date.UTC(2026, 5, 7, 12),
+			slug: 'restocked',
+		});
+		await product({ active: false, slug: 'hidden' });
+		const entries = await new CatalogueService(db()).sitemapEntries();
+		expect(entries.products.toSorted()).toEqual(['created', 'restocked']);
+		expect(entries.lastmod.products).toEqual({
+			[created.slug]: '2026-01-02',
+			[restocked.slug]: '2026-06-07',
+		});
+	});
+});
+
+describe('CatalogueService.product categories', () => {
+	const { db, product } = shopTestDb();
+
+	it('lists the product categories', async () => {
+		const item = await product({ slug: 'mug' });
+		const [category] = await db()
+			.insert(categories)
+			.values({ name: 'Mugs', slug: 'mugs' })
+			.returning();
+		await db().insert(productCategories).values({ categoryId: category.id, productId: item.id });
+		const found = await new CatalogueService(db()).product('mug');
+		expect(found?.categories).toEqual([{ name: 'Mugs', slug: 'mugs' }]);
 	});
 });

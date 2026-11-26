@@ -5,7 +5,11 @@ import { getContext, setContext } from 'svelte';
  * the app hands these over once from its root layout with `setShopContext`.
  */
 export type ShopContext = {
+	/** Absolute URL of the link-preview picture for pages with no image of their own. Unset: the site's share image, if any. */
+	defaultOgImage?: string;
 	imageBaseUrl: string;
+	/** Absolute URL of the shop's logo, for the home page's `Organization` data. Unset: left out. */
+	logoUrl?: string;
 	siteName: string;
 	siteUrl: string;
 	supportEmail: string;

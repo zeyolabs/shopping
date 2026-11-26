@@ -36,6 +36,7 @@ service to a `const`. Services never read `shopping()` or secrets; managers and 
 | `bundles/`                | `BundleService`, bundle builder page, admin editor                                                                                                                                       |
 | `clients/`                | `StripeClient`, `RoyalMailClient`, `ShopClients` (both built with the shop's secrets, for managers)                                                                                      |
 | `mail/`                   | `defaultShopMail`: renders the emails and hands them to the app's `send`                                                                                                                 |
+| `seo/`                    | `Seo` library (JSON-LD builders, `jsonLd` escaping, descriptions, alt text, `lastmod`), `SeoHead` (Head + Twitter card + JSON-LD), `HomeSeo` (Organization, WebSite)                     |
 | `utils/`, `ui/`, `db/`    | `Money`, `Images`, `FormInput`; `Stars`; the Drizzle schema                                                                                                                              |
 | `config.ts`, `context.ts` | server config (`configureShopping`), browser context (`setShopContext`)                                                                                                                  |
 
@@ -69,7 +70,7 @@ Signup form and checkout stay in the app (Turnstile / rate limiter): the product
 `outOfStock` snippet, the basket page takes the app's `startCheckout` remote function.
 
 Pages run in the browser too, so they cannot read the server config: the app's root layout calls
-`setShopContext({ imageBaseUrl, siteName, siteUrl, supportEmail })`; anything else arrives as
+`setShopContext({ imageBaseUrl, siteName, siteUrl, supportEmail })` (optional: `defaultOgImage`, the share picture for pages without their own, and `logoUrl` for the home `Organization`; the home route renders `<HomeSeo />`); anything else arrives as
 data from a remote function or a `load`. Each page's `<head>` tags are `@zeyolabs/ui`'s `Head`
 (the layout calls `setHeadContext` too); the visible heading is a plain `Title`.
 

@@ -4,6 +4,7 @@
 	import Text from '@zeyolabs/ui/text/Text.svelte';
 
 	import { shopContext } from '../../context';
+	import { Seo } from '../../seo/library';
 	import { Stock } from '../../stock/library';
 	import { Images } from '../../utils/images';
 	import { Money } from '../../utils/money';
@@ -17,9 +18,10 @@
 		pricePence: number;
 		slug: string;
 		stock: number;
+		variationLabel?: null | string;
 	};
 
-	let { product }: { product: Product } = $props();
+	let { priority = false, product }: { priority?: boolean; product: Product } = $props();
 
 	const context = shopContext();
 
@@ -44,8 +46,13 @@
 				0
 					? 'opacity-60'
 					: ''}"
-				alt={product.cover.alt || product.name}
-				loading="lazy"
+				alt={Seo.imageAlt({
+					alt: product.cover.alt,
+					label: product.variationLabel,
+					name: product.name,
+				})}
+				fetchpriority={priority ? 'high' : undefined}
+				loading={priority ? undefined : 'lazy'}
 				src={Images.url(context.imageBaseUrl, product.cover.src)}
 			/>
 		{/if}
