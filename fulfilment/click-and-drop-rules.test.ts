@@ -9,24 +9,40 @@ describe('ClickAndDropRules.check', () => {
 		expect(ClickAndDropRules.check({ ...second, format: 'parcel', weightGrams: 360 })).toEqual({
 			ok: false,
 			reason:
-				'Royal Mail 2nd Class does not take the Parcel format; use Large letter (up to 750 g).',
-			suggestion: 'largeLetter',
+				'Royal Mail 2nd Class does not take the Parcel format; use Small parcel (up to 2 kg).',
+			suggestion: 'smallParcel',
 		});
 	});
 
 	it('suggests the smallest format that fits', () => {
-		expect(ClickAndDropRules.suggest({ serviceCode: 'OLP1', weightGrams: 90 })).toBe('letter');
-		expect(ClickAndDropRules.suggest({ serviceCode: 'OLP1', weightGrams: 100 })).toBe('letter');
-		expect(ClickAndDropRules.suggest({ serviceCode: 'OLP1', weightGrams: 101 })).toBe(
-			'largeLetter'
-		);
-		expect(ClickAndDropRules.suggest({ serviceCode: 'OLP1', weightGrams: 751 })).toBe(
-			'smallParcel'
-		);
-		expect(ClickAndDropRules.suggest({ serviceCode: 'OLP1', weightGrams: 2000 })).toBe(
-			'smallParcel'
-		);
-		expect(ClickAndDropRules.suggest({ serviceCode: 'OLP1', weightGrams: 2001 })).toBeUndefined();
+		expect(
+			ClickAndDropRules.suggest({ format: 'letter', serviceCode: 'OLP1', weightGrams: 90 })
+		).toBe('letter');
+		expect(
+			ClickAndDropRules.suggest({ format: 'letter', serviceCode: 'OLP1', weightGrams: 100 })
+		).toBe('letter');
+		expect(
+			ClickAndDropRules.suggest({ format: 'letter', serviceCode: 'OLP1', weightGrams: 101 })
+		).toBe('largeLetter');
+		expect(
+			ClickAndDropRules.suggest({ format: 'letter', serviceCode: 'OLP1', weightGrams: 751 })
+		).toBe('smallParcel');
+		expect(
+			ClickAndDropRules.suggest({ format: 'letter', serviceCode: 'OLP1', weightGrams: 2000 })
+		).toBe('smallParcel');
+		expect(
+			ClickAndDropRules.suggest({ format: 'letter', serviceCode: 'OLP1', weightGrams: 2001 })
+		).toBeUndefined();
+	});
+
+	it('moves a parcel to a small parcel and never shrinks the chosen format', () => {
+		const base = { serviceCode: 'OLP2', weightGrams: 360 };
+		expect(ClickAndDropRules.suggest({ ...base, format: 'parcel' })).toBe('smallParcel');
+		expect(ClickAndDropRules.suggest({ ...base, format: 'smallParcel' })).toBe('smallParcel');
+		expect(ClickAndDropRules.suggest({ ...base, format: 'letter' })).toBe('largeLetter');
+		expect(
+			ClickAndDropRules.suggest({ ...base, format: 'parcel', weightGrams: 2500 })
+		).toBeUndefined();
 	});
 
 	it('accepts formats within their weight limit', () => {
@@ -67,7 +83,9 @@ describe('ClickAndDropRules.check', () => {
 					ok: true,
 				}
 			);
-			expect(ClickAndDropRules.suggest({ serviceCode, weightGrams: 300 })).toBeUndefined();
+			expect(
+				ClickAndDropRules.suggest({ format: 'letter', serviceCode, weightGrams: 300 })
+			).toBeUndefined();
 		}
 	});
 });

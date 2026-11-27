@@ -41,7 +41,7 @@ export const ClickAndDropRules = {
 		const limits = limitsFor(serviceCode);
 		if (!limits) return { ok: true };
 		const name = serviceName || serviceCode || 'This service';
-		const suggestion = ClickAndDropRules.suggest({ serviceCode, weightGrams });
+		const suggestion = ClickAndDropRules.suggest({ format, serviceCode, weightGrams });
 		const label = Packing.FORMAT_LABELS[format];
 		const max = limits[format];
 
@@ -71,13 +71,19 @@ export const ClickAndDropRules = {
 		return { ok: true };
 	},
 
-	/** The smallest accepted format that fits the weight; undefined when the service has no format rules or none fits. */
+	/**
+	 * The smallest accepted format that fits the weight and is no smaller than the one chosen: weight
+	 * alone cannot tell a box from a large letter, so a chosen parcel moves to a small parcel and a
+	 * letter only grows. Undefined when the service has no format rules or none fits.
+	 */
 	suggest({
+		format,
 		serviceCode,
 		weightGrams,
-	}: Pick<CheckInput, 'serviceCode' | 'weightGrams'>): PackageFormat | undefined {
+	}: Pick<CheckInput, 'format' | 'serviceCode' | 'weightGrams'>): PackageFormat | undefined {
 		const limits = limitsFor(serviceCode);
 		if (!limits) return undefined;
-		return BY_SIZE.find((f) => (limits[f] ?? -1) >= weightGrams);
+		const from = BY_SIZE.indexOf(format === 'parcel' ? 'smallParcel' : format);
+		return BY_SIZE.slice(from).find((f) => (limits[f] ?? -1) >= weightGrams);
 	},
 };

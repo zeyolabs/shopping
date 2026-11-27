@@ -115,7 +115,7 @@ describe('FulfilmentManager Click & Drop preflight', () => {
 		const number = await packed({ packageFormat: 'parcel' });
 		expect(await FulfilmentManager.preflight(number)).toMatchObject({
 			alreadySent: false,
-			check: { ok: false, suggestion: 'largeLetter' },
+			check: { ok: false, suggestion: 'smallParcel' },
 			format: 'parcel',
 			serviceCode: 'OLP2',
 			serviceName: 'Royal Mail 2nd Class',
@@ -172,7 +172,7 @@ describe('FulfilmentManager Click & Drop preflight', () => {
 		await FulfilmentManager.useSuggestedFormat(number);
 		expect(await FulfilmentManager.preflight(number)).toMatchObject({
 			check: { ok: true },
-			format: 'largeLetter',
+			format: 'smallParcel',
 			weightGrams: 360,
 		});
 	});
