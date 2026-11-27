@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 import { logger } from '@zeyolabs/kit/server/logger';
 
 import { BundleParts } from '../bundles/library';
+import { ClickAndDropRejected } from '../clients/royalmail';
 import { ShopClients } from '../clients/shop.server';
 import { shopping } from '../config';
 import { ShippingService } from '../shipping/service.server';
@@ -106,7 +107,17 @@ export const OrderManager = {
 				});
 				await service.setRoyalMailOrderId(order.id, royalMailOrderId);
 			} catch (error) {
-				logger.error(error, { op: 'royalMailPush', orderNumber: order.number });
+				if (error instanceof ClickAndDropRejected) {
+					logger.warn(
+						'Click & Drop refused the order at payment; staff can fix it and send it from the order page',
+						{
+							orderNumber: order.number,
+							reason: error.reason,
+						}
+					);
+				} else {
+					logger.error(error, { op: 'royalMailPush', orderNumber: order.number });
+				}
 			}
 		}
 	},

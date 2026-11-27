@@ -33,6 +33,18 @@ type CreateResponse = {
 	failedOrders?: { errors?: { errorMessage?: string }[] }[];
 };
 
+/** Click & Drop answered and refused the order (e.g. a service that cannot take the format). Not an outage. */
+export class ClickAndDropRejected extends Error {
+	constructor(
+		readonly orderNumber: string,
+		readonly reason: string,
+		readonly status: number
+	) {
+		super(`Click & Drop rejected order ${orderNumber} (${status}): ${reason}`);
+		this.name = 'ClickAndDropRejected';
+	}
+}
+
 const pounds = (pence: number) => pence / 100;
 
 function headers(apiKey: string, extra: Record<string, string> = {}) {
@@ -40,8 +52,8 @@ function headers(apiKey: string, extra: Record<string, string> = {}) {
 }
 
 /**
- * Creates the order in Click & Drop and returns its identifier. Throws on any failure so the caller
- * can log it: the customer's order is already safely recorded either way.
+ * Creates the order in Click & Drop and returns its identifier. Throws `ClickAndDropRejected` when Click & Drop refuses it and a plain error on any other
+ * failure, so the caller can log it: the customer's order is already safely recorded either way.
  */
 async function createOrder(apiKey: string, order: ClickAndDropOrder): Promise<string> {
 	// Shoppers only give a delivery address, so it doubles as the billing address (the API requires both).
@@ -92,6 +104,9 @@ async function createOrder(apiKey: string, order: ClickAndDropOrder): Promise<st
 			.flatMap((f) => f.errors ?? [])
 			.map((e) => e.errorMessage)
 			.join('; ');
+		if (reasons && response.status < 500) {
+			throw new ClickAndDropRejected(order.number, reasons, response.status);
+		}
 		throw new Error(`Click & Drop rejected order ${order.number} (${response.status}): ${reasons}`);
 	}
 	return String(created.orderIdentifier);

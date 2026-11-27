@@ -23,12 +23,14 @@
 	import {
 		createOrderLabel,
 		detailsForm,
+		getClickAndDropPreflight,
 		getOrder,
 		getShippingServices,
 		parcelForm,
 		refundForm,
 		shipForm,
 		updateOrderForm,
+		useSuggestedFormat,
 	} from '../admin.remote';
 	import { Packing } from '../library';
 	import {
@@ -64,6 +66,14 @@
 			toast.error(ErrorMessage.from(error, 'Could not send the order to Click & Drop.'));
 		} finally {
 			printing = false;
+		}
+	}
+
+	async function useSuggestion(orderNumber: string) {
+		try {
+			await useSuggestedFormat(orderNumber);
+		} catch (error) {
+			toast.error(ErrorMessage.from(error, 'Could not change the package format.'));
 		}
 	}
 
@@ -196,6 +206,45 @@
 				{#if order.packedAt}Packed {date.format(order.packedAt)}.{/if}
 				{#if order.labelCreatedAt}Label created {date.format(order.labelCreatedAt)}.{/if}
 			</Text>
+			{let preflight = $derived(await getClickAndDropPreflight(order.number))}
+			{#if stage !== 'held' && stage !== 'new' && stage !== 'packing'}
+				<div class="mt-4">
+					{#if preflight.alreadySent}
+						<Text>This order is already in Click &amp; Drop.</Text>
+					{:else}
+						<Cluster gap="xs">
+							<Text>
+								{#if preflight.serviceName || preflight.serviceCode}
+									Will be sent as <Span bold>{preflight.serviceName ?? preflight.serviceCode}</Span>
+									{#if preflight.serviceName && preflight.serviceCode}({preflight.serviceCode}){/if}
+								{:else}
+									Click &amp; Drop will choose the service
+								{/if}
+								· <Span bold>{Packing.FORMAT_LABELS[preflight.format]}</Span>
+								· <Span bold>{preflight.weightGrams} g</Span>{preflight.weightIsEstimate
+									? ' (estimated)'
+									: ''}
+							</Text>
+							<Badge color={preflight.check.ok ? 'success' : 'error'}>
+								{preflight.check.ok ? 'Accepted' : 'Not accepted'}
+							</Badge>
+						</Cluster>
+						{#if !preflight.check.ok}
+							{let rejected = preflight.check}
+							<Text class="mt-1" color="error">{rejected.reason}</Text>
+							{#if rejected.suggestion}
+								<Button
+									class="mt-2"
+									onclick={() => useSuggestion(order.number)}
+									variant="secondary"
+								>
+									Use {Packing.FORMAT_LABELS[rejected.suggestion]}
+								</Button>
+							{/if}
+						{/if}
+					{/if}
+				</div>
+			{/if}
 			<Form
 				class="mt-4"
 				form={updateOrderForm}
@@ -216,7 +265,10 @@
 							Mark packed
 						</Button>
 					{:else if stage === 'packed' || stage === 'label'}
-						<Button disabled={printing} onclick={() => sendToClickAndDrop(order.number)}>
+						<Button
+							disabled={printing || (!preflight.alreadySent && !preflight.check.ok)}
+							onclick={() => sendToClickAndDrop(order.number)}
+						>
 							{order.labelCreatedAt ? 'Open in Click & Drop' : 'Send to Click & Drop'}
 						</Button>
 					{/if}
@@ -253,29 +305,31 @@
 					? `Estimated ${order.estimatedWeightGrams} g from the items. Weigh the parcel and correct it.`
 					: 'Weight and format go on the Royal Mail label.'}
 			</Text>
-			<Form
-				class="mt-3 grid gap-4"
-				defaults={{
-					format: order.packageFormat,
-					weightGrams: order.weightGrams ?? (order.estimatedWeightGrams || undefined),
-				}}
-				form={parcelForm}
-				hidden={{ number: order.number }}
-				reset={false}
-				schema={ParcelSchema}
-			>
-				<NumberField name="weightGrams" form={parcelForm} inputmode="numeric"
-					>Weight (g)</NumberField
-				>
-				<SelectField
-					name="format"
+			{#key order.packageFormat}
+				<Form
+					class="mt-3 grid gap-4"
+					defaults={{
+						format: order.packageFormat,
+						weightGrams: order.weightGrams ?? (order.estimatedWeightGrams || undefined),
+					}}
 					form={parcelForm}
-					getLabel={(f) => Packing.FORMAT_LABELS[f]}
-					items={PACKAGE_FORMATS}
-					placeholder="Package format"
-				/>
-				<div><Button form={parcelForm}>Save parcel</Button></div>
-			</Form>
+					hidden={{ number: order.number }}
+					reset={false}
+					schema={ParcelSchema}
+				>
+					<NumberField name="weightGrams" form={parcelForm} inputmode="numeric"
+						>Weight (g)</NumberField
+					>
+					<SelectField
+						name="format"
+						form={parcelForm}
+						getLabel={(f) => Packing.FORMAT_LABELS[f]}
+						items={PACKAGE_FORMATS}
+						placeholder="Package format"
+					/>
+					<div><Button form={parcelForm}>Save parcel</Button></div>
+				</Form>
+			{/key}
 		</section>
 	{/if}
 

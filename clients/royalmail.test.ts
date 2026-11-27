@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { RoyalMailClient } from './royalmail';
+import { ClickAndDropRejected, RoyalMailClient } from './royalmail';
 
 const env = 'key';
 
@@ -78,5 +78,32 @@ describe('Click & Drop client', () => {
 		await expect(new RoyalMailClient(env).trackingNumber('42')).resolves.toBe('AB123456789GB');
 		vi.stubGlobal('fetch', async () => Response.json([{}]));
 		await expect(new RoyalMailClient(env).trackingNumber('42')).resolves.toBeUndefined();
+	});
+});
+
+describe('Click & Drop rejections', () => {
+	const failed = {
+		errorsCount: 1,
+		failedOrders: [{ errors: [{ errorMessage: 'not possible to ship' }] }],
+	};
+
+	it('throws ClickAndDropRejected with the reason when Click & Drop refuses the order', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => Response.json(failed))
+		);
+		const error = await new RoyalMailClient(env).createOrder(order).catch((e: unknown) => e);
+		expect(error).toBeInstanceOf(ClickAndDropRejected);
+		expect(error).toMatchObject({ orderNumber: 'PL-ABC123', reason: 'not possible to ship' });
+	});
+
+	it('keeps a server failure a plain error', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => Response.json(failed, { status: 503 }))
+		);
+		const error = await new RoyalMailClient(env).createOrder(order).catch((e: unknown) => e);
+		expect(error).not.toBeInstanceOf(ClickAndDropRejected);
+		expect(error).toBeInstanceOf(Error);
 	});
 });

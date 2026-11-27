@@ -88,6 +88,15 @@ export class ShippingService {
 		return rate?.royalMailServiceCode ?? null;
 	}
 
+	/** The shop's display name for a postage service, e.g. "Royal Mail 2nd Class". */
+	async serviceName(service: null | string): Promise<null | string> {
+		if (!service) return null;
+		const rate = await this.db.query.shippingRates.findFirst({
+			where: eq(shippingRates.service, service),
+		});
+		return rate?.name ?? null;
+	}
+
 	/** The distinct postage services that have a rate, for the admin's service picker. */
 	async services() {
 		const rows = await this.db

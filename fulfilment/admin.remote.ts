@@ -22,6 +22,10 @@ export const getReadyByService = Remote.Query(() => FulfilmentManager.readyBySer
 
 export const getOrder = Remote.Query(OrderNumber, (number) => FulfilmentManager.find(number));
 
+export const getClickAndDropPreflight = Remote.Query(OrderNumber, (number) =>
+	FulfilmentManager.preflight(number)
+);
+
 export const shipForm = Remote.Form(ShipSchema, async ({ number, skipEmail, trackingNumber }) => {
 	const { emailed, skipped } = await FulfilmentManager.markShipped(number, trackingNumber || null, {
 		email: !skipEmail,
@@ -55,15 +59,20 @@ export const updateOrderForm = Remote.Form(OrderStepSchema, async ({ number, ste
 
 export const parcelForm = Remote.Form(ParcelSchema, async ({ format, number, weightGrams }) => {
 	await FulfilmentManager.saveParcel(number, { format, weightGrams });
-	await getOrder(number).refresh();
+	await Promise.all([getOrder(number).refresh(), getClickAndDropPreflight(number).refresh()]);
 	return FormResult.ok('Parcel details saved.');
+});
+
+export const useSuggestedFormat = Remote.Cmd(OrderNumber, async (number) => {
+	await FulfilmentManager.useSuggestedFormat(number);
+	await Promise.all([getOrder(number).refresh(), getClickAndDropPreflight(number).refresh()]);
 });
 
 export const getShippingServices = Remote.Query(() => FulfilmentManager.shippingServices());
 
 export const detailsForm = Remote.Form(OrderDetailsSchema, async ({ number, ...details }) => {
 	const { labelStale } = await FulfilmentManager.saveDetails(number, { number, ...details });
-	await getOrder(number).refresh();
+	await Promise.all([getOrder(number).refresh(), getClickAndDropPreflight(number).refresh()]);
 	return FormResult.ok(
 		labelStale
 			? 'Details saved. The Click & Drop order no longer matches: send it again to replace it.'
@@ -77,7 +86,7 @@ export const detailsForm = Remote.Form(OrderDetailsSchema, async ({ number, ...d
  */
 export const createOrderLabel = Remote.Cmd(OrderNumber, async (number) => {
 	const label = await FulfilmentManager.createLabel(number);
-	await getOrder(number).refresh();
+	await Promise.all([getOrder(number).refresh(), getClickAndDropPreflight(number).refresh()]);
 	return label;
 });
 
