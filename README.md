@@ -20,8 +20,8 @@ One folder per feature (library, client, service, manager, remote functions, pag
 ## Using it in an app
 
 1. Register the site's config once on the server: `configureShopping({...})` (brand, shipping,
-   order prefix, `db`, `mail`), imported by `hooks.server.ts`, and list the bindings in the app's
-   `secretNames` for `runWithContext`. Bindings: `ROYALMAIL_API_KEY`, `STRIPE_SECRET_KEY`,
+   order prefix, `db`, `mail`), imported by `hooks.server.ts`, and list the bindings in the `Secrets` it
+   gives `EnvStore.configure`. Bindings: `ROYALMAIL_API_KEY`, `STRIPE_SECRET_KEY`,
    `STRIPE_WEBHOOK_SECRET`, and the var `IMAGE_BASE_URL`.
 2. In the root layout, `setShopContext({ imageBaseUrl, siteName, siteUrl, supportEmail })`, and
    `setHeadContext({ siteName, siteUrl })` from `@zeyolabs/ui/head/context.ts`: the shop pages' `<head>`
