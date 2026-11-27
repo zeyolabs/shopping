@@ -58,7 +58,7 @@
 	},
 	"peerDependencies": {
 		"@sveltejs/kit": "^3.1.1",
-		"@zeyolabs/kit": ">=2026.11.57",
+		"@zeyolabs/kit": ">=2026.11.61",
 		"@zeyolabs/ui": ">=2026.11.42",
 		"drizzle-orm": "^0.45.3",
 		"svelte": "^5.57.3",
