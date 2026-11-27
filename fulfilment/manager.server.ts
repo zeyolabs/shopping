@@ -4,12 +4,14 @@ import { Error400, Error404, Error500 } from '@zeyolabs/kit/utils/errors';
 
 import type { OrderDetails, OrderStep } from './schema';
 
+import { ClickAndDropRejected } from '../clients/royalmail';
 import { ShopClients } from '../clients/shop.server';
 import { shopping } from '../config';
 import { Orders } from '../orders/library';
 import { OrderManager } from '../orders/manager.server';
 import { ShippingService } from '../shipping/service.server';
 import { Money } from '../utils/money';
+import { ClickAndDropRules } from './click-and-drop-rules';
 import { BULK_DISPATCH_LIMIT } from './filters';
 import { OrderRefunds } from './refund.server';
 import { FulfilmentService, type Parcel } from './service.server';
@@ -54,9 +56,8 @@ export const FulfilmentManager = {
 		if (order.status !== 'paid') {
 			throw Error400(`This order is ${order.status}, so it cannot have a label.`);
 		}
-		const client = ShopClients.royalMail();
 		if (order.labelCreatedAt && order.royalMailOrderId) {
-			const pdf = await client.label(order.royalMailOrderId);
+			const pdf = await ShopClients.royalMail().label(order.royalMailOrderId);
 			return { pdf: pdf !== null, royalMailOrderId: order.royalMailOrderId };
 		}
 
@@ -66,28 +67,49 @@ export const FulfilmentManager = {
 		const db = shopping().db();
 		const fulfilment = new FulfilmentService(db);
 		const shipping = new ShippingService(db);
-		if (order.royalMailOrderId) await client.deleteOrder(order.royalMailOrderId);
-		const royalMailOrderId = await client.createOrder({
-			address: {
-				city: address.city,
-				country: address.country,
-				line1: address.line1,
-				line2: address.line2,
-				name: address.name,
-				postal_code: address.postcode,
-				state: null,
-			},
-			createdAt: order.createdAt,
-			email: order.email,
-			number: order.number,
-			packageFormat: order.packageFormat,
-			phone: address.phone,
-			serviceCode: await shipping.serviceCode(order.shippingService),
-			shippingPence: order.shippingPence,
-			subtotalPence: order.subtotalPence,
-			totalPence: order.totalPence,
+		const serviceCode = await shipping.serviceCode(order.shippingService);
+		const check = ClickAndDropRules.check({
+			format: order.packageFormat,
+			serviceCode,
+			serviceName: await shipping.serviceName(order.shippingService),
 			weightGrams,
 		});
+		if (!check.ok) throw Error400(check.reason);
+
+		const client = ShopClients.royalMail();
+		if (order.royalMailOrderId) await client.deleteOrder(order.royalMailOrderId);
+		const royalMailOrderId = await client
+			.createOrder({
+				address: {
+					city: address.city,
+					country: address.country,
+					line1: address.line1,
+					line2: address.line2,
+					name: address.name,
+					postal_code: address.postcode,
+					state: null,
+				},
+				createdAt: order.createdAt,
+				email: order.email,
+				number: order.number,
+				packageFormat: order.packageFormat,
+				phone: address.phone,
+				serviceCode,
+				shippingPence: order.shippingPence,
+				subtotalPence: order.subtotalPence,
+				totalPence: order.totalPence,
+				weightGrams,
+			})
+			.catch((error: unknown) => {
+				if (error instanceof ClickAndDropRejected) {
+					logger.warn('Click & Drop refused the order', {
+						orderNumber: order.number,
+						reason: error.reason,
+					});
+					throw Error400(`Click & Drop did not accept this order: ${error.reason}`);
+				}
+				throw error;
+			});
 		// Keep the new id before fetching the label, so a failed fetch can be retried without a duplicate.
 		await fulfilment.update(order.id, { royalMailOrderId });
 		const pdf = await client.label(royalMailOrderId);
@@ -101,6 +123,31 @@ export const FulfilmentManager = {
 			weightGrams,
 		});
 		return { pdf: pdf !== null, royalMailOrderId };
+	},
+
+	/** What sending this order to Click & Drop would send, and whether Click & Drop will take it. */
+	async preflight(number: string) {
+		const order = await findOrThrow(number);
+		const shipping = new ShippingService(shopping().db());
+		const [serviceCode, serviceName] = await Promise.all([
+			shipping.serviceCode(order.shippingService),
+			shipping.serviceName(order.shippingService),
+		]);
+		const weightGrams = order.weightGrams ?? order.estimatedWeightGrams;
+		return {
+			alreadySent: Boolean(order.royalMailOrderId && order.labelCreatedAt),
+			check: ClickAndDropRules.check({
+				format: order.packageFormat,
+				serviceCode,
+				serviceName,
+				weightGrams,
+			}),
+			format: order.packageFormat,
+			serviceCode,
+			serviceName,
+			weightGrams,
+			weightIsEstimate: order.weightGrams === null,
+		};
 	},
 
 	/**
@@ -300,6 +347,13 @@ export const FulfilmentManager = {
 			}
 		}
 		return results;
+	},
+
+	/** Saves the format Click & Drop will accept for this order's weight and service, keeping the weight. */
+	async useSuggestedFormat(number: string) {
+		const { check, weightGrams } = await FulfilmentManager.preflight(number);
+		if (check.ok || !check.suggestion) throw Error400('There is no better package format to use.');
+		await service().saveParcel(number, { format: check.suggestion, weightGrams });
 	},
 
 	async saveParcel(number: string, parcel: Parcel) {
