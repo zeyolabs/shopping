@@ -2,6 +2,7 @@ import type Stripe from 'stripe';
 
 import { getRequestEvent } from '$app/server';
 import { AuthHandle } from '@zeyolabs/kit/auth/sessions/handle';
+import { envStore } from '@zeyolabs/kit/utils/env';
 import { Error400 } from '@zeyolabs/kit/utils/errors';
 
 import { BasketCookies } from '../basket/cookies.server';
@@ -78,7 +79,8 @@ function sessionParams(
 	origin: string,
 	customerId: string | undefined
 ): Stripe.Checkout.SessionCreateParams {
-	const { checkout = {}, imageBaseUrl } = shopping();
+	const { checkout = {} } = shopping();
+	const imageBaseUrl = envStore().string('IMAGE_BASE_URL');
 	return {
 		allow_promotion_codes: checkout.promotionCodes || undefined,
 		cancel_url: `${origin}/basket`,
