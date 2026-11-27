@@ -7,15 +7,11 @@ import type { DispatchEmailData } from './fulfilment/dispatch-email';
 import type { OrderEmailData } from './orders/email';
 import type { BackInStockEmailData } from './stock-alerts/email';
 
-/**
- * Names of the secrets the shop reads, as they are called in the app's wrangler config. The app must
- * list them in the `secretNames` it gives `runWithContext`, so `EnvStore` resolves them.
- */
-export type ShoppingSecrets = {
-	royalMailApiKey: string;
-	stripeSecretKey: string;
-	stripeWebhookSecret: string;
-};
+const SHOP_SECRETS = {
+	royalMailApiKey: 'ROYALMAIL_API_KEY',
+	stripeSecretKey: 'STRIPE_SECRET_KEY',
+	stripeWebhookSecret: 'STRIPE_WEBHOOK_SECRET',
+} as const;
 
 /** Postage rules layered on the per-zone rate table. */
 export type ShippingRules = {
@@ -31,7 +27,7 @@ export type ShippingRules = {
 
 /**
  * What the shop sends, one function per email, each given the order details. `defaultShopMail`
- * (`@zeyolabs/shopping/server/mail`) is the package's own wording; a site can use it or write its own.
+ * (`@zeyolabs/shopping/mail/default`) is the package's own wording; a site can use it or write its own.
  */
 export type ShopMail = {
 	/**
@@ -72,19 +68,15 @@ export type ShoppingConfig = {
 	brand: EmailBrand;
 	checkout?: CheckoutOptions;
 	db: () => ShopDb;
-	/** Where product image files are served from; the database stores only file names. */
-	imageBaseUrl: string;
 	mail: ShopMail;
 	/** Letters before the random part of an order number, e.g. `PL` for `PL-ABC123`. */
 	orderNumberPrefix: string;
-	secrets: ShoppingSecrets;
 	shipping: ShippingRules;
 	siteUrl: string;
 };
 
 let current: ShoppingConfig | undefined;
 
-/** Called once at startup by each app (see its `src/lib/server/shopping.ts`). */
 export function configureShopping(config: ShoppingConfig): void {
 	current = config;
 }
@@ -95,7 +87,6 @@ export function shopping(): ShoppingConfig {
 	return current;
 }
 
-/** A secret by its role (`stripeSecretKey`); the config says what it is called in this app. */
-export function secret(key: keyof ShoppingSecrets): string {
-	return envStore().secret(shopping().secrets[key]);
+export function secret(key: keyof typeof SHOP_SECRETS): string {
+	return envStore().secret(SHOP_SECRETS[key]);
 }

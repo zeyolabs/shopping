@@ -13,7 +13,6 @@ configureShopping({
 	db: () => {
 		throw new Error('no database in unit tests');
 	},
-	imageBaseUrl: 'https://images.test.example/products',
 	mail: {
 		backInStock: async () => {},
 		newOrderAlert: async () => {},
@@ -21,11 +20,6 @@ configureShopping({
 		orderDispatched: async () => {},
 	},
 	orderNumberPrefix: 'TS',
-	secrets: {
-		royalMailApiKey: 'ROYALMAIL_API_KEY',
-		stripeSecretKey: 'STRIPE_SECRET_KEY',
-		stripeWebhookSecret: 'STRIPE_WEBHOOK_SECRET',
-	},
 	shipping: {
 		defaultCountry: 'GB',
 		freeUkFromPence: 7000,

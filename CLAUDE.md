@@ -5,10 +5,10 @@ Leaves. Depends on `@zeyolabs/kit` and `@zeyolabs/ui`.
 
 ## Nothing site-specific
 
-The brand, shipping thresholds, image URL, order prefix, database, the _names_ of secrets and one
+The brand, shipping thresholds, order prefix, database and one
 function per email (`mail.orderConfirmed`, `newOrderAlert`, `orderDispatched`) arrive through
-`configureShopping()`, which just stores the config object. Secrets are read with
-`envStore().secret(name)`, so the app passes its `secretNames` to `runWithContext`. The emails
+`configureShopping()`, which just stores the config object. Secrets and `IMAGE_BASE_URL` are read from `envStore()` under fixed binding names, so the app
+lists them in the `secretNames` it passes to `runWithContext`. The emails
 default to `defaultShopMail`; a site can replace any of them. Page copy that names the site uses
 `shopContext().siteName` or comes in as a prop (e.g. `<Shop description intro>`).
 
