@@ -12,7 +12,7 @@ const reviews = {
 };
 
 const product = {
-	brand: 'KeyCrox',
+	brand: 'Example Shop',
 	description: 'A switch.',
 	images: ['https://cdn.example/a.webp'],
 	name: 'Switch',
@@ -62,7 +62,7 @@ describe('Seo.product', () => {
 			priceCurrency: 'GBP',
 			url: product.url,
 		});
-		expect(node).toMatchObject({ brand: { name: 'KeyCrox' }, sku: 'SW-1' });
+		expect(node).toMatchObject({ brand: { name: 'Example Shop' }, sku: 'SW-1' });
 		expect(node['image']).toEqual(product.images);
 	});
 
@@ -141,9 +141,9 @@ describe('descriptions', () => {
 			description: ' ',
 			name: 'Korean Mug',
 			shortDescription: '',
-			siteName: 'Pure Leaves',
+			siteName: 'Example Shop',
 		});
-		expect(out).toBe('Buy Korean Mug (Mugs) online from Pure Leaves.');
+		expect(out).toBe('Buy Korean Mug (Mugs) online from Example Shop.');
 		expect(
 			Seo.productDescription({ description: '', name: 'X', shortDescription: '', siteName: 'S' })
 		).toBe('Buy X online from S.');

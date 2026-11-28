@@ -45,7 +45,7 @@ Apps keep thin route files that render or re-export the package's: `<Basket />`,
 `export { POST } from '@zeyolabs/shopping/checkout/webhook.server'`,
 `export { productLoad as load } from '@zeyolabs/shopping/catalogue/loads.server'`.
 Admin remote functions have no auth of their own: the app guards every admin route and remote call
-(pureleaves does it in `apps/admin`'s hooks).
+(an app does it in its admin hooks).
 
 Stock: `products.stock` is in single units; `packSize` above 1 sells whole packs, and a combined
 product (`product_components`, at most 10) has only the complete sets its components allow. `stock`
